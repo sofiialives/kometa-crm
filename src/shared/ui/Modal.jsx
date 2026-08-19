@@ -1,0 +1,76 @@
+import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
+import { cx } from '../lib/cx'
+import { Button } from './Button'
+
+const sizes = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl' }
+
+export function Modal({ open, onClose, title, size = 'md', closeOnOverlay = true, footer, children }) {
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e) => e.key === 'Escape' && onClose?.()
+    document.addEventListener('keydown', onKey)
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = ''
+    }
+  }, [open, onClose])
+
+  if (!open) return null
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 grid place-items-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+      onMouseDown={(e) => closeOnOverlay && e.target === e.currentTarget && onClose?.()}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        className={cx(
+          'w-full glass rounded-card bg-space-2/90 shadow-[0_30px_80px_rgba(0,0,0,0.6),0_0_60px_rgba(133,76,255,0.12)]',
+          'animate-modal-in',
+          sizes[size],
+        )}
+      >
+        <div className="flex items-center justify-between gap-4 px-6 pt-5 pb-4 border-b border-white/8">
+          <h3 className="text-[17px] font-semibold tracking-tight">{title}</h3>
+          <button
+            onClick={onClose}
+            className="grid place-items-center w-8 h-8 rounded-lg text-ink-3 hover:text-ink hover:bg-white/5 transition-colors cursor-pointer"
+            aria-label="Закрыть"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+              strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+          </button>
+        </div>
+
+        <div className="px-6 py-5">{children}</div>
+
+        {footer && (
+          <div className="flex items-center justify-end gap-3 px-6 pb-5 pt-1">{footer}</div>
+        )}
+      </div>
+    </div>,
+    document.body,
+  )
+}
+
+export function ConfirmModal({ open, onClose, onConfirm, title = 'Вы уверены?', text, confirmText = 'Подтвердить', danger = false, loading = false }) {
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={title}
+      size="sm"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>Отмена</Button>
+          <Button variant={danger ? 'danger' : 'primary'} loading={loading} onClick={onConfirm}>{confirmText}</Button>
+        </>
+      }
+    >
+      {text && <p className="text-sm text-ink-2 leading-relaxed">{text}</p>}
+    </Modal>
+  )
+}
