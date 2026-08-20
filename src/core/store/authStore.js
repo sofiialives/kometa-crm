@@ -7,6 +7,7 @@ export const useAuthStore = create(
     (set, get) => ({
       user: null,
       token: null,
+      refreshToken: null,
       loading: false,
       error: null,
 
@@ -17,8 +18,8 @@ export const useAuthStore = create(
       async login({ email, password }) {
         set({ loading: true, error: null })
         try {
-          const { user, token } = await mockLogin({ email, password })
-          set({ user, token, loading: false })
+          const { user, accessToken, refreshToken } = await api.post('/auth/login', { email, password })
+          set({ user, token: accessToken, refreshToken, loading: false })
           return { ok: true }
         } catch (e) {
           set({ error: e.message, loading: false })
@@ -26,37 +27,51 @@ export const useAuthStore = create(
         }
       },
 
-      async loginWithGoogle() {
-        set({ error: null })
+      async loginWithGoogle(idToken) {
+        set({ loading: true, error: null })
         try {
-          await new Promise((r) => setTimeout(r, 600))
-          const user = { id: 9, name: 'Google User', role: 'staff', departmentId: 1 }
-          set({ user, token: 'mock-google' })
+          const { user, accessToken, refreshToken } = await api.post('/auth/google', { idToken })
+          set({ user, token: accessToken, refreshToken, loading: false })
           return { ok: true }
         } catch (e) {
-          set({ error: e.message })
+          set({ error: e.message, loading: false })
+          return { ok: false, error: e.message }
+        }
+      },
+
+      async forgotPassword(email) {
+        set({ loading: true, error: null })
+        try {
+          await api.post('/auth/forgot-password', { email })
+          set({ loading: false })
+          return { ok: true }
+        } catch (e) {
+          set({ error: e.message, loading: false })
+          return { ok: false, error: e.message }
+        }
+      },
+
+      async resetPassword({ email, code, newPassword }) {
+        set({ loading: true, error: null })
+        try {
+          const { user, accessToken, refreshToken } = await api.post('/auth/reset-password', {
+            email,
+            code,
+            newPassword,
+          })
+          set({ user, token: accessToken, refreshToken, loading: false })
+          return { ok: true }
+        } catch (e) {
+          set({ error: e.message, loading: false })
           return { ok: false, error: e.message }
         }
       },
 
       logout() {
-        set({ user: null, token: null, error: null })
+        api.post('/auth/logout', {}).catch(() => {})
+        set({ user: null, token: null, refreshToken: null, error: null })
       },
     }),
-    { name: 'kometa-crm-auth' },
+    { name: 'kometa-crm-auth', partialize: (s) => ({ user: s.user, token: s.token, refreshToken: s.refreshToken }) },
   ),
 )
-
-async function mockLogin({ email, password }) {
-  await new Promise((r) => setTimeout(r, 500))
-  if (email === 'admin@kometa.web3' && password === 'admin') {
-    return { token: 'mock-admin', user: { id: 1, name: 'Ян', role: 'admin', departmentId: null } }
-  }
-  if (email === 'lead@kometa.web3' && password === 'lead') {
-    return { token: 'mock-lead', user: { id: 2, name: 'София', role: 'lead', departmentId: 1 } }
-  }
-  if (password === '1234') {
-    return { token: 'mock-staff', user: { id: 3, name: email.split('@')[0], role: 'staff', departmentId: 1 } }
-  }
-  throw new Error('Неверный email или пароль')
-}

@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* ==========================================================================
+   KOMETA CRM — дизайн-токены из наших КП
+   ========================================================================== */
 @theme {
   --color-space: #0e0e12;
   --color-space-2: #14131c;
@@ -20,6 +23,7 @@
   --radius-field: 14px;
 }
 
+/* ---- База ---- */
 html,
 body,
 #root {
@@ -34,6 +38,7 @@ body {
   overflow-x: hidden;
 }
 
+/* ---- Стекло (как glass-карточки в КП) ---- */
 .glass {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -41,6 +46,7 @@ body {
   -webkit-backdrop-filter: blur(14px);
 }
 
+/* ---- Градиентный текст ---- */
 .text-gradient {
   background: linear-gradient(120deg, var(--color-brand-blue), var(--color-brand-purple));
   -webkit-background-clip: text;
@@ -48,6 +54,7 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
+/* ---- mono-подпись как в КП ---- */
 .mono-caption {
   font-family: var(--font-mono);
   font-size: 11px;
@@ -56,6 +63,7 @@ body {
   color: var(--color-ink-3);
 }
 
+/* ---- Космический фон как в КП: слои звёзд + дрейфующие блобы ---- */
 .cosmos { position: fixed; inset: 0; z-index: -2; pointer-events: none; overflow: hidden; }
 
 .cosmos__star {
@@ -100,6 +108,7 @@ body {
   .cosmos__star, .cosmos__blob { animation: none; }
 }
 
+/* ---- Скроллбар в тон ---- */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -115,6 +124,7 @@ body {
   background: rgba(133, 76, 255, 0.4);
 }
 
+/* ---- Появление модалки ---- */
 @keyframes modal-in {
   from {
     opacity: 0;

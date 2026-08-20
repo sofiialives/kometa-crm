@@ -18,6 +18,7 @@ export function Header() {
       <div className="mx-auto max-w-[1360px] px-5 h-16 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <img src="/kometa.png" alt="KOMETA" className="h-7 w-auto select-none" draggable="false" />
+          <span className="mono-caption !text-brand-light border border-brand-purple/40 rounded-full px-2.5 py-0.5">CRM</span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -27,7 +28,7 @@ export function Header() {
                 <span className="text-sm font-medium">{user.name}</span>
                 <span className="mono-caption">{roleLabel(user.role)}</span>
               </div>
-              <Avatar name={user.name} size={34} />
+              <Avatar name={user.name} src={user.avatarUrl} size={34} />
               <Button variant="ghost" size="sm" onClick={() => setConfirmOut(true)}>
                 Выйти
               </Button>
