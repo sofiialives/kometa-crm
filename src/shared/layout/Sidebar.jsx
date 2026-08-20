@@ -54,7 +54,7 @@ function UserCard() {
   return (
     <>
       <div className="glass rounded-2xl p-3 flex items-center gap-3">
-        <Avatar name={user.name} size={36} />
+        <Avatar name={user.name} src={user.avatarUrl} size={36} />
         <div className="flex-1 min-w-0 leading-tight">
           <p className="text-sm font-medium truncate">{user.name}</p>
           <p className="mono-caption">{roleLabel(user.role)}</p>
@@ -88,8 +88,8 @@ function UserCard() {
 
 export function Sidebar() {
   return (
-    <aside className="hidden md:flex w-60 shrink-0">
-      <div className="glass rounded-card p-3 flex flex-col gap-4 sticky top-[88px] w-full h-[calc(100vh-120px)]">
+    <aside className="hidden md:flex w-60 shrink-0 sticky top-16 h-[calc(100vh-64px)] border-r border-white/8 bg-space-2/50 backdrop-blur-xl">
+      <div className="flex flex-col gap-4 w-full p-3">
         <NavList />
         <div className="mt-auto flex flex-col gap-3">
           <div className="h-px bg-white/8" />

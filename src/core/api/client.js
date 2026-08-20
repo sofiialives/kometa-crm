@@ -13,14 +13,16 @@ async function request(path, { method = 'GET', body, headers = {} } = {}) {
     },
     body: body ? JSON.stringify(body) : undefined,
   })
-  if (res.status === 401) {
+
+  if (res.status === 401 && path !== '/auth/login') {
     useAuthStore.getState().logout()
-    throw new Error('Сессия истекла, войдите заново')
   }
+
   if (!res.ok) {
-    const text = await res.text().catch(() => '')
-    throw new Error(text || `Ошибка ${res.status}`)
+    const data = await res.json().catch(() => null)
+    throw new Error(data?.error?.message || `Ошибка ${res.status}`)
   }
+
   return res.status === 204 ? null : res.json()
 }
 
