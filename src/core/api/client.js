@@ -20,7 +20,10 @@ async function request(path, { method = 'GET', body, headers = {} } = {}) {
 
   if (!res.ok) {
     const data = await res.json().catch(() => null)
-    throw new Error(data?.error?.message || `Ошибка ${res.status}`)
+    const err = new Error(data?.error?.message || `Ошибка ${res.status}`)
+    err.status = res.status
+    err.details = data?.error?.details
+    throw err
   }
 
   return res.status === 204 ? null : res.json()
