@@ -57,4 +57,16 @@ export const useDepartmentsStore = create((set, get) => ({
       return { ok: false, error: e.message }
     }
   },
+
+  async deleteDepartment(id) {
+    set({ error: null })
+    try {
+      await api.del(`/departments/${id}`)
+      set({ departments: get().departments.filter((d) => d.id !== id) })
+      return { ok: true }
+    } catch (e) {
+      set({ error: e.message })
+      return { ok: false, error: e.message }
+    }
+  },
 }))

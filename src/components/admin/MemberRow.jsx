@@ -4,7 +4,7 @@ import { Avatar, Badge } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
 import { displayName, roleBadge, userStatus } from '../../utils/admin'
 
-export function MemberRow({ user, isLead = false, canPromote = true, onPromote, onMove, onDismiss }) {
+export function MemberRow({ user, isLead = false, canPromote = true, onPromote, onMove, onDismiss, stats }) {
   const role = roleBadge(user.role)
   const status = userStatus(user)
 
@@ -23,6 +23,13 @@ export function MemberRow({ user, isLead = false, canPromote = true, onPromote, 
         <p className="truncate text-sm font-medium leading-tight">{displayName(user)}</p>
         {user.position && <p className="caption truncate">{user.position}</p>}
       </div>
+
+      {stats && (stats.done > 0 || stats.overdue > 0) && (
+        <div className="hidden shrink-0 items-center gap-1.5 sm:flex" title={`Готово: ${stats.done} · Просрочено: ${stats.overdue}`}>
+          {stats.done > 0 && <Badge tone="ok">✓ {stats.done}</Badge>}
+          {stats.overdue > 0 && <Badge tone="danger">! {stats.overdue}</Badge>}
+        </div>
+      )}
 
       <Badge tone={role.tone}>{role.label}</Badge>
 

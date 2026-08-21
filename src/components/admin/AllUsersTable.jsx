@@ -1,7 +1,7 @@
 import { Card, Avatar, Badge, Button, EmptyState } from '../../shared/ui'
 import { displayName, roleBadge, userStatus } from '../../utils/admin'
 
-export function AllUsersTable({ users, departments, currentUserId, onDismiss }) {
+export function AllUsersTable({ users, departments, currentUserId, onDismiss, statsByUser }) {
   const deptName = (id) => departments.find((d) => d.id === id)?.name || '—'
 
   return (
@@ -26,6 +26,8 @@ export function AllUsersTable({ users, departments, currentUserId, onDismiss }) 
                 <Th>Отдел</Th>
                 <Th>Роль</Th>
                 <Th>Статус</Th>
+                <Th className="text-center">Готово</Th>
+                <Th className="text-center">Просрочено</Th>
                 <Th className="text-right">Действия</Th>
               </tr>
             </thead>
@@ -33,6 +35,7 @@ export function AllUsersTable({ users, departments, currentUserId, onDismiss }) 
               {users.map((u) => {
                 const role = roleBadge(u.role)
                 const status = userStatus(u)
+                const stats = statsByUser?.[u.id] || { done: 0, overdue: 0 }
                 return (
                   <tr key={u.id} className="border-b border-line last:border-0 transition-colors hover:bg-panel-2">
                     <Td>
@@ -47,6 +50,12 @@ export function AllUsersTable({ users, departments, currentUserId, onDismiss }) 
                     <Td className="text-sm text-ink-2">{deptName(u.departmentId)}</Td>
                     <Td><Badge tone={role.tone}>{role.label}</Badge></Td>
                     <Td><Badge tone={status.tone}>{status.label}</Badge></Td>
+                    <Td className="text-center">
+                      {stats.done > 0 ? <Badge tone="ok">{stats.done}</Badge> : <span className="caption">—</span>}
+                    </Td>
+                    <Td className="text-center">
+                      {stats.overdue > 0 ? <Badge tone="danger">{stats.overdue}</Badge> : <span className="caption">—</span>}
+                    </Td>
                     <Td className="text-right">
                       {!u.active ? (
                         <span className="caption">уволен</span>

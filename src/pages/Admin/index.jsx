@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuthStore } from '../../core/store/authStore'
 import { useUsersStore } from '../../core/store/usersStore'
 import { useDepartmentsStore } from '../../core/store/departmentsStore'
+import { useTasksStore } from '../../core/store/tasksStore'
 import { PageSection } from '../../widgets'
 import { Button, Card, EmptyState, Spinner, ConfirmModal } from '../../shared/ui'
 import { DepartmentCard } from '../../components/admin/DepartmentCard'
@@ -26,11 +27,16 @@ export default function AdminPage() {
   const fetchDepartments = useDepartmentsStore((s) => s.fetchDepartments)
   const createDepartment = useDepartmentsStore((s) => s.createDepartment)
   const updateDepartment = useDepartmentsStore((s) => s.updateDepartment)
+  const deleteDepartment = useDepartmentsStore((s) => s.deleteDepartment)
+
+  const tasks = useTasksStore((s) => s.tasks)
+  const fetchTasks = useTasksStore((s) => s.fetchTasks)
 
   const [deptOpen, setDeptOpen] = useState(false)
   const [inviteOpen, setInviteOpen] = useState(false)
   const [moving, setMoving] = useState(null)
   const [dismissing, setDismissing] = useState(null)
+  const [deletingDept, setDeletingDept] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   // Два быстрых клика подряд прочитали бы устаревший leadId из замыкания.
@@ -40,11 +46,30 @@ export default function AdminPage() {
   useEffect(() => {
     fetchUsers()
     fetchDepartments()
-  }, [fetchUsers, fetchDepartments])
+    // Админ видит все задачи (без scope) — этого достаточно, чтобы
+    // посчитать готово/просрочено на каждого сотрудника без отдельного
+    // эндпоинта под статистику.
+    fetchTasks()
+  }, [fetchUsers, fetchDepartments, fetchTasks])
 
   async function refresh() {
     await Promise.all([fetchUsers(), fetchDepartments()])
   }
+
+  // done — сколько задач сотрудник довёл до статуса "done" (когда угодно,
+  // не только сегодня); overdue — сколько сейчас просрочено и не закрыто.
+  // Оба числа считаются на лету из уже загруженного списка задач, отдельный
+  // эндпоинт под это не нужен.
+  const statsByUser = useMemo(() => {
+    const map = {}
+    for (const t of tasks) {
+      if (!t.ownerId) continue
+      if (!map[t.ownerId]) map[t.ownerId] = { done: 0, overdue: 0 }
+      if (t.status === 'done') map[t.ownerId].done += 1
+      else if (t.overdue) map[t.ownerId].overdue += 1
+    }
+    return map
+  }, [tasks])
 
   const leadDepartmentOf = (user) => departments.find((d) => d.leadId === user.id) || null
 
@@ -115,6 +140,15 @@ export default function AdminPage() {
 
   const loading = (usersLoading || departmentsLoading) && users.length === 0 && departments.length === 0
 
+  async function confirmDeleteDepartment() {
+    if (!deletingDept) return
+    setBusy(true)
+    const res = await deleteDepartment(deletingDept.id)
+    setBusy(false)
+    setDeletingDept(null)
+    if (!res.ok) setError(res.error)
+  }
+
   return (
     <PageSection
       pill="Админ-панель"
@@ -155,6 +189,8 @@ export default function AdminPage() {
               onPromote={promote}
               onMove={setMoving}
               onDismiss={setDismissing}
+              onDelete={setDeletingDept}
+              statsByUser={statsByUser}
               onAddPosition={async (department, position) => {
                 const res = await updateDepartment(department.id, {
                   positions: [...department.positions, position],
@@ -172,6 +208,7 @@ export default function AdminPage() {
           departments={departments}
           currentUserId={currentUser?.id}
           onDismiss={setDismissing}
+          statsByUser={statsByUser}
         />
       </div>
 
@@ -217,6 +254,17 @@ export default function AdminPage() {
               ' потеряет доступ к системе. Запись и его задачи останутся, отдел и должность снимутся.'
             : ''
         }
+      />
+
+      <ConfirmModal
+        open={Boolean(deletingDept)}
+        onClose={() => setDeletingDept(null)}
+        onConfirm={confirmDeleteDepartment}
+        loading={busy}
+        danger
+        title="Удалить отдел?"
+        confirmText="Удалить"
+        text={deletingDept ? `Отдел «${deletingDept.name}» пропадёт без возможности отменить.` : ''}
       />
     </PageSection>
   )
