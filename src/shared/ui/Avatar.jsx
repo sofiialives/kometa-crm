@@ -1,13 +1,23 @@
 import { cx } from '../lib/cx'
 
-export function Avatar({ name = '', src, color, size = 36, ring = false, className, title }) {
-  const initials = name
-    .split(' ')
-    .map((w) => w[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase()
+/*
+ * Буква в кружке должна быть всегда, иначе получается разнобой: у нового
+ * сотрудника, пока он не заполнил имя, кружок оставался пустым, а у него же
+ * после сохранения имени — с буквой. Поэтому берём имя, а если его ещё нет,
+ * то почту: она есть у каждого с первого дня.
+ */
+export function initialsOf(name, email) {
+  const words = String(name || '').trim().split(/\s+/).filter(Boolean)
+  const fromName = words.slice(0, 2).map((w) => w[0]).join('')
+  if (fromName.length > 1) return fromName.toUpperCase()
+
+  const fromEmail = String(email || '').trim()[0]
+  if (fromName) return fromName.toUpperCase()
+  return (fromEmail || '?').toUpperCase()
+}
+
+export function Avatar({ name = '', email, src, color, size = 36, ring = false, className, title }) {
+  const initials = initialsOf(name, email)
 
   return (
     <span
@@ -26,7 +36,7 @@ export function Avatar({ name = '', src, color, size = 36, ring = false, classNa
         ...(color && !src ? { background: color } : {}),
       }}
     >
-      {src ? <img src={src} alt={name} className="w-full h-full object-cover" /> : initials || '•'}
+      {src ? <img src={src} alt={name} className="w-full h-full object-cover" /> : initials}
     </span>
   )
 }

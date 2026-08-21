@@ -30,7 +30,7 @@ export function Header() {
                 <span className="caption">{roleLabel(user.role)}</span>
               </Link>
               <Link to="/settings" title="Настройки профиля">
-                <Avatar name={user.name} src={user.avatarUrl} color={user.avatarColor} size={34} />
+                <Avatar name={user.name} email={user.email} src={user.avatarUrl} color={user.avatarColor} size={34} />
               </Link>
               <Button variant="ghost" size="sm" onClick={() => setConfirmOut(true)}>
                 Выйти

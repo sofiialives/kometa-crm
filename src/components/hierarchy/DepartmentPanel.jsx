@@ -22,7 +22,7 @@ export function DepartmentPanel({ department, users, worksCount, canSeeMembers, 
         <span className="caption">Главный отдела</span>
         {head ? (
           <div className="flex items-center gap-3">
-            <Avatar name={displayName(head)} src={head.avatarUrl} color={head.avatarColor} size={40} ring />
+            <Avatar name={head.name} email={head.email} src={head.avatarUrl} color={head.avatarColor} size={40} ring />
             <div className="min-w-0">
               <p className="truncate text-sm font-medium leading-tight">{displayName(head)}</p>
               <p className="caption truncate">{head.position || 'Начальник отдела'}</p>
@@ -40,7 +40,7 @@ export function DepartmentPanel({ department, users, worksCount, canSeeMembers, 
           <span className="caption">Сотрудники</span>
           <div className="flex items-center gap-2">
             {staff.length > 0 ? (
-              <AvatarStack users={staff.map((u) => ({ id: u.id, name: displayName(u), src: u.avatarUrl }))} size={30} />
+              <AvatarStack users={staff.map((u) => ({ id: u.id, name: u.name, email: u.email, src: u.avatarUrl, color: u.avatarColor }))} size={30} />
             ) : (
               <span className="text-sm text-ink-3">Пока никого</span>
             )}

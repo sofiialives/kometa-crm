@@ -18,7 +18,7 @@ export default function SettingsPage() {
     <PageSection pill="Настройки" title="Настройки профиля" subtitle="Видно всей команде — в списках, задачах, отделах.">
       <div className="grid gap-4 lg:grid-cols-[360px_1fr] lg:items-start">
         <Card pad="md" className="flex flex-col items-center gap-3 text-center">
-          <Avatar name={user?.name} src={user?.avatarUrl} color={user?.avatarColor} size={96} />
+          <Avatar name={user?.name} email={user?.email} src={user?.avatarUrl} color={user?.avatarColor} size={96} />
           <div>
             <p className="font-medium">{user?.name}</p>
             <p className="caption">{roleLabel(user?.role)}{user?.position ? ' · ' + user.position : ''}</p>

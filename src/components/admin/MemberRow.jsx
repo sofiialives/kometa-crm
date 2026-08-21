@@ -17,7 +17,7 @@ export function MemberRow({ user, isLead = false, canPromote = true, onPromote, 
         isLead ? 'bg-panel-2' : 'hover:bg-panel-2',
       )}
     >
-      <Avatar name={displayName(user)} src={user.avatarUrl} color={user.avatarColor} size={isLead ? 36 : 30} ring={isLead} />
+      <Avatar name={user.name} email={user.email} src={user.avatarUrl} color={user.avatarColor} size={isLead ? 36 : 30} ring={isLead} />
 
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium leading-tight">{displayName(user)}</p>

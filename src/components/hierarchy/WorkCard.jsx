@@ -1,7 +1,6 @@
 import { Card, Badge, AvatarStack, AddAction } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
 import { TaskLine } from './TaskLine'
-import { displayName } from '../../utils/admin'
 import { taskCount, workBadge } from '../../utils/hierarchy'
 
 // Корешок слева повторяет статус работы: в списке из десятка карточек
@@ -26,7 +25,7 @@ export function WorkCard({
   const badge = workBadge(work.status)
   const assignees = (work.assignees || []).map((u) => ({
     id: u.id,
-    name: displayName(u),
+    name: u.name,
     src: u.avatarUrl,
     color: u.avatarColor,
   }))
