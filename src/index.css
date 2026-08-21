@@ -1,7 +1,6 @@
 @import "tailwindcss";
 
 @theme {
-  /* Акцент — единственный насыщенный цвет в системе. Фирменный синий. */
   --color-accent: #504cff;
   --color-accent-hover: #423ee6;
   --color-accent-soft: #edecff;
