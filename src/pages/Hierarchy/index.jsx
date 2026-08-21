@@ -15,6 +15,7 @@ import { AssigneesModal } from '../../components/hierarchy/AssigneesModal'
 import { ExtendDeadlineModal } from '../../components/hierarchy/ExtendDeadlineModal'
 import { EditTaskModal } from '../../components/hierarchy/EditTaskModal'
 import { InviteUserModal } from '../../components/admin/InviteUserModal'
+import { MembersModal } from '../../components/hierarchy/MembersModal'
 import { ClientGroup } from '../../components/hierarchy/ClientGroup'
 import { inviteMember } from '../../core/store/team'
 import { sortWorks, tasksOfWork, visibleDepartments } from '../../utils/hierarchy'
@@ -53,6 +54,7 @@ export default function HierarchyPage() {
   const [activeDept, setActiveDept] = useState(null)
   const [workOpen, setWorkOpen] = useState(false)
   const [invitingTo, setInvitingTo] = useState(null)
+  const [membersOfDept, setMembersOfDept] = useState(null)
   const [addingTaskTo, setAddingTaskTo] = useState(null)
   const [editingAssignees, setEditingAssignees] = useState(null)
   const [extendingTask, setExtendingTask] = useState(null)
@@ -191,6 +193,7 @@ export default function HierarchyPage() {
                 worksCount={activeWorksOf(d.id)}
                 canSeeMembers={canManage}
                 canInvite={isAdmin}
+                onShowMembers={setMembersOfDept}
                 onInvite={() => setInvitingTo(d.id)}
               />
             ))}
@@ -236,6 +239,12 @@ export default function HierarchyPage() {
           </div>
         </div>
       )}
+
+      <MembersModal
+        department={membersOfDept}
+        users={users}
+        onClose={() => setMembersOfDept(null)}
+      />
 
       <CreateWorkModal
         open={workOpen}
