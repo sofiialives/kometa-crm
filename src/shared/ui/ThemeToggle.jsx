@@ -12,7 +12,7 @@ export function ThemeToggle() {
   const setTheme = useThemeStore((s) => s.setTheme)
 
   return (
-    <div className="inline-flex items-center gap-0.5 rounded-xl border border-line bg-surface-3 p-0.5" role="group" aria-label="Тема оформления">
+    <div className="inline-flex items-center gap-0.5 rounded-xl border border-line bg-panel-2 p-0.5" role="group" aria-label="Тема оформления">
       {THEMES.map((t) => (
         <button
           key={t.value}
@@ -23,8 +23,8 @@ export function ThemeToggle() {
           className={cx(
             'grid h-8 w-8 place-items-center rounded-[9px] transition-colors cursor-pointer',
             theme === t.value
-              ? 'bg-gradient-to-br from-brand-blue to-brand-purple text-white'
-              : 'text-ink-3 hover:text-ink hover:bg-space-2',
+              ? 'bg-accent text-white'
+              : 'text-ink-3 hover:text-ink hover:bg-panel',
           )}
         >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">

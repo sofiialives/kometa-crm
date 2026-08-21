@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../core/store/authStore'
-import { Card, Input, PasswordInput, Button, Form, Pill, Cosmos, GoogleButton } from '../../shared/ui'
+import { Card, Input, PasswordInput, Button, Form, Pill, GoogleButton } from '../../shared/ui'
 
 const VIEW = {
   LOGIN: 'login',
@@ -63,7 +63,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-full grid place-items-center p-4">
-      <Cosmos />
       <Card pad="lg" className="w-full max-w-sm flex flex-col gap-6">
         <div className="flex flex-col items-center gap-3 text-center">
           <Pill>KOMETA · CRM</Pill>
@@ -76,7 +75,7 @@ export default function LoginPage() {
         </div>
 
         {notice && view !== VIEW.LOGIN && (
-          <p className="text-sm text-brand-light bg-brand-purple/10 border border-brand-purple/30 rounded-xl px-3.5 py-2.5 leading-relaxed">
+          <p className="text-sm text-accent bg-accent/10 border border-accent/30 rounded-xl px-3.5 py-2.5 leading-relaxed">
             {notice}
           </p>
         )}
@@ -90,7 +89,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => { setError(null); setNotice(null); setView(VIEW.FORGOT_EMAIL) }}
-                  className="self-end text-xs text-ink-3 hover:text-brand-light transition-colors cursor-pointer"
+                  className="self-end text-xs text-ink-3 hover:text-accent transition-colors cursor-pointer"
                 >
                   Забыли пароль?
                 </button>
@@ -100,13 +99,13 @@ export default function LoginPage() {
 
             <div className="flex items-center gap-3 -my-1">
               <span className="h-px flex-1 bg-line" />
-              <span className="mono-caption">или</span>
+              <span className="caption">или</span>
               <span className="h-px flex-1 bg-line" />
             </div>
 
             <GoogleButton onCredential={onGoogleCredential} disabled={loading} />
 
-            <p className="mono-caption text-center">Доступ выдаёт администратор</p>
+            <p className="caption text-center">Доступ выдаёт администратор</p>
           </>
         )}
 
@@ -144,7 +143,7 @@ function BackToLogin({ onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="self-center text-xs text-ink-3 hover:text-brand-light transition-colors cursor-pointer -mt-1"
+      className="self-center text-xs text-ink-3 hover:text-accent transition-colors cursor-pointer -mt-1"
     >
       ← Назад ко входу
     </button>

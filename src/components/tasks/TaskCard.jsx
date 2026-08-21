@@ -11,8 +11,8 @@ export function TaskCard({ task, col, isMine, onMove, onOpen }) {
     <div
       onClick={() => onOpen(task)}
       className={cx(
-        'glass rounded-2xl p-3.5 flex flex-col gap-2.5 transition-colors cursor-pointer',
-        isDone ? 'opacity-80' : 'hover:border-brand-purple/35',
+        'panel rounded-2xl p-3.5 flex flex-col gap-2.5 transition-colors cursor-pointer',
+        isDone ? 'opacity-80' : 'hover:border-accent/35',
       )}
     >
       <div>
@@ -27,8 +27,8 @@ export function TaskCard({ task, col, isMine, onMove, onOpen }) {
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <Avatar name={task.owner?.name || '?'} src={task.owner?.avatarUrl} color={task.owner?.avatarColor} size={22} />
-          <span className="mono-caption truncate">
-            {dateLabel && <span className="text-brand-light">{dateLabel} · </span>}
+          <span className="caption truncate">
+            {dateLabel && <span className="text-accent">{dateLabel} · </span>}
             {time}
           </span>
         </div>

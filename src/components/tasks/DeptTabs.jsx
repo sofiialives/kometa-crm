@@ -34,7 +34,7 @@ export function DeptTabs({ departments, active, onSelect }) {
       {canLeft && (
         <button
           onClick={() => scrollBy(-160)}
-          className="shrink-0 grid place-items-center w-7 h-7 rounded-full glass text-ink-3 hover:text-ink transition-colors cursor-pointer"
+          className="shrink-0 grid place-items-center w-7 h-7 rounded-full panel text-ink-3 hover:text-ink transition-colors cursor-pointer"
           aria-label="Прокрутить влево"
         >
           <ChevronIcon left />
@@ -54,7 +54,7 @@ export function DeptTabs({ departments, active, onSelect }) {
       {canRight && (
         <button
           onClick={() => scrollBy(160)}
-          className="shrink-0 grid place-items-center w-7 h-7 rounded-full glass text-ink-3 hover:text-ink transition-colors cursor-pointer"
+          className="shrink-0 grid place-items-center w-7 h-7 rounded-full panel text-ink-3 hover:text-ink transition-colors cursor-pointer"
           aria-label="Прокрутить вправо"
         >
           <ChevronIcon />
@@ -79,8 +79,8 @@ function DeptTab({ active, onClick, children }) {
       className={cx(
         'shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all cursor-pointer whitespace-nowrap',
         active
-          ? 'bg-gradient-to-r from-brand-blue to-brand-purple text-white shadow-[0_4px_16px_rgba(133,76,255,0.35)]'
-          : 'glass text-ink-3 hover:text-ink',
+          ? 'bg-accent text-white'
+          : 'panel text-ink-3 hover:text-ink',
       )}
     >
       {children}

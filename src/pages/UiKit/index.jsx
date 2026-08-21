@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   Button, Input, Textarea, Select, Checkbox, Form, FormRow, FormActions,
-  Modal, ConfirmModal, Badge, Pill, Card, Avatar, AvatarStack, Spinner, EmptyState, Cosmos,
+  Modal, ConfirmModal, Badge, Pill, Card, Avatar, AvatarStack, Spinner, EmptyState,
  } from '../../shared/ui'
 import { PageSection } from '../../widgets'
 
@@ -16,13 +16,12 @@ export default function UiKitPage() {
 
   return (
     <div className="min-h-full">
-      <Cosmos />
       <div className="mx-auto max-w-[1100px] px-5 py-10 flex flex-col gap-10">
         <PageSection pill="UI Kit" title="Shared-компоненты" subtitle="Витрина всего, что лежит в shared/ui. Каждый компонент управляется пропсами.">
 
           {}
           <Card>
-            <p className="mono-caption mb-4">Button · variant / size / loading</p>
+            <p className="caption mb-4">Button · variant / size / loading</p>
             <div className="flex flex-wrap items-center gap-3">
               <Button>Primary</Button>
               <Button variant="secondary">Secondary</Button>
@@ -37,7 +36,7 @@ export default function UiKitPage() {
 
           {}
           <Card>
-            <p className="mono-caption mb-4">Form · Input / Select / Textarea / Checkbox</p>
+            <p className="caption mb-4">Form · Input / Select / Textarea / Checkbox</p>
             <Form onSubmit={(v) => alert(JSON.stringify(v, null, 2))}>
               <FormRow>
                 <Input name="name" label="Название работы" placeholder="Например: сайт под ключ" required />
@@ -71,7 +70,7 @@ export default function UiKitPage() {
 
           {}
           <Card>
-            <p className="mono-caption mb-4">Badge · tone / Pill</p>
+            <p className="caption mb-4">Badge · tone / Pill</p>
             <div className="flex flex-wrap items-center gap-3">
               <Badge tone="ok">Готово</Badge>
               <Badge tone="warn">Срок прошёл</Badge>
@@ -84,7 +83,7 @@ export default function UiKitPage() {
 
           {}
           <Card>
-            <p className="mono-caption mb-4">Avatar · size / ring / AvatarStack</p>
+            <p className="caption mb-4">Avatar · size / ring / AvatarStack</p>
             <div className="flex flex-wrap items-center gap-5">
               <Avatar name="София К" size={44} />
               <Avatar name="Ян В" size={36} ring />
@@ -96,7 +95,7 @@ export default function UiKitPage() {
 
           {}
           <Card>
-            <p className="mono-caption mb-4">Modal / ConfirmModal</p>
+            <p className="caption mb-4">Modal / ConfirmModal</p>
             <div className="flex flex-wrap gap-3">
               <Button variant="secondary" onClick={() => setModal(true)}>Открыть модалку</Button>
               <Button variant="danger" onClick={() => setConfirm(true)}>Открыть confirm</Button>

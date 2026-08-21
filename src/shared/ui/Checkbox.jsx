@@ -8,11 +8,11 @@ export function Checkbox({ label, id: propId, className, ...props }) {
       <input id={id} type="checkbox" className="peer sr-only" {...props} />
       <span
         className={cx(
-          'grid place-items-center w-5 h-5 rounded-md border border-line-strong bg-surface-3',
-          'transition-all duration-150 group-hover:border-brand-purple/60',
-          'peer-checked:border-transparent peer-checked:bg-gradient-to-br peer-checked:from-brand-blue peer-checked:to-brand-purple',
+          'grid place-items-center w-5 h-5 rounded-md border border-line-2 bg-panel-2',
+          'transition-all duration-150 group-hover:border-accent/60',
+          'peer-checked:border-transparent peer-checked:bg-gradient-to-br peer-checked:from-accent peer-checked:to-accent',
           'peer-checked:[&>svg]:opacity-100',
-          'peer-focus-visible:shadow-[0_0_0_3px_rgba(133,76,255,0.25)]',
+          'peer-focus-visible:',
         )}
       >
         <svg

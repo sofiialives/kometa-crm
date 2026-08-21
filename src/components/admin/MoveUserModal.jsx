@@ -77,8 +77,8 @@ export function MoveUserModal({ user, departments, onClose, onSubmit }) {
 
           {keepsPosition ? (
             <div className="flex flex-col gap-2">
-              <span className="mono-caption select-none">Должность</span>
-              <p className="rounded-xl border border-line bg-surface-3 px-4 py-3 text-sm text-ink-3">
+              <span className="caption select-none">Должность</span>
+              <p className="rounded-xl border border-line bg-panel-2 px-4 py-3 text-sm text-ink-3">
                 {user.position || 'Начальник отдела'} — должность главного отдела, она не выбирается.
               </p>
             </div>

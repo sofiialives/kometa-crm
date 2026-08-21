@@ -14,18 +14,18 @@ export function DepartmentPanel({ department, users, worksCount, canSeeMembers, 
       <div className="flex items-start justify-between gap-3">
         <h2 className="text-lg font-semibold tracking-tight">{department.name}</h2>
         {canSeeMembers && (
-          <Badge tone="neutral" dot={false}>{memberCount(members.length)}</Badge>
+          <Badge tone="neutral">{memberCount(members.length)}</Badge>
         )}
       </div>
 
       <div className="flex flex-col gap-2">
-        <span className="mono-caption">Главный отдела</span>
+        <span className="caption">Главный отдела</span>
         {head ? (
           <div className="flex items-center gap-3">
             <Avatar name={displayName(head)} src={head.avatarUrl} color={head.avatarColor} size={40} ring />
             <div className="min-w-0">
               <p className="truncate text-sm font-medium leading-tight">{displayName(head)}</p>
-              <p className="mono-caption truncate">{head.position || 'Начальник отдела'}</p>
+              <p className="caption truncate">{head.position || 'Начальник отдела'}</p>
             </div>
           </div>
         ) : (
@@ -37,7 +37,7 @@ export function DepartmentPanel({ department, users, worksCount, canSeeMembers, 
 
       {canSeeMembers && (
         <div className="flex flex-col gap-2">
-          <span className="mono-caption">Сотрудники</span>
+          <span className="caption">Сотрудники</span>
           <div className="flex items-center gap-2">
             {staff.length > 0 ? (
               <AvatarStack users={staff.map((u) => ({ id: u.id, name: displayName(u), src: u.avatarUrl }))} size={30} />
@@ -48,7 +48,7 @@ export function DepartmentPanel({ department, users, worksCount, canSeeMembers, 
               <button
                 onClick={onInvite}
                 aria-label="Добавить сотрудника"
-                className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-full glass text-ink-3 transition-colors hover:border-brand-purple/50 hover:text-ink cursor-pointer"
+                className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-full panel text-ink-3 transition-colors hover:border-accent/50 hover:text-ink cursor-pointer"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
                   <path d="M12 5v14M5 12h14" />
@@ -60,7 +60,7 @@ export function DepartmentPanel({ department, users, worksCount, canSeeMembers, 
       )}
 
       <div className="border-t border-line pt-3">
-        <p className="mono-caption">Активные работы · {worksCount}</p>
+        <p className="caption">Активные работы · {worksCount}</p>
       </div>
     </Card>
   )

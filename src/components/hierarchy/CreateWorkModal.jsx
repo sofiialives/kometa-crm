@@ -72,8 +72,8 @@ export function CreateWorkModal({ open, onClose, departments, clients, defaultDe
                     key={c}
                     onClick={() => setClientName(c)}
                     className={cx(
-                      'rounded-full glass px-3 py-1.5 text-sm text-ink-2 transition-colors cursor-pointer',
-                      'hover:border-brand-purple/50 hover:text-ink',
+                      'rounded-full panel px-3 py-1.5 text-sm text-ink-2 transition-colors cursor-pointer',
+                      'hover:border-accent/50 hover:text-ink',
                     )}
                   >
                     {c}

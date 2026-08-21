@@ -1,24 +1,27 @@
 import { cx } from '../lib/cx'
 
+/*
+ * Статус читается словом на приглушённой подложке. Точку убрали: она
+ * дублировала цвет подложки и добавляла шума в плотных списках.
+ */
 const tones = {
-  ok: 'bg-ok/10 text-ok border-ok/30',
-  warn: 'bg-warn/10 text-warn border-warn/30',
-  danger: 'bg-danger/10 text-danger border-danger/30',
-  brand: 'bg-brand-purple/12 text-brand-light border-brand-purple/35',
-  neutral: 'bg-surface-3 text-ink-3 border-line',
+  neutral: 'bg-panel-2 text-ink-2 border-line',
+  brand: 'bg-accent-soft text-accent border-accent/30',
+  ok: 'bg-ok-soft text-ok border-ok/30',
+  warn: 'bg-warn-soft text-warn border-warn/30',
+  danger: 'bg-danger-soft text-danger border-danger/30',
 }
 
-export function Badge({ tone = 'neutral', dot = true, className, children }) {
+export function Badge({ tone = 'neutral', className, children }) {
   return (
     <span
       className={cx(
-        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border',
-        'font-mono text-[12px] leading-none uppercase tracking-[0.06em] whitespace-nowrap',
-        tones[tone],
+        'inline-flex items-center px-2 py-0.5 rounded-md border',
+        'text-xs font-semibold whitespace-nowrap',
+        tones[tone] || tones.neutral,
         className,
       )}
     >
-      {dot && <span className="w-1.5 h-1.5 rounded-full bg-current" />}
       {children}
     </span>
   )

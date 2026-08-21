@@ -56,7 +56,7 @@ export function GoogleButton({ onCredential, disabled }) {
       <div ref={boxRef} className={disabled ? 'pointer-events-none opacity-70' : ''} />
       {!ready && (
         <span
-          className="w-5 h-5 rounded-full border-2 border-line border-t-brand-light animate-spin"
+          className="w-5 h-5 rounded-full border-2 border-line border-t-accent animate-spin"
           aria-label="Загрузка кнопки Google"
         />
       )}

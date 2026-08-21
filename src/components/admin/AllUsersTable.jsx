@@ -34,24 +34,24 @@ export function AllUsersTable({ users, departments, currentUserId, onDismiss }) 
                 const role = roleBadge(u.role)
                 const status = userStatus(u)
                 return (
-                  <tr key={u.id} className="border-b border-line last:border-0 transition-colors hover:bg-surface-3">
+                  <tr key={u.id} className="border-b border-line last:border-0 transition-colors hover:bg-panel-2">
                     <Td>
                       <div className="flex items-center gap-3">
                         <Avatar name={displayName(u)} src={u.avatarUrl} color={u.avatarColor} size={30} />
                         <div className="min-w-0">
                           <p className="truncate text-sm font-medium leading-tight">{displayName(u)}</p>
-                          <p className="mono-caption truncate">{u.email}</p>
+                          <p className="caption truncate">{u.email}</p>
                         </div>
                       </div>
                     </Td>
                     <Td className="text-sm text-ink-2">{deptName(u.departmentId)}</Td>
-                    <Td><Badge tone={role.tone} dot={false}>{role.label}</Badge></Td>
+                    <Td><Badge tone={role.tone}>{role.label}</Badge></Td>
                     <Td><Badge tone={status.tone}>{status.label}</Badge></Td>
                     <Td className="text-right">
                       {!u.active ? (
-                        <span className="mono-caption">уволен</span>
+                        <span className="caption">уволен</span>
                       ) : u.id === currentUserId ? (
-                        <span className="mono-caption">это вы</span>
+                        <span className="caption">это вы</span>
                       ) : (
                         <Button size="sm" variant="danger" onClick={() => onDismiss(u)}>Уволить</Button>
                       )}
@@ -68,7 +68,7 @@ export function AllUsersTable({ users, departments, currentUserId, onDismiss }) 
 }
 
 function Th({ className = '', children }) {
-  return <th className={`px-6 py-3 text-left mono-caption font-normal ${className}`}>{children}</th>
+  return <th className={`px-6 py-3 text-left caption font-normal ${className}`}>{children}</th>
 }
 
 function Td({ className = '', children }) {

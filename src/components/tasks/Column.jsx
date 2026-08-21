@@ -5,8 +5,8 @@ export function Column({ col, tasks, loading, currentUser, onMove, onOpen }) {
   return (
     <Card pad="sm" className="flex flex-col gap-3 min-h-[320px]">
       <div className="flex items-center justify-between px-2 pt-1">
-        <p className="mono-caption">{col.title}</p>
-        <span className="mono-caption !text-brand-light">{tasks.length}</span>
+        <p className="caption">{col.title}</p>
+        <span className="caption !text-accent">{tasks.length}</span>
       </div>
 
       {loading && <div className="py-10 grid place-items-center"><Spinner size={20} /></div>}

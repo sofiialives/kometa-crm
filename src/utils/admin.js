@@ -6,7 +6,7 @@ export const ROLES = [
   { value: 'admin', label: 'Администратор' },
 ]
 
-const ROLE_LABEL = { admin: 'ADMIN', lead: 'ГЛАВНЫЙ', staff: 'СОТРУДНИК' }
+const ROLE_LABEL = { admin: 'Админ', lead: 'Главный', staff: 'Сотрудник' }
 const ROLE_TONE = { admin: 'brand', lead: 'brand', staff: 'neutral' }
 
 export function roleBadge(role) {

@@ -1,7 +1,12 @@
-import { Card, Badge, AvatarStack, Button } from '../../shared/ui'
+import { Card, Badge, AvatarStack, Button, AddAction } from '../../shared/ui'
+import { cx } from '../../shared/lib/cx'
 import { TaskLine } from './TaskLine'
 import { displayName } from '../../utils/admin'
 import { taskCount, workBadge } from '../../utils/hierarchy'
+
+// Корешок слева повторяет статус работы: в списке из десятка карточек
+// состояние видно, не читая бейдж.
+const SPINE = { active: 'spine--accent', done: 'spine--ok', archived: 'spine--muted' }
 
 export function WorkCard({
   work,
@@ -27,10 +32,10 @@ export function WorkCard({
   }))
 
   return (
-    <Card pad="md" hover className="flex flex-col gap-4">
+    <Card pad="md" hover className={cx('spine flex flex-col gap-4', SPINE[work.status] || 'spine--accent')}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="mono-caption truncate">
+          <p className="caption truncate">
             Клиент · {work.clientName}
             {departmentName ? ' · ' + departmentName : ''}
           </p>
@@ -67,11 +72,11 @@ export function WorkCard({
             <span className="text-sm text-ink-3">Исполнители не назначены</span>
           )}
         </button>
-        <span className="mono-caption shrink-0">{taskCount(tasks.length)}</span>
+        <span className="caption shrink-0">{taskCount(tasks.length)}</span>
       </div>
 
       <div className="border-t border-line pt-3">
-        <span className="mono-caption">Задачи</span>
+        <span className="caption">Задачи</span>
         {tasks.length === 0 ? (
           <p className="pt-2 text-sm text-ink-3">Задач пока нет.</p>
         ) : (
@@ -93,9 +98,9 @@ export function WorkCard({
         )}
 
         {canManage && (
-          <Button variant="ghost" size="sm" className="mt-2 -ml-1" onClick={() => onAddTask(work)}>
-            + Добавить задачу
-          </Button>
+          <AddAction className="mt-3" onClick={() => onAddTask(work)}>
+            Добавить задачу
+          </AddAction>
         )}
       </div>
     </Card>

@@ -21,14 +21,14 @@ export function Modal({ open, onClose, title, size = 'md', closeOnOverlay = true
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 grid place-items-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-50 grid place-items-center p-4 bg-black/60 animate-fade-in"
       onMouseDown={(e) => closeOnOverlay && !hideClose && e.target === e.currentTarget && onClose?.()}
       role="dialog"
       aria-modal="true"
     >
       <div
         className={cx(
-          'w-full glass rounded-card bg-space-2/90 shadow-[0_30px_80px_rgba(0,0,0,0.6),0_0_60px_rgba(133,76,255,0.12)]',
+          'w-full panel rounded-card bg-panel/90',
           'animate-modal-in',
           sizes[size],
         )}
@@ -38,7 +38,7 @@ export function Modal({ open, onClose, title, size = 'md', closeOnOverlay = true
           {!hideClose && (
             <button
               onClick={onClose}
-              className="grid place-items-center w-8 h-8 rounded-lg text-ink-3 hover:text-ink hover:bg-surface-3 transition-colors cursor-pointer"
+              className="grid place-items-center w-8 h-8 rounded-lg text-ink-3 hover:text-ink hover:bg-panel-2 transition-colors cursor-pointer"
               aria-label="Закрыть"
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
