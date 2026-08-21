@@ -1,9 +1,10 @@
 import { Avatar, Badge, Button } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
-import { formatMskTime } from '../../utils/tasks'
+import { formatMskDate, formatMskTime, isTodayMsk } from '../../utils/tasks'
 
 export function TaskCard({ task, col, isMine, onMove, onOpen }) {
   const time = formatMskTime(task.deadline)
+  const dateLabel = isTodayMsk(task.deadline) ? null : formatMskDate(task.deadline)
   const isDone = task.status === 'done'
 
   return (
@@ -26,7 +27,10 @@ export function TaskCard({ task, col, isMine, onMove, onOpen }) {
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <Avatar name={task.owner?.name || '?'} src={task.owner?.avatarUrl} size={22} />
-          <span className="mono-caption truncate">{time}</span>
+          <span className="mono-caption truncate">
+            {dateLabel && <span className="text-brand-light">{dateLabel} · </span>}
+            {time}
+          </span>
         </div>
         {isDone ? (
           <Badge tone="neutral">Готово</Badge>

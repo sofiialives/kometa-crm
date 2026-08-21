@@ -155,6 +155,12 @@ export default function AdminPage() {
               onPromote={promote}
               onMove={setMoving}
               onDismiss={setDismissing}
+              onAddPosition={async (department, position) => {
+                const res = await updateDepartment(department.id, {
+                  positions: [...department.positions, position],
+                })
+                if (!res.ok) setError(res.error)
+              }}
             />
           ))}
         </div>

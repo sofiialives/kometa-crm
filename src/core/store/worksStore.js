@@ -43,4 +43,16 @@ export const useWorksStore = create((set, get) => ({
       return { ok: false, error: e.message }
     }
   },
+
+  async deleteWork(id) {
+    set({ error: null })
+    try {
+      await api.del(`/works/${id}`)
+      set({ works: get().works.filter((w) => w.id !== id) })
+      return { ok: true }
+    } catch (e) {
+      set({ error: e.message })
+      return { ok: false, error: e.message }
+    }
+  },
 }))

@@ -28,12 +28,56 @@ export function defaultMskTimeValue() {
   return `${hh}:${mm}`
 }
 
+/**
+ * В отличие от buildTodayDeadlineMsk (доска «Задачи», всегда сегодня),
+ * здесь дату выбирают явно — Иерархии нужны сроки на будущие дни,
+ * не только на сегодня.
+ */
+export function buildDeadlineMsk(dateStr, hhmm) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr || '')) throw new Error('invalid date')
+  if (!/^\d{1,2}:\d{2}(:\d{2})?$/.test(hhmm || '')) throw new Error('invalid time')
+
+  const [y, mo, da] = dateStr.split('-').map(Number)
+  const [h, m] = hhmm.split(':').map(Number)
+
+  const utcMs = Date.UTC(y, mo - 1, da, h, m, 0, 0) - MSK_OFFSET_MS
+  return new Date(utcMs).toISOString()
+}
+
+export function defaultMskDateValue() {
+  const d = new Date(Date.now() + MSK_OFFSET_MS)
+  const y = d.getUTCFullYear()
+  const mo = String(d.getUTCMonth() + 1).padStart(2, '0')
+  const da = String(d.getUTCDate()).padStart(2, '0')
+  return `${y}-${mo}-${da}`
+}
+
+/** Для предзаполнения полей при продлении срока уже существующей задачи. */
+export function splitDeadlineMsk(iso) {
+  const d = new Date(iso)
+  const mskMs = d.getTime() + MSK_OFFSET_MS
+  const mskD = new Date(mskMs)
+  const y = mskD.getUTCFullYear()
+  const mo = String(mskD.getUTCMonth() + 1).padStart(2, '0')
+  const da = String(mskD.getUTCDate()).padStart(2, '0')
+  const hh = String(mskD.getUTCHours()).padStart(2, '0')
+  const mm = String(mskD.getUTCMinutes()).padStart(2, '0')
+  return { date: `${y}-${mo}-${da}`, time: `${hh}:${mm}` }
+}
+
 export function formatMskTime(iso) {
   return new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: MSK_TZ })
 }
 
 export function formatMskDate(iso) {
   return new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', timeZone: MSK_TZ })
+}
+
+/** Совпадает ли дата задачи (по МСК) с сегодняшним днём (по МСК). */
+export function isTodayMsk(iso) {
+  const target = new Date(iso).toLocaleDateString('ru-RU', { timeZone: MSK_TZ })
+  const today = new Date().toLocaleDateString('ru-RU', { timeZone: MSK_TZ })
+  return target === today
 }
 
 export function scopeHint(user) {

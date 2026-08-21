@@ -5,13 +5,15 @@ import { useDepartmentsStore } from '../../core/store/departmentsStore'
 import { useWorksStore } from '../../core/store/worksStore'
 import { useTasksStore } from '../../core/store/tasksStore'
 import { PageSection } from '../../widgets'
-import { Button, Card, EmptyState, Spinner } from '../../shared/ui'
+import { Button, Card, EmptyState, Spinner, ConfirmModal } from '../../shared/ui'
 import { DeptTabs } from '../../components/tasks/DeptTabs'
 import { DepartmentPanel } from '../../components/hierarchy/DepartmentPanel'
 import { WorkCard } from '../../components/hierarchy/WorkCard'
 import { CreateWorkModal } from '../../components/hierarchy/CreateWorkModal'
 import { AddTaskModal } from '../../components/hierarchy/AddTaskModal'
 import { AssigneesModal } from '../../components/hierarchy/AssigneesModal'
+import { ExtendDeadlineModal } from '../../components/hierarchy/ExtendDeadlineModal'
+import { EditTaskModal } from '../../components/hierarchy/EditTaskModal'
 import { InviteUserModal } from '../../components/admin/InviteUserModal'
 import { inviteMember } from '../../core/store/team'
 import { ALL_DEPARTMENTS, sortWorks, tasksOfWork, visibleDepartments } from '../../utils/hierarchy'
@@ -33,12 +35,16 @@ export default function HierarchyPage() {
   const fetchWorks = useWorksStore((s) => s.fetchWorks)
   const createWork = useWorksStore((s) => s.createWork)
   const updateWork = useWorksStore((s) => s.updateWork)
+  const deleteWork = useWorksStore((s) => s.deleteWork)
 
   const tasks = useTasksStore((s) => s.tasks)
   const tasksError = useTasksStore((s) => s.error)
   const fetchTasks = useTasksStore((s) => s.fetchTasks)
   const createTask = useTasksStore((s) => s.createTask)
   const moveTask = useTasksStore((s) => s.moveTask)
+  const extendDeadline = useTasksStore((s) => s.extendDeadline)
+  const editTask = useTasksStore((s) => s.editTask)
+  const removeTask = useTasksStore((s) => s.removeTask)
 
   const isAdmin = currentUser?.role === 'admin'
   const canManage = isAdmin || currentUser?.role === 'lead'
@@ -48,7 +54,12 @@ export default function HierarchyPage() {
   const [invitingTo, setInvitingTo] = useState(null)
   const [addingTaskTo, setAddingTaskTo] = useState(null)
   const [editingAssignees, setEditingAssignees] = useState(null)
+  const [extendingTask, setExtendingTask] = useState(null)
+  const [editingTask, setEditingTask] = useState(null)
+  const [deletingTask, setDeletingTask] = useState(null)
+  const [deletingWork, setDeletingWork] = useState(null)
   const [busyTaskId, setBusyTaskId] = useState(null)
+  const [busy, setBusy] = useState(false)
   const [actionError, setActionError] = useState(null)
 
   useEffect(() => {
@@ -103,6 +114,24 @@ export default function HierarchyPage() {
     setActionError(null)
     const res = await moveTask(task.id, task.status === 'done' ? 'progress' : 'done')
     setBusyTaskId(null)
+    if (!res.ok) setActionError(res.error)
+  }
+
+  async function confirmDeleteTask() {
+    if (!deletingTask) return
+    setBusy(true)
+    const res = await removeTask(deletingTask.id)
+    setBusy(false)
+    setDeletingTask(null)
+    if (!res.ok) setActionError(res.error)
+  }
+
+  async function confirmDeleteWork() {
+    if (!deletingWork) return
+    setBusy(true)
+    const res = await deleteWork(deletingWork.id)
+    setBusy(false)
+    setDeletingWork(null)
     if (!res.ok) setActionError(res.error)
   }
 
@@ -176,6 +205,10 @@ export default function HierarchyPage() {
                   onToggleTask={toggleTask}
                   onAddTask={setAddingTaskTo}
                   onEditAssignees={() => setEditingAssignees(w)}
+                  onEditTask={setEditingTask}
+                  onExtendTask={setExtendingTask}
+                  onDeleteTask={setDeletingTask}
+                  onDeleteWork={setDeletingWork}
                 />
               ))
             )}
@@ -198,6 +231,8 @@ export default function HierarchyPage() {
 
       <AddTaskModal
         work={addingTaskTo}
+        currentUser={currentUser}
+        users={users}
         onClose={() => setAddingTaskTo(null)}
         onSubmit={async (payload) => {
           const res = await createTask(payload)
@@ -215,6 +250,44 @@ export default function HierarchyPage() {
           if (res.ok) await fetchWorks()
           return res
         }}
+      />
+
+      <ExtendDeadlineModal
+        task={extendingTask}
+        onClose={() => setExtendingTask(null)}
+        onSubmit={extendDeadline}
+      />
+
+      <EditTaskModal
+        task={editingTask}
+        onClose={() => setEditingTask(null)}
+        onSubmit={editTask}
+      />
+
+      <ConfirmModal
+        open={Boolean(deletingTask)}
+        onClose={() => setDeletingTask(null)}
+        onConfirm={confirmDeleteTask}
+        loading={busy}
+        danger
+        title="Удалить задачу?"
+        confirmText="Удалить"
+        text={deletingTask ? `«${deletingTask.title}» пропадёт без возможности отменить.` : ''}
+      />
+
+      <ConfirmModal
+        open={Boolean(deletingWork)}
+        onClose={() => setDeletingWork(null)}
+        onConfirm={confirmDeleteWork}
+        loading={busy}
+        danger
+        title="Удалить работу?"
+        confirmText="Удалить"
+        text={
+          deletingWork
+            ? `«${deletingWork.title}» для клиента «${deletingWork.clientName}» пропадёт. Задачи останутся у сотрудников, но отвяжутся от этой работы.`
+            : ''
+        }
       />
 
       <InviteUserModal
