@@ -17,7 +17,7 @@ export function TaskLine({ task, canToggle, canManage, busy, onToggle, onEdit, o
         aria-label={done ? 'Вернуть в работу' : 'Отметить выполненной'}
         title={canToggle ? undefined : 'Отмечать можно только свои задачи'}
         className={cx(
-          'grid h-5 w-5 shrink-0 place-items-center rounded-md border transition-all duration-150',
+          'grid h-5 w-5 shrink-0 place-items-center rounded-md border transition-colors duration-150',
           done
             ? 'border-transparent bg-accent'
             : 'border-line-2 bg-panel-2',

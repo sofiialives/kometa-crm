@@ -9,7 +9,7 @@ export function Checkbox({ label, id: propId, className, ...props }) {
       <span
         className={cx(
           'grid place-items-center w-5 h-5 rounded-md border border-line-2 bg-panel-2',
-          'transition-all duration-150 group-hover:border-accent/60',
+          'transition-colors duration-150 group-hover:border-accent/60',
           'peer-checked:border-transparent peer-checked:bg-gradient-to-br peer-checked:from-accent peer-checked:to-accent',
           'peer-checked:[&>svg]:opacity-100',
           'peer-focus-visible:',

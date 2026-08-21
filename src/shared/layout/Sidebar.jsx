@@ -33,7 +33,7 @@ function NavList({ onNavigate }) {
           onClick={onNavigate}
           className={({ isActive }) =>
             cx(
-              'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all',
+              'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors',
               isActive
                 ? 'bg-gradient-to-r from-accent/25 to-accent/12 text-ink border border-accent/35'
                 : 'text-ink-3 border border-transparent hover:text-ink hover:bg-panel-2',

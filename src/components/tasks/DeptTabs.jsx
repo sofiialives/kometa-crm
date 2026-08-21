@@ -77,7 +77,7 @@ function DeptTab({ active, onClick, children }) {
     <button
       onClick={onClick}
       className={cx(
-        'shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all cursor-pointer whitespace-nowrap',
+        'shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors cursor-pointer whitespace-nowrap',
         active
           ? 'bg-accent text-white'
           : 'panel text-ink-3 hover:text-ink',

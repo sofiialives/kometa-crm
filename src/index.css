@@ -25,9 +25,9 @@
   --color-panel-2: #f2f2f5;
   --color-ink: #17171c;
   --color-ink-2: #55555f;
-  --color-ink-3: #767683;
-  --color-line: #e3e3e8;
-  --color-line-2: #c9c9d2;
+  --color-ink-3: #6a6a78;
+  --color-line: #e0e0e6;
+  --color-line-2: #8e8e9a;
 
   /* Состояния. Приглушены до рабочего уровня: в интерфейсе, где статус
      у каждой строки, чистый красный превращается в шум. */
@@ -75,8 +75,8 @@
   --color-ink: #f3f3f6;
   --color-ink-2: #b6b6c2;
   --color-ink-3: #8d8d9c;
-  --color-line: #2c2c37;
-  --color-line-2: #464655;
+  --color-line: #30303c;
+  --color-line-2: #6e6e85;
 
   --color-ok: #4ec08d;
   --color-ok-soft: #16281f;
@@ -101,8 +101,8 @@
     --color-ink: #f3f3f6;
     --color-ink-2: #b6b6c2;
     --color-ink-3: #8d8d9c;
-    --color-line: #2c2c37;
-    --color-line-2: #464655;
+    --color-line: #30303c;
+    --color-line-2: #6e6e85;
 
     --color-ok: #4ec08d;
     --color-ok-soft: #16281f;

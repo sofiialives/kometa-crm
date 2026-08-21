@@ -1,4 +1,4 @@
-import { Card, Badge, AvatarStack, Button, AddAction } from '../../shared/ui'
+import { Card, Badge, AvatarStack, AddAction } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
 import { TaskLine } from './TaskLine'
 import { displayName } from '../../utils/admin'
