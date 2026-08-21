@@ -15,8 +15,8 @@ export function Avatar({ name = '', src, color, size = 36, ring = false, classNa
       className={cx(
         'relative inline-grid place-items-center rounded-full overflow-hidden select-none shrink-0',
         'text-white font-semibold',
-        !src && !color && 'bg-gradient-to-br from-brand-blue to-brand-purple',
-        ring && 'ring-2 ring-brand-light ring-offset-2 ring-offset-space',
+        !src && !color && 'bg-accent',
+        ring && 'ring-2 ring-accent ring-offset-2 ring-offset-panel',
         className,
       )}
       style={{
@@ -43,7 +43,7 @@ export function AvatarStack({ users = [], size = 30, max = 5, className }) {
       ))}
       {rest > 0 && (
         <span
-          className="grid place-items-center rounded-full glass text-ink-2 font-mono border-2 border-space"
+          className="grid place-items-center rounded-full panel text-ink-2 font-mono border-2 border-space"
           style={{ width: size, height: size, marginLeft: -size * 0.3, fontSize: size * 0.34 }}
         >
           +{rest}

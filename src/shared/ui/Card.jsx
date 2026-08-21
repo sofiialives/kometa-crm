@@ -6,8 +6,8 @@ export function Card({ hover = false, pad = 'md', className, children, ...props 
   return (
     <div
       className={cx(
-        'glass rounded-card',
-        hover && 'transition-all duration-200 hover:-translate-y-1 hover:border-brand-purple/40 hover:shadow-[0_14px_40px_rgba(0,0,0,0.35)]',
+        'panel rounded-card',
+        hover && 'transition-colors duration-150 hover:border-line-2',
         pads[pad],
         className,
       )}

@@ -28,7 +28,7 @@ export function TaskDetailModal({ task, onClose, isMine, onMove }) {
             <Avatar name={task.owner?.name || '?'} src={task.owner?.avatarUrl} color={task.owner?.avatarColor} size={26} />
             <span className="text-sm text-ink-2">{task.owner?.name || 'Без имени'}</span>
           </div>
-          <span className="mono-caption">{dateLabel} · {timeLabel} МСК</span>
+          <span className="caption">{dateLabel} · {timeLabel} МСК</span>
           {isDone ? (
             <Badge tone="neutral">Готово</Badge>
           ) : task.overdue ? (

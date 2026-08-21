@@ -19,7 +19,7 @@ export function Select({
       <div className="relative">
         <select
           id={id}
-          className={cx(controlClasses({ error, size }), 'appearance-none pr-10 cursor-pointer [&>option]:bg-space-2')}
+          className={cx(controlClasses({ error, size }), 'appearance-none pr-10 cursor-pointer [&>option]:bg-panel')}
           {...props}
         >
           {placeholder && <option value="">{placeholder}</option>}

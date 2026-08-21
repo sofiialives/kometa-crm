@@ -72,8 +72,8 @@ export function CreateWorkModal({ open, onClose, departments, clients, defaultDe
                     key={c}
                     onClick={() => setClientName(c)}
                     className={cx(
-                      'rounded-full glass px-3 py-1.5 text-[13px] text-ink-2 transition-colors cursor-pointer',
-                      'hover:border-brand-purple/50 hover:text-ink',
+                      'rounded-full panel px-3 py-1.5 text-sm text-ink-2 transition-colors cursor-pointer',
+                      'hover:border-accent/50 hover:text-ink',
                     )}
                   >
                     {c}
@@ -99,7 +99,7 @@ export function CreateWorkModal({ open, onClose, departments, clients, defaultDe
             options={departments.map((d) => ({ value: d.id, label: d.name }))}
           />
 
-          {error && <p className="text-[13px] text-danger">{error}</p>}
+          {error && <p className="text-sm text-danger">{error}</p>}
         </div>
       )}
     </Modal>

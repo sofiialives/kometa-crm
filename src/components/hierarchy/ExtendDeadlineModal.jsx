@@ -67,7 +67,7 @@ export function ExtendDeadlineModal({ task, onClose, onSubmit }) {
             />
           </div>
 
-          {error && <p className="text-[13px] text-danger">{error}</p>}
+          {error && <p className="text-sm text-danger">{error}</p>}
         </div>
       )}
     </Modal>

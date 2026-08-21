@@ -21,8 +21,8 @@ export default function SettingsPage() {
           <Avatar name={user?.name} src={user?.avatarUrl} color={user?.avatarColor} size={96} />
           <div>
             <p className="font-medium">{user?.name}</p>
-            <p className="mono-caption">{roleLabel(user?.role)}{user?.position ? ' · ' + user.position : ''}</p>
-            <p className="mt-1 text-[13px] text-ink-3">{user?.email}</p>
+            <p className="caption">{roleLabel(user?.role)}{user?.position ? ' · ' + user.position : ''}</p>
+            <p className="mt-1 text-sm text-ink-3">{user?.email}</p>
           </div>
         </Card>
 
@@ -103,7 +103,7 @@ function ProfileForm() {
       </form>
 
       <div>
-        <p className="mono-caption mb-2">Фото</p>
+        <p className="caption mb-2">Фото</p>
         <div className="flex flex-wrap items-center gap-3">
           <Button variant="secondary" size="sm" loading={uploading} onClick={() => fileRef.current?.click()}>
             Загрузить фото
@@ -116,24 +116,24 @@ function ProfileForm() {
       </div>
 
       <div>
-        <p className="mono-caption mb-2">Цвет кружка, пока нет фото</p>
+        <p className="caption mb-2">Цвет кружка, пока нет фото</p>
         <div className="flex flex-wrap gap-2">
           {AVATAR_COLORS.map((c) => (
             <button
               key={c || 'default'}
               onClick={() => pickColor(c)}
               title={c || 'Фирменный градиент'}
-              className={`h-8 w-8 rounded-full border-2 transition-transform cursor-pointer hover:scale-110 ${
+              className={`h-8 w-8 rounded-full border-2 transition-transform cursor-pointer ${
                 user?.avatarColor === c ? 'border-white' : 'border-transparent'
               }`}
-              style={{ background: c || 'linear-gradient(135deg, var(--color-brand-blue), var(--color-brand-purple))' }}
+              style={{ background: c || 'var(--color-accent)' }}
             />
           ))}
         </div>
       </div>
 
-      {notice && <p className="text-[13px] text-ok">{notice}</p>}
-      {error && <p className="text-[13px] text-danger">{error}</p>}
+      {notice && <p className="text-sm text-ok">{notice}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
     </Card>
   )
 }
@@ -188,8 +188,8 @@ function PasswordForm() {
           value={confirm}
           onChange={(e) => { setConfirm(e.target.value); setError(null) }}
         />
-        {notice && <p className="text-[13px] text-ok">{notice}</p>}
-        {error && <p className="text-[13px] text-danger">{error}</p>}
+        {notice && <p className="text-sm text-ok">{notice}</p>}
+        {error && <p className="text-sm text-danger">{error}</p>}
         <Button type="submit" loading={saving} className="self-start">Сменить пароль</Button>
       </form>
     </Card>

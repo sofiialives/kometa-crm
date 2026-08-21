@@ -62,7 +62,7 @@ export function CreateDepartmentModal({ open, onClose, onSubmit }) {
         />
 
         <div className="flex flex-col gap-2">
-          <span className="mono-caption select-none">Должности в отделе</span>
+          <span className="caption select-none">Должности в отделе</span>
           <div className="flex gap-2">
             <Input
               placeholder="Например: Дизайнер"
@@ -75,14 +75,14 @@ export function CreateDepartmentModal({ open, onClose, onSubmit }) {
             />
             <Button variant="secondary" onClick={addPosition} className="h-11 shrink-0">Добавить</Button>
           </div>
-          <p className="text-[12.5px] leading-snug text-ink-3">
+          <p className="text-xs leading-snug text-ink-3">
             Без должностей в отдел нельзя пригласить сотрудника
           </p>
 
           {positions.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {positions.map((p) => (
-                <span key={p} className="inline-flex items-center gap-2 rounded-full glass px-3 py-1.5 text-[13px]">
+                <span key={p} className="inline-flex items-center gap-2 rounded-full panel px-3 py-1.5 text-sm">
                   {p}
                   <button
                     onClick={() => setPositions((list) => list.filter((x) => x !== p))}

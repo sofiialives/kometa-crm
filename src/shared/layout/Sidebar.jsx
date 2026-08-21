@@ -24,7 +24,7 @@ function NavList({ onNavigate }) {
   const items = useNavItems()
   return (
     <nav className="flex flex-col gap-1">
-      <p className="mono-caption px-3.5 pb-2">Навигация</p>
+      <p className="caption px-3.5 pb-2">Навигация</p>
       {items.map(({ to, label, icon: Icon }) => (
         <NavLink
           key={to}
@@ -33,10 +33,10 @@ function NavList({ onNavigate }) {
           onClick={onNavigate}
           className={({ isActive }) =>
             cx(
-              'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all',
+              'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors',
               isActive
-                ? 'bg-gradient-to-r from-brand-blue/25 to-brand-purple/12 text-ink border border-brand-purple/35 shadow-[0_0_24px_rgba(133,76,255,0.15)]'
-                : 'text-ink-3 border border-transparent hover:text-ink hover:bg-white/5',
+                ? 'bg-gradient-to-r from-accent/25 to-accent/12 text-ink border border-accent/35'
+                : 'text-ink-3 border border-transparent hover:text-ink hover:bg-panel-2',
             )
           }
         >
@@ -56,13 +56,13 @@ function UserCard() {
   if (!user) return null
   return (
     <>
-      <div className="glass rounded-2xl p-3 flex items-center gap-3">
+      <div className="panel rounded-2xl p-3 flex items-center gap-3">
         <Link to="/settings" title="Настройки профиля" className="shrink-0">
           <Avatar name={user.name} src={user.avatarUrl} color={user.avatarColor} size={36} />
         </Link>
         <Link to="/settings" className="flex-1 min-w-0 leading-tight">
-          <p className="text-sm font-medium truncate hover:text-brand-light transition-colors">{user.name}</p>
-          <p className="mono-caption">{roleLabel(user.role)}</p>
+          <p className="text-sm font-medium truncate hover:text-accent transition-colors">{user.name}</p>
+          <p className="caption">{roleLabel(user.role)}</p>
         </Link>
         <button
           onClick={() => setConfirmOut(true)}
@@ -93,11 +93,11 @@ function UserCard() {
 
 export function Sidebar() {
   return (
-    <aside className="hidden md:flex w-60 shrink-0 sticky top-16 h-[calc(100vh-64px)] border-r border-white/8 bg-space-2/50 backdrop-blur-xl">
+    <aside className="hidden md:flex w-60 shrink-0 sticky top-16 h-[calc(100vh-64px)] border-r border-line bg-panel/50 ">
       <div className="flex flex-col gap-4 w-full p-3">
         <NavList />
         <div className="mt-auto flex flex-col gap-3">
-          <div className="h-px bg-white/8" />
+          <div className="h-px bg-panel-2" />
           <UserCard />
         </div>
       </div>
@@ -111,17 +111,17 @@ export function MobileNav() {
   if (!open) return null
   return createPortal(
     <div className="fixed inset-0 z-50 md:hidden animate-fade-in" onMouseDown={(e) => e.target === e.currentTarget && closeNav()}>
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onMouseDown={closeNav} />
-      <div className="absolute right-0 top-0 bottom-0 w-72 max-w-[85vw] bg-space-2/95 glass border-l border-white/10 p-4 flex flex-col gap-4 animate-modal-in">
+      <div className="absolute inset-0 bg-black/60 " onMouseDown={closeNav} />
+      <div className="absolute right-0 top-0 bottom-0 w-72 max-w-[85vw] bg-panel/95 panel border-l border-line p-4 flex flex-col gap-4 animate-modal-in">
         <div className="flex items-center justify-between">
-          <img src="/kometa.png" alt="KOMETA" className="h-6 w-auto" />
-          <button onClick={closeNav} className="grid place-items-center w-9 h-9 rounded-lg text-ink-3 hover:text-ink hover:bg-white/5 cursor-pointer" aria-label="Закрыть меню">
+          <img src="/kometa.png" alt="KOMETA" className="logo-mark h-6 w-auto" />
+          <button onClick={closeNav} className="grid place-items-center w-9 h-9 rounded-lg text-ink-3 hover:text-ink hover:bg-panel-2 cursor-pointer" aria-label="Закрыть меню">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
           </button>
         </div>
         <NavList onNavigate={closeNav} />
         <div className="mt-auto flex flex-col gap-3">
-          <div className="h-px bg-white/8" />
+          <div className="h-px bg-panel-2" />
           <UserCard />
         </div>
       </div>

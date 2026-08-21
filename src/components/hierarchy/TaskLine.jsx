@@ -3,6 +3,8 @@ import { cx } from '../../shared/lib/cx'
 import { taskBadge } from '../../utils/hierarchy'
 import { formatMskDate, formatMskTime } from '../../utils/tasks'
 
+const SPINE = { ok: 'spine--ok', warn: 'spine--danger', brand: 'spine--accent', neutral: 'spine--muted' }
+
 export function TaskLine({ task, canToggle, canManage, busy, onToggle, onEdit, onExtend, onDelete }) {
   const badge = taskBadge(task)
   const done = task.status === 'done'
@@ -15,11 +17,11 @@ export function TaskLine({ task, canToggle, canManage, busy, onToggle, onEdit, o
         aria-label={done ? 'Вернуть в работу' : 'Отметить выполненной'}
         title={canToggle ? undefined : 'Отмечать можно только свои задачи'}
         className={cx(
-          'grid h-5 w-5 shrink-0 place-items-center rounded-md border transition-all duration-150',
+          'grid h-5 w-5 shrink-0 place-items-center rounded-md border transition-colors duration-150',
           done
-            ? 'border-transparent bg-gradient-to-br from-brand-blue to-brand-purple'
-            : 'border-white/25 bg-white/[0.04]',
-          canToggle ? 'cursor-pointer hover:border-brand-purple/60' : 'cursor-not-allowed opacity-60',
+            ? 'border-transparent bg-accent'
+            : 'border-line-2 bg-panel-2',
+          canToggle ? 'cursor-pointer hover:border-accent/60' : 'cursor-not-allowed opacity-60',
         )}
       >
         {busy ? (
@@ -42,14 +44,14 @@ export function TaskLine({ task, canToggle, canManage, busy, onToggle, onEdit, o
           {task.title}
         </p>
         {task.description && (
-          <p className="truncate text-[12.5px] text-ink-3" title={task.description}>
+          <p className="truncate text-xs text-ink-3" title={task.description}>
             {task.description}
           </p>
         )}
       </div>
 
-      <span className="mono-caption shrink-0">{formatMskDate(task.deadline)} · {formatMskTime(task.deadline)}</span>
-      <Badge tone={badge.tone} dot={false} className="shrink-0">{badge.label}</Badge>
+      <span className="caption shrink-0">{formatMskDate(task.deadline)} · {formatMskTime(task.deadline)}</span>
+      <Badge tone={badge.tone} className="shrink-0">{badge.label}</Badge>
 
       {canManage && (
         <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
@@ -82,7 +84,7 @@ function IconButton({ label, danger, onClick, children }) {
       title={label}
       className={cx(
         'grid h-6 w-6 place-items-center rounded-md transition-colors cursor-pointer',
-        danger ? 'text-ink-3 hover:bg-danger/10 hover:text-danger' : 'text-ink-3 hover:bg-white/5 hover:text-ink',
+        danger ? 'text-ink-3 hover:bg-danger/10 hover:text-danger' : 'text-ink-3 hover:bg-panel-2 hover:text-ink',
       )}
     >
       {children}

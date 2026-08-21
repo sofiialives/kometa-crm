@@ -25,11 +25,11 @@ export function DepartmentCard({ department, users, onPromote, onMove, onDismiss
     <Card pad="md" className="flex flex-col gap-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-[17px] font-semibold tracking-tight">{department.name}</h2>
+          <h2 className="truncate text-lg font-semibold tracking-tight">{department.name}</h2>
 
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             {department.positions?.map((p) => (
-              <span key={p} className="mono-caption rounded-full border border-white/10 px-2 py-0.5">{p}</span>
+              <span key={p} className="caption rounded-full border border-line px-2 py-0.5">{p}</span>
             ))}
 
             {adding ? (
@@ -51,14 +51,14 @@ export function DepartmentCard({ department, users, onPromote, onMove, onDismiss
             ) : (
               <button
                 onClick={() => setAdding(true)}
-                className="mono-caption rounded-full border border-dashed border-white/20 px-2 py-0.5 text-ink-3 transition-colors hover:border-brand-purple/50 hover:text-ink cursor-pointer"
+                className="caption rounded-full border border-dashed border-line-2 px-2 py-0.5 text-ink-3 transition-colors hover:border-accent/50 hover:text-ink cursor-pointer"
               >
                 + должность
               </button>
             )}
           </div>
         </div>
-        <Badge tone="neutral" dot={false}>{memberCount(members.length)}</Badge>
+        <Badge tone="neutral">{memberCount(members.length)}</Badge>
       </div>
 
       {members.length === 0 ? (
@@ -75,12 +75,12 @@ export function DepartmentCard({ department, users, onPromote, onMove, onDismiss
           {lead ? (
             <MemberRow user={lead} isLead onMove={onMove} onDismiss={onDismiss} />
           ) : (
-            <p className="rounded-xl border border-dashed border-white/12 px-3 py-2.5 text-[13px] text-ink-3">
+            <p className="rounded-xl border border-dashed border-line px-3 py-2.5 text-sm text-ink-3">
               Главный не назначен
             </p>
           )}
 
-          {staff.length > 0 && <div className="mt-1 h-px bg-white/8" />}
+          {staff.length > 0 && <div className="mt-1 h-px bg-panel-2" />}
 
           {staff.map((u) => (
             <MemberRow

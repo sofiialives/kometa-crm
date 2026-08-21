@@ -70,7 +70,7 @@ export function AddTaskModal({ work, currentUser, users, onClose, onSubmit }) {
     >
       {!work ? null : (
         <div className="flex flex-col gap-4">
-          <p className="mono-caption">{work.clientName} · {work.title}</p>
+          <p className="caption">{work.clientName} · {work.title}</p>
 
           <Input
             label="Название"
@@ -115,14 +115,14 @@ export function AddTaskModal({ work, currentUser, users, onClose, onSubmit }) {
               options={pickable.map((u) => ({ value: u.id, label: displayName(u) + (u.position ? ' · ' + u.position : '') }))}
             />
           ) : (
-            <p className="text-[12.5px] leading-relaxed text-ink-3">
+            <p className="text-xs leading-relaxed text-ink-3">
               {isAdmin
                 ? 'В этом отделе нет сотрудников — сначала пригласите кого-то.'
                 : 'Задача создаётся на вас — в отделе больше никого нет.'}
             </p>
           )}
 
-          {error && <p className="text-[13px] text-danger">{error}</p>}
+          {error && <p className="text-sm text-danger">{error}</p>}
         </div>
       )}
     </Modal>

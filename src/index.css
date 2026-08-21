@@ -1,29 +1,118 @@
 @import "tailwindcss";
 
 /* ==========================================================================
-   KOMETA CRM — дизайн-токены из наших КП
+   KOMETA CRM — визуальная система
+
+   Это рабочий инструмент, а не витрина: в нём сидят по несколько часов
+   каждый день. Поэтому интерфейс молчит, а цветом говорит только то, что
+   требует действия — срок, статус, кнопка. Никаких свечений, градиентов
+   и стекла: они соревнуются с содержимым за внимание.
+
+   Фирменный стиль KOMETA держится на акцентном цвете и на корешке статуса
+   у карточек, а не на фоне.
    ========================================================================== */
+
 @theme {
-  --color-space: #0e0e12;
-  --color-space-2: #14131c;
-  --color-ink: #f2f2f5;
-  --color-ink-2: #b8b8c4;
-  --color-ink-3: #7a7a88;
-  --color-brand-blue: #504cff;
-  --color-brand-purple: #854cff;
-  --color-brand-light: #8f8cff;
-  --color-ok: #4ade80;
-  --color-warn: #ffba26;
-  --color-danger: #ff6b6b;
+  /* Акцент — единственный насыщенный цвет в системе. Фирменный синий. */
+  --color-accent: #504cff;
+  --color-accent-hover: #423ee6;
+  --color-accent-soft: #edecff;
+  --color-on-accent: #ffffff;
 
-  --font-sans: "Jost", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  /* Поверхности и текст. Значения по умолчанию — светлая тема. */
+  --color-paper: #f7f7f9;
+  --color-panel: #ffffff;
+  --color-panel-2: #f2f2f5;
+  --color-ink: #17171c;
+  --color-ink-2: #55555f;
+  --color-ink-3: #6a6a78;
+  --color-line: #e0e0e6;
+  --color-line-2: #8e8e9a;
 
-  --radius-card: 20px;
-  --radius-field: 14px;
+  /* Состояния. Приглушены до рабочего уровня: в интерфейсе, где статус
+     у каждой строки, чистый красный превращается в шум. */
+  --color-ok: #12805c;
+  --color-ok-soft: #e6f4ef;
+  --color-warn: #8a5a00;
+  --color-warn-soft: #fdf2df;
+  --color-danger: #b42318;
+  --color-danger-soft: #fdeceb;
+
+  --font-sans: "Manrope", ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  --radius-card: 12px;
+  --radius-field: 8px;
+
+  --text-xs: 12.5px;
+  --text-xs--line-height: 1.45;
+  --text-sm: 14px;
+  --text-sm--line-height: 1.5;
+  --text-base: 15px;
+  --text-base--line-height: 1.55;
+  --text-lg: 17px;
+  --text-lg--line-height: 1.4;
+  --text-xl: 20px;
+  --text-xl--line-height: 1.3;
+  --text-2xl: 25px;
+  --text-2xl--line-height: 1.25;
 }
 
-/* ---- База ---- */
+/* ---- Тёмная тема ---------------------------------------------------------
+   Не инверсия светлой: у неё свои значения. Глубина передаётся осветлением
+   поверхности, а не тенью — на тёмном фоне тень не читается. Акцент взят
+   светлее фирменного, потому что #504CFF на тёмном даёт лишь 3.5:1. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-accent: #8f8cff;
+  --color-accent-hover: #a5a2ff;
+  --color-accent-soft: #23233a;
+  --color-on-accent: #14141f;
+
+  --color-paper: #101014;
+  --color-panel: #17171d;
+  --color-panel-2: #1f1f27;
+  --color-ink: #f3f3f6;
+  --color-ink-2: #b6b6c2;
+  --color-ink-3: #8d8d9c;
+  --color-line: #30303c;
+  --color-line-2: #6e6e85;
+
+  --color-ok: #4ec08d;
+  --color-ok-soft: #16281f;
+  --color-warn: #e2a33c;
+  --color-warn-soft: #2a2214;
+  --color-danger: #f47a72;
+  --color-danger-soft: #2c1a1a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']):not([data-theme='dark']) {
+    color-scheme: dark;
+
+    --color-accent: #8f8cff;
+    --color-accent-hover: #a5a2ff;
+    --color-accent-soft: #23233a;
+    --color-on-accent: #14141f;
+
+    --color-paper: #101014;
+    --color-panel: #17171d;
+    --color-panel-2: #1f1f27;
+    --color-ink: #f3f3f6;
+    --color-ink-2: #b6b6c2;
+    --color-ink-3: #8d8d9c;
+    --color-line: #30303c;
+    --color-line-2: #6e6e85;
+
+    --color-ok: #4ec08d;
+    --color-ok-soft: #16281f;
+    --color-warn: #e2a33c;
+    --color-warn-soft: #2a2214;
+    --color-danger: #f47a72;
+    --color-danger-soft: #2c1a1a;
+  }
+}
+
 html,
 body,
 #root {
@@ -31,122 +120,87 @@ body,
 }
 
 body {
-  background: var(--color-space);
+  background: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-sans);
+  font-size: 15px;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
 
-/* ---- Стекло (как glass-карточки в КП) ---- */
-.glass {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+/* Цифры в таблицах и сроках выравниваются по разрядам — иначе колонка
+   времени «пляшет» от строки к строке. */
+time,
+.tabular {
+  font-variant-numeric: tabular-nums;
 }
 
-/* ---- Градиентный текст ---- */
-.text-gradient {
-  background: linear-gradient(120deg, var(--color-brand-blue), var(--color-brand-purple));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 
-/* ---- mono-подпись как в КП ---- */
-.mono-caption {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+/* ---- Панель: плоская поверхность с читаемой границей ---- */
+.panel {
+  background: var(--color-panel);
+  border: 1px solid var(--color-line);
+}
+
+/* ---- Корешок статуса ------------------------------------------------------
+   Подпись интерфейса: вертикальная метка слева у карточки, по которой
+   состояние читается боковым зрением, без чтения бейджа. */
+.spine {
+  position: relative;
+  padding-left: 15px;
+}
+.spine::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--spine-color, var(--color-line-2));
+}
+.spine--accent { --spine-color: var(--color-accent); }
+.spine--ok     { --spine-color: var(--color-ok); }
+.spine--warn   { --spine-color: var(--color-warn); }
+.spine--danger { --spine-color: var(--color-danger); }
+.spine--muted  { --spine-color: var(--color-line-2); }
+
+/* ---- Служебная подпись ----------------------------------------------------
+   Раньше это был моноширинный капслок 11px с разрядкой — самое нечитаемое
+   место интерфейса. Теперь обычный текст обычным шрифтом. */
+.caption {
+  font-size: 12.5px;
+  line-height: 1.4;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   color: var(--color-ink-3);
 }
 
-/* ---- Космический фон как в КП: слои звёзд + дрейфующие блобы ---- */
-.cosmos { position: fixed; inset: 0; z-index: -2; pointer-events: none; overflow: hidden; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-line-2); border-radius: 100px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-ink-3); }
 
-.cosmos__star {
-  position: absolute;
-  border-radius: 50%;
-  background: #fff;
-  animation: twinkle var(--tw-dur, 4s) ease-in-out infinite;
-  animation-delay: var(--tw-delay, 0s);
-}
-.cosmos__star--blue { background: #9db4ff; box-shadow: 0 0 6px rgba(80, 76, 255, 0.9); }
-.cosmos__star--purple { background: #c9adff; box-shadow: 0 0 6px rgba(133, 76, 255, 0.9); }
-.cosmos__star--accent { animation: pulseStar 3.4s ease-in-out infinite; }
-
-@keyframes twinkle {
-  0%, 100% { opacity: 0.25; }
-  50% { opacity: 0.9; }
-}
-@keyframes pulseStar {
-  0%, 100% { opacity: 0.5; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.6); }
-}
-
-.cosmos__blob {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(90px);
-}
-.cosmos__blob--1 { top: -10%; left: -8%; width: 620px; height: 620px; background: radial-gradient(circle, rgba(80, 76, 255, 0.26) 0%, transparent 70%); animation: driftA 26s ease-in-out infinite; }
-.cosmos__blob--2 { top: 30%; right: -12%; width: 560px; height: 560px; background: radial-gradient(circle, rgba(133, 76, 255, 0.22) 0%, transparent 70%); animation: driftB 32s ease-in-out infinite; }
-.cosmos__blob--3 { bottom: -14%; left: 22%; width: 520px; height: 520px; background: radial-gradient(circle, rgba(80, 76, 255, 0.18) 0%, transparent 70%); animation: driftA 38s ease-in-out infinite reverse; }
-
-@keyframes driftA {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(60px, 40px) scale(1.08); }
-}
-@keyframes driftB {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(-50px, -60px) scale(1.05); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .cosmos__star, .cosmos__blob { animation: none; }
-}
-
-/* ---- Скроллбар в тон ---- */
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 100px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(133, 76, 255, 0.4);
-}
-
-/* ---- Появление модалки ---- */
 @keyframes modal-in {
-  from {
-    opacity: 0;
-    transform: translateY(14px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
 }
-.animate-modal-in {
-  animation: modal-in 0.22s ease;
-}
+.animate-modal-in { animation: modal-in 0.16s ease-out; }
 
 @keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
-.animate-fade-in {
-  animation: fade-in 0.18s ease;
+.animate-fade-in { animation: fade-in 0.12s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

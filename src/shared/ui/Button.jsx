@@ -1,23 +1,30 @@
 import { cx } from '../lib/cx'
 import { Spinner } from './Spinner'
 
+/*
+ * Кнопки различаются заливкой и границей, а не свечением. Раньше вторичные
+ * держались на полупрозрачном белом и терялись на фоне — теперь у каждой
+ * своя поверхность, а при наведении меняется и фон, и граница.
+ */
 const variants = {
   primary:
-    'bg-gradient-to-br from-brand-blue to-brand-purple text-white shadow-[0_6px_24px_rgba(133,76,255,0.35)] hover:shadow-[0_8px_32px_rgba(133,76,255,0.5)] hover:-translate-y-px',
+    'bg-accent text-on-accent border border-accent hover:bg-accent-hover hover:border-accent-hover',
   secondary:
-    'glass text-ink hover:border-brand-purple/50 hover:-translate-y-px',
+    'bg-panel text-ink border border-line-2 hover:bg-panel-2 hover:border-ink-3',
   outline:
-    'bg-transparent border border-white/25 text-ink-2 hover:text-ink hover:border-brand-purple/60',
+    'bg-transparent text-ink-2 border border-line-2 hover:text-ink hover:border-ink-3 hover:bg-panel-2',
   ghost:
-    'bg-transparent text-ink-3 hover:text-ink hover:bg-white/5',
+    'bg-transparent text-ink-2 border border-transparent hover:text-ink hover:bg-panel-2 hover:border-line',
+  quiet:
+    'bg-transparent text-accent border border-transparent hover:bg-accent-soft hover:border-accent/30 font-semibold',
   danger:
-    'bg-danger/10 border border-danger/40 text-danger hover:bg-danger/20',
+    'bg-danger-soft text-danger border border-danger/40 hover:border-danger hover:bg-danger/12',
 }
 
 const sizes = {
-  sm: 'h-8 px-3.5 text-[13px] rounded-[10px] gap-1.5',
-  md: 'h-10 px-5 text-sm rounded-xl gap-2',
-  lg: 'h-12 px-7 text-[15px] rounded-[14px] gap-2.5',
+  sm: 'h-8 px-3 text-xs rounded-[7px] gap-1.5',
+  md: 'h-9 px-4 text-sm rounded-[8px] gap-2',
+  lg: 'h-11 px-6 text-base rounded-[9px] gap-2.5',
 }
 
 export function Button({
@@ -34,9 +41,9 @@ export function Button({
   return (
     <Tag
       className={cx(
-        'inline-flex items-center justify-center font-semibold select-none',
-        'transition-all duration-200 cursor-pointer',
-        'disabled:opacity-50 disabled:pointer-events-none',
+        'inline-flex items-center justify-center font-semibold select-none whitespace-nowrap',
+        'transition-colors duration-150 cursor-pointer',
+        'disabled:opacity-45 disabled:pointer-events-none',
         variants[variant],
         sizes[size],
         full && 'w-full',
@@ -45,7 +52,7 @@ export function Button({
       disabled={disabled || loading}
       {...props}
     >
-      {loading && <Spinner size={size === 'lg' ? 18 : 14} />}
+      {loading && <Spinner size={size === 'lg' ? 16 : 13} />}
       {children}
     </Tag>
   )

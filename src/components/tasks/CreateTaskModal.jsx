@@ -61,7 +61,7 @@ export function CreateTaskModal({ open, onClose, onSubmit }) {
           onChange={(e) => setTime(e.target.value)}
           required
         />
-        {error && <p className="text-[12.5px] text-danger -mt-2">{error}</p>}
+        {error && <p className="text-xs text-danger -mt-2">{error}</p>}
         <div className="flex items-center justify-end gap-3 pt-1">
           <Button type="button" variant="ghost" onClick={() => { reset(); onClose() }}>Отмена</Button>
           <Button type="submit" loading={loading}>Создать</Button>
