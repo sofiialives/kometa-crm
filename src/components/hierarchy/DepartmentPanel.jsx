@@ -1,7 +1,7 @@
 import { Card, Badge, Avatar, AvatarStack } from '../../shared/ui'
 import { displayName, memberCount, membersOf, splitByLead } from '../../utils/admin'
 
-export function DepartmentPanel({ department, users, worksCount, canSeeMembers, canInvite, onInvite }) {
+export function DepartmentPanel({ department, users, worksCount, canSeeMembers, canInvite, onInvite, onShowMembers }) {
   const members = membersOf(users, department.id)
   const { lead, staff } = splitByLead(members, department)
 
@@ -14,7 +14,13 @@ export function DepartmentPanel({ department, users, worksCount, canSeeMembers, 
       <div className="flex items-start justify-between gap-3">
         <h2 className="text-lg font-semibold tracking-tight">{department.name}</h2>
         {canSeeMembers && (
-          <Badge tone="neutral">{memberCount(members.length)}</Badge>
+          <button
+            onClick={() => onShowMembers(department)}
+            title="Посмотреть состав отдела"
+            className="shrink-0 rounded-md transition-opacity cursor-pointer hover:opacity-80"
+          >
+            <Badge tone="neutral">{memberCount(members.length)}</Badge>
+          </button>
         )}
       </div>
 
@@ -40,7 +46,13 @@ export function DepartmentPanel({ department, users, worksCount, canSeeMembers, 
           <span className="caption">Сотрудники</span>
           <div className="flex items-center gap-2">
             {staff.length > 0 ? (
-              <AvatarStack users={staff.map((u) => ({ id: u.id, name: u.name, email: u.email, src: u.avatarUrl, color: u.avatarColor }))} size={30} />
+              <button
+                onClick={() => onShowMembers(department)}
+                title="Посмотреть состав отдела"
+                className="cursor-pointer transition-opacity hover:opacity-80"
+              >
+                <AvatarStack users={staff.map((u) => ({ id: u.id, name: u.name, email: u.email, src: u.avatarUrl, color: u.avatarColor }))} size={30} />
+              </button>
             ) : (
               <span className="text-sm text-ink-3">Пока никого</span>
             )}
