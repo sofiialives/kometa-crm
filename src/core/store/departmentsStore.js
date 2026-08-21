@@ -38,7 +38,8 @@ export const useDepartmentsStore = create((set, get) => ({
     const positions = [...dep.positions, position]
     try {
       const updated = await api.patch(`/departments/${departmentId}`, { positions })
-      set({ departments: get().departments.map((d) => (d.id === departmentId ? updated : d)) })
+      // PATCH возвращает отдел без вложенного lead — мержим, чтобы не потерять его.
+      set({ departments: get().departments.map((d) => (d.id === departmentId ? { ...d, ...updated } : d)) })
       return { ok: true }
     } catch (e) {
       return { ok: false, error: e.message }
