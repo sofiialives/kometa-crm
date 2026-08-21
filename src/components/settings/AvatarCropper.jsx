@@ -20,27 +20,41 @@ export function AvatarCropper({ file, onCancel, onDone }) {
   const [zoom, setZoom] = useState(1)
   const [offset, setOffset] = useState({ x: 0, y: 0 })
   const [error, setError] = useState(null)
+  const [loading, setLoading] = useState(false)
   const dragRef = useRef(null)
 
   useEffect(() => {
-    if (!file) { setSrc(null); setImg(null); setError(null); return }
+    if (!file) { setSrc(null); setImg(null); setError(null); setLoading(false); return }
     if (!file.type.startsWith('image/')) { setError('Выберите файл изображения'); return }
 
+    let cancelled = false
+    setLoading(true)
+    setImg(null)
+    setError(null)
+
     const reader = new FileReader()
-    reader.onerror = () => setError('Не удалось прочитать файл')
+    reader.onerror = () => { if (!cancelled) { setError('Не удалось прочитать файл'); setLoading(false) } }
     reader.onload = () => {
+      if (cancelled) return
       const image = new Image()
-      image.onerror = () => setError('Файл повреждён или не является изображением')
+      image.onerror = () => {
+        if (cancelled) return
+        setError('Файл повреждён или не является изображением')
+        setLoading(false)
+      }
       image.onload = () => {
+        if (cancelled) return
         setImg(image)
         setZoom(1)
         setOffset({ x: 0, y: 0 })
-        setError(null)
+        setLoading(false)
       }
       image.src = reader.result
       setSrc(reader.result)
     }
     reader.readAsDataURL(file)
+
+    return () => { cancelled = true }
   }, [file])
 
   // Масштаб, при котором картинка ровно закрывает круг — от него и пляшем.
@@ -103,6 +117,11 @@ export function AvatarCropper({ file, onCancel, onDone }) {
     const ctx = canvas.getContext('2d')
     ctx.imageSmoothingQuality = 'high'
 
+    // JPEG не умеет прозрачность и заливает её чёрным, поэтому подкладываем
+    // белый лист — иначе у логотипа с прозрачным фоном чернеют углы.
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, OUT, OUT)
+
     // Переносим то, что видно в круге, на квадрат OUT×OUT.
     const k = OUT / BOX
     ctx.translate(OUT / 2, OUT / 2)
@@ -135,7 +154,12 @@ export function AvatarCropper({ file, onCancel, onDone }) {
             style={{ width: BOX, height: BOX }}
             className="relative overflow-hidden rounded-full border border-line-2 bg-panel-2 cursor-grab active:cursor-grabbing touch-none select-none"
           >
-            {src && (
+            {loading && (
+              <span className="absolute inset-0 grid place-items-center text-xs text-ink-3">
+                Открываю фото…
+              </span>
+            )}
+            {src && !loading && (
               <img
                 src={src}
                 alt=""
