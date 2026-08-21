@@ -3,6 +3,7 @@ import { useAuthStore } from '../../core/store/authStore'
 import { useUsersStore } from '../../core/store/usersStore'
 import { useDepartmentsStore } from '../../core/store/departmentsStore'
 import { useTasksStore } from '../../core/store/tasksStore'
+import { useWorksStore } from '../../core/store/worksStore'
 import { PageSection } from '../../widgets'
 import { Button, Card, EmptyState, Spinner, ConfirmModal } from '../../shared/ui'
 import { DepartmentCard } from '../../components/admin/DepartmentCard'
@@ -32,6 +33,9 @@ export default function AdminPage() {
   const tasks = useTasksStore((s) => s.tasks)
   const fetchTasks = useTasksStore((s) => s.fetchTasks)
 
+  const works = useWorksStore((s) => s.works)
+  const fetchWorks = useWorksStore((s) => s.fetchWorks)
+
   const [deptOpen, setDeptOpen] = useState(false)
   const [inviteOpen, setInviteOpen] = useState(false)
   const [moving, setMoving] = useState(null)
@@ -50,7 +54,10 @@ export default function AdminPage() {
     // посчитать готово/просрочено на каждого сотрудника без отдельного
     // эндпоинта под статистику.
     fetchTasks()
-  }, [fetchUsers, fetchDepartments, fetchTasks])
+    // Работы нужны, чтобы сказать про них до удаления отдела, а не после:
+    // бэк такой отдел не отдаст, и человек узнавал об этом уже нажав «Удалить».
+    fetchWorks()
+  }, [fetchUsers, fetchDepartments, fetchTasks, fetchWorks])
 
   async function refresh() {
     await Promise.all([fetchUsers(), fetchDepartments()])
@@ -140,6 +147,12 @@ export default function AdminPage() {
 
   const loading = (usersLoading || departmentsLoading) && users.length === 0 && departments.length === 0
 
+  const worksByDepartment = useMemo(() => {
+    const map = {}
+    for (const w of works) map[w.departmentId] = (map[w.departmentId] || 0) + 1
+    return map
+  }, [works])
+
   async function confirmDeleteDepartment() {
     if (!deletingDept) return
     setBusy(true)
@@ -190,6 +203,7 @@ export default function AdminPage() {
               onMove={setMoving}
               onDismiss={setDismissing}
               onDelete={setDeletingDept}
+              worksCount={worksByDepartment[d.id] || 0}
               statsByUser={statsByUser}
               onAddPosition={async (department, position) => {
                 const res = await updateDepartment(department.id, {
