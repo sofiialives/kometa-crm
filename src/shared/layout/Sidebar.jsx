@@ -58,7 +58,7 @@ function UserCard() {
     <>
       <div className="panel rounded-2xl p-3 flex items-center gap-3">
         <Link to="/settings" title="Настройки профиля" className="shrink-0">
-          <Avatar name={user.name} src={user.avatarUrl} color={user.avatarColor} size={36} />
+          <Avatar name={user.name} email={user.email} src={user.avatarUrl} color={user.avatarColor} size={36} />
         </Link>
         <Link to="/settings" className="flex-1 min-w-0 leading-tight">
           <p className="text-sm font-medium truncate hover:text-accent transition-colors">{user.name}</p>

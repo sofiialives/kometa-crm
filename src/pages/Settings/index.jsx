@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { useAuthStore } from '../../core/store/authStore'
 import { PageSection } from '../../widgets'
 import { Card, Avatar, Button, Input, PasswordInput } from '../../shared/ui'
-import { compressImageToDataUrl } from '../../utils/image'
+import { AvatarCropper } from '../../components/settings/AvatarCropper'
 import { roleLabel } from '../../shared/layout/Header'
 
 const AVATAR_COLORS = [
@@ -18,7 +18,7 @@ export default function SettingsPage() {
     <PageSection pill="Настройки" title="Настройки профиля" subtitle="Видно всей команде — в списках, задачах, отделах.">
       <div className="grid gap-4 lg:grid-cols-[360px_1fr] lg:items-start">
         <Card pad="md" className="flex flex-col items-center gap-3 text-center">
-          <Avatar name={user?.name} src={user?.avatarUrl} color={user?.avatarColor} size={96} />
+          <Avatar name={user?.name} email={user?.email} src={user?.avatarUrl} color={user?.avatarColor} size={96} />
           <div>
             <p className="font-medium">{user?.name}</p>
             <p className="caption">{roleLabel(user?.role)}{user?.position ? ' · ' + user.position : ''}</p>
@@ -42,6 +42,7 @@ function ProfileForm() {
   const [name, setName] = useState(user?.name || '')
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [cropping, setCropping] = useState(null)
   const [error, setError] = useState(null)
   const [notice, setNotice] = useState(null)
   const fileRef = useRef(null)
@@ -66,19 +67,20 @@ function ProfileForm() {
     if (!res.ok) setError(res.error)
   }
 
-  async function onFile(e) {
+  function onFile(e) {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
+    setError(null)
+    setCropping(file)
+  }
+
+  async function saveCropped(dataUrl) {
+    setCropping(null)
     setUploading(true)
     setError(null)
-    try {
-      const dataUrl = await compressImageToDataUrl(file)
-      const res = await updateProfile({ avatarUrl: dataUrl })
-      if (!res.ok) setError(res.error)
-    } catch (err) {
-      setError(err.message)
-    }
+    const res = await updateProfile({ avatarUrl: dataUrl })
+    if (!res.ok) setError(res.error)
     setUploading(false)
   }
 
@@ -114,6 +116,8 @@ function ProfileForm() {
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
         </div>
       </div>
+
+      <AvatarCropper file={cropping} onCancel={() => setCropping(null)} onDone={saveCropped} />
 
       <div>
         <p className="caption mb-2">Цвет кружка, пока нет фото</p>
