@@ -6,7 +6,6 @@ import HierarchyPage from '../../pages/Hierarchy'
 import TasksPage from '../../pages/Tasks'
 import AdminPage from '../../pages/Admin'
 import SettingsPage from '../../pages/Settings'
-import UiKitPage from '../../pages/UiKit'
 
 function Protected() {
   const isAuthed = useAuthStore((s) => Boolean(s.token))
@@ -23,7 +22,6 @@ function AdminOnly() {
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
-  { path: '/ui-kit', element: <UiKitPage /> },
   {
     element: <Protected />,
     children: [
