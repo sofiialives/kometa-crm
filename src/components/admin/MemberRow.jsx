@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Avatar, Badge } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
 import { displayName, roleBadge, userStatus } from '../../utils/admin'
@@ -45,19 +46,47 @@ export function MemberRow({ user, isLead = false, canPromote = true, onPromote, 
 
 function RowMenu({ canPromote, onPromote, onMove, onDismiss }) {
   const [open, setOpen] = useState(false)
-  const ref = useRef(null)
+  const [pos, setPos] = useState({ top: 0, left: 0 })
+  const btnRef = useRef(null)
+  const menuRef = useRef(null)
+
+  function place() {
+    const r = btnRef.current?.getBoundingClientRect()
+    if (!r) return
+    // Меню шириной 224px, прижимаем к правому краю кнопки; если не влезает
+    // снизу — открываем вверх, а не обрезаем об низ экрана.
+    const menuH = 132
+    const openUp = r.bottom + menuH + 8 > window.innerHeight
+    setPos({
+      left: Math.min(r.right - 224, window.innerWidth - 232),
+      top: openUp ? r.top - menuH - 6 : r.bottom + 6,
+    })
+  }
+
+  function toggle() {
+    if (!open) place()
+    setOpen((v) => !v)
+  }
 
   useEffect(() => {
     if (!open) return
+    place()
     const onDown = (e) => {
-      if (!ref.current?.contains(e.target)) setOpen(false)
+      if (btnRef.current?.contains(e.target)) return
+      if (menuRef.current?.contains(e.target)) return
+      setOpen(false)
     }
     const onKey = (e) => e.key === 'Escape' && setOpen(false)
+    const onScroll = () => setOpen(false)
     document.addEventListener('mousedown', onDown)
     document.addEventListener('keydown', onKey)
+    window.addEventListener('scroll', onScroll, true)
+    window.addEventListener('resize', onScroll)
     return () => {
       document.removeEventListener('mousedown', onDown)
       document.removeEventListener('keydown', onKey)
+      window.removeEventListener('scroll', onScroll, true)
+      window.removeEventListener('resize', onScroll)
     }
   }, [open])
 
@@ -67,9 +96,10 @@ function RowMenu({ canPromote, onPromote, onMove, onDismiss }) {
   }
 
   return (
-    <div ref={ref} className="relative shrink-0">
+    <div className="relative shrink-0">
       <button
-        onClick={() => setOpen((v) => !v)}
+        ref={btnRef}
+        onClick={toggle}
         aria-label="Действия"
         aria-expanded={open}
         className="grid h-7 w-7 place-items-center rounded-lg text-ink-3 transition-colors hover:bg-white/5 hover:text-ink cursor-pointer"
@@ -81,17 +111,18 @@ function RowMenu({ canPromote, onPromote, onMove, onDismiss }) {
         </svg>
       </button>
 
-      {open && (
-        // .glass перебивает фоновую утилиту Tailwind, поэтому фон — инлайном
+      {open && createPortal(
         <div
-          style={{ background: 'var(--color-space-2)' }}
-          className="absolute right-0 top-9 z-30 w-56 overflow-hidden rounded-xl glass py-1 shadow-[0_20px_50px_rgba(0,0,0,0.55)] animate-fade-in"
+          ref={menuRef}
+          style={{ background: 'var(--color-space-2)', position: 'fixed', top: pos.top, left: pos.left }}
+          className="z-[200] w-56 overflow-hidden rounded-xl glass py-1 shadow-[0_20px_50px_rgba(0,0,0,0.55)] animate-fade-in"
         >
           {canPromote && <MenuItem onClick={() => pick(onPromote)}>Повысить до главного</MenuItem>}
           <MenuItem onClick={() => pick(onMove)}>Отдел и должность</MenuItem>
           <div className="my-1 h-px bg-white/8" />
           <MenuItem danger onClick={() => pick(onDismiss)}>Уволить</MenuItem>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   )

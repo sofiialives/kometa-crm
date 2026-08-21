@@ -13,6 +13,10 @@ export function WorkCard({
   onToggleTask,
   onAddTask,
   onEditAssignees,
+  onEditTask,
+  onExtendTask,
+  onDeleteTask,
+  onDeleteWork,
 }) {
   const badge = workBadge(work.status)
   const assignees = (work.assignees || []).map((u) => ({
@@ -31,7 +35,21 @@ export function WorkCard({
           </p>
           <h3 className="mt-1 truncate text-[15px] font-semibold tracking-tight">{work.title}</h3>
         </div>
-        <Badge tone={badge.tone}>{badge.label}</Badge>
+        <div className="flex shrink-0 items-center gap-2">
+          <Badge tone={badge.tone}>{badge.label}</Badge>
+          {canManage && (
+            <button
+              onClick={() => onDeleteWork(work)}
+              aria-label="Удалить работу"
+              title="Удалить работу"
+              className="grid h-6 w-6 place-items-center rounded-md text-ink-3 transition-colors hover:bg-danger/10 hover:text-danger cursor-pointer"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex items-center justify-between gap-3">
@@ -62,16 +80,22 @@ export function WorkCard({
                 key={t.id}
                 task={t}
                 canToggle={t.ownerId === currentUser?.id}
+                canManage={canManage}
                 busy={busyTaskId === t.id}
                 onToggle={onToggleTask}
+                onEdit={onEditTask}
+                onExtend={onExtendTask}
+                onDelete={onDeleteTask}
               />
             ))}
           </div>
         )}
 
-        <Button variant="ghost" size="sm" className="mt-2 -ml-1" onClick={() => onAddTask(work)}>
-          + Добавить задачу
-        </Button>
+        {canManage && (
+          <Button variant="ghost" size="sm" className="mt-2 -ml-1" onClick={() => onAddTask(work)}>
+            + Добавить задачу
+          </Button>
+        )}
       </div>
     </Card>
   )

@@ -24,7 +24,7 @@ export const useTasksStore = create((set, get) => ({
     }
   },
 
-  async createTask({ title, description, deadline, workId }) {
+  async createTask({ title, description, deadline, workId, ownerId }) {
     set({ error: null })
     try {
       const task = await api.post('/tasks', {
@@ -32,6 +32,7 @@ export const useTasksStore = create((set, get) => ({
         description: description || undefined,
         deadline,
         ...(workId ? { workId } : {}),
+        ...(ownerId ? { ownerId } : {}),
       })
       set({ tasks: [task, ...get().tasks] })
       return { ok: true }
@@ -48,6 +49,36 @@ export const useTasksStore = create((set, get) => ({
       return { ok: true }
     } catch (e) {
       set({ error: e.message })
+      return { ok: false, error: e.message }
+    }
+  },
+
+  async extendDeadline(id, deadline) {
+    try {
+      const updated = await api.patch(`/tasks/${id}/deadline`, { deadline })
+      set({ tasks: get().tasks.map((t) => (t.id === id ? updated : t)) })
+      return { ok: true }
+    } catch (e) {
+      return { ok: false, error: e.message }
+    }
+  },
+
+  async editTask(id, patch) {
+    try {
+      const updated = await api.patch(`/tasks/${id}`, patch)
+      set({ tasks: get().tasks.map((t) => (t.id === id ? updated : t)) })
+      return { ok: true }
+    } catch (e) {
+      return { ok: false, error: e.message }
+    }
+  },
+
+  async removeTask(id) {
+    try {
+      await api.del(`/tasks/${id}`)
+      set({ tasks: get().tasks.filter((t) => t.id !== id) })
+      return { ok: true }
+    } catch (e) {
       return { ok: false, error: e.message }
     }
   },

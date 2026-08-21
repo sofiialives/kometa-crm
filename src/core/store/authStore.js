@@ -71,6 +71,23 @@ export const useAuthStore = create(
         api.post('/auth/logout', {}).catch(() => {})
         set({ user: null, token: null, refreshToken: null, error: null })
       },
+
+      /**
+       * После первого входа бэк держит в name только первую букву почты —
+       * этим методом человек один раз ставит своё настоящее имя, и оно
+       * дальше отображается везде (аватарки, списки, задачи).
+       */
+      async updateName(name) {
+        set({ error: null })
+        try {
+          const updated = await api.patch('/auth/me', { name })
+          set({ user: { ...get().user, ...updated } })
+          return { ok: true }
+        } catch (e) {
+          set({ error: e.message })
+          return { ok: false, error: e.message }
+        }
+      },
     }),
     { name: 'kometa-crm-auth', partialize: (s) => ({ user: s.user, token: s.token, refreshToken: s.refreshToken }) },
   ),
