@@ -28,12 +28,12 @@ export function Modal({ open, onClose, title, size = 'md', closeOnOverlay = true
     >
       <div
         className={cx(
-          'w-full panel rounded-card bg-panel/90',
+          'flex w-full max-h-[calc(100dvh-2rem)] flex-col panel rounded-card bg-panel/90',
           'animate-modal-in',
           sizes[size],
         )}
       >
-        <div className="flex items-center justify-between gap-4 px-6 pt-5 pb-4 border-b border-line">
+        <div className="flex shrink-0 items-center justify-between gap-4 px-6 pt-5 pb-4 border-b border-line">
           <h3 className="text-lg font-semibold tracking-tight">{title}</h3>
           {!hideClose && (
             <button
@@ -47,10 +47,10 @@ export function Modal({ open, onClose, title, size = 'md', closeOnOverlay = true
           )}
         </div>
 
-        <div className="px-6 py-5">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">{children}</div>
 
         {footer && (
-          <div className="flex items-center justify-end gap-3 px-6 pb-5 pt-1">{footer}</div>
+          <div className="flex shrink-0 items-center justify-end gap-3 px-6 pb-5 pt-1">{footer}</div>
         )}
       </div>
     </div>,
