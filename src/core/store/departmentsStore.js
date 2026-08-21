@@ -30,6 +30,18 @@ export const useDepartmentsStore = create((set, get) => ({
     }
   },
 
+  async updateDepartment(id, patch) {
+    set({ error: null })
+    try {
+      const updated = await api.patch(`/departments/${id}`, patch)
+      set({ departments: get().departments.map((d) => (d.id === id ? { ...d, ...updated } : d)) })
+      return { ok: true, department: updated }
+    } catch (e) {
+      set({ error: e.message })
+      return { ok: false, error: e.message }
+    }
+  },
+
   async addPosition(departmentId, position) {
     const dep = get().departments.find((d) => d.id === departmentId)
     if (!dep) return { ok: false, error: 'Отдел не найден' }
@@ -38,7 +50,8 @@ export const useDepartmentsStore = create((set, get) => ({
     const positions = [...dep.positions, position]
     try {
       const updated = await api.patch(`/departments/${departmentId}`, { positions })
-      set({ departments: get().departments.map((d) => (d.id === departmentId ? updated : d)) })
+      // PATCH возвращает отдел без вложенного lead — мержим, чтобы не потерять его.
+      set({ departments: get().departments.map((d) => (d.id === departmentId ? { ...d, ...updated } : d)) })
       return { ok: true }
     } catch (e) {
       return { ok: false, error: e.message }

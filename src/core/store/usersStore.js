@@ -23,7 +23,19 @@ export const useUsersStore = create((set, get) => ({
     try {
       const user = await api.post('/users', { email, role, position, departmentId })
       set({ users: [user, ...get().users] })
-      return { ok: true }
+      return { ok: true, user }
+    } catch (e) {
+      set({ error: e.message })
+      return { ok: false, error: e.message }
+    }
+  },
+
+  async updateUser(id, patch) {
+    set({ error: null })
+    try {
+      const updated = await api.patch(`/users/${id}`, patch)
+      set({ users: get().users.map((u) => (u.id === id ? updated : u)) })
+      return { ok: true, user: updated }
     } catch (e) {
       set({ error: e.message })
       return { ok: false, error: e.message }

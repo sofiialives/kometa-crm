@@ -1,10 +1,217 @@
+import { useEffect, useRef, useState } from 'react'
+import { useAuthStore } from '../../core/store/authStore'
+import { useUsersStore } from '../../core/store/usersStore'
+import { useDepartmentsStore } from '../../core/store/departmentsStore'
 import { PageSection } from '../../widgets'
-import { EmptyState } from '../../shared/ui'
+import { Button, Card, EmptyState, Spinner, ConfirmModal } from '../../shared/ui'
+import { DepartmentCard } from '../../components/admin/DepartmentCard'
+import { AllUsersTable } from '../../components/admin/AllUsersTable'
+import { CreateDepartmentModal } from '../../components/admin/CreateDepartmentModal'
+import { InviteUserModal } from '../../components/admin/InviteUserModal'
+import { MoveUserModal } from '../../components/admin/MoveUserModal'
+import { inviteMember, setLead } from '../../core/store/team'
+import { displayName } from '../../utils/admin'
 
 export default function AdminPage() {
+  const currentUser = useAuthStore((s) => s.user)
+
+  const users = useUsersStore((s) => s.users)
+  const usersLoading = useUsersStore((s) => s.loading)
+  const fetchUsers = useUsersStore((s) => s.fetchUsers)
+  const updateUser = useUsersStore((s) => s.updateUser)
+  const deactivateUser = useUsersStore((s) => s.deactivateUser)
+
+  const departments = useDepartmentsStore((s) => s.departments)
+  const departmentsLoading = useDepartmentsStore((s) => s.loading)
+  const fetchDepartments = useDepartmentsStore((s) => s.fetchDepartments)
+  const createDepartment = useDepartmentsStore((s) => s.createDepartment)
+  const updateDepartment = useDepartmentsStore((s) => s.updateDepartment)
+
+  const [deptOpen, setDeptOpen] = useState(false)
+  const [inviteOpen, setInviteOpen] = useState(false)
+  const [moving, setMoving] = useState(null)
+  const [dismissing, setDismissing] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(null)
+  // Два быстрых клика подряд прочитали бы устаревший leadId из замыкания.
+  // Лочим по ссылке: setState асинхронный и от гонки не спасает.
+  const lock = useRef(false)
+
+  useEffect(() => {
+    fetchUsers()
+    fetchDepartments()
+  }, [fetchUsers, fetchDepartments])
+
+  async function refresh() {
+    await Promise.all([fetchUsers(), fetchDepartments()])
+  }
+
+  const leadDepartmentOf = (user) => departments.find((d) => d.leadId === user.id) || null
+
+  async function promote(user) {
+    const department = departments.find((d) => d.id === user.departmentId)
+    if (!department || lock.current) return
+    lock.current = true
+    setBusy(true)
+    setError(null)
+
+    let res = await updateUser(user.id, { role: 'lead' })
+    if (res.ok) res = await setLead(department.id, user.id)
+
+    await refresh()
+    lock.current = false
+    setBusy(false)
+    if (!res.ok) setError(res.error)
+  }
+
+  // Той же модалкой правят должность внутри своего отдела, поэтому снимаем
+  // руководство только при реальном переходе — иначе главный терял бы отдел,
+  // просто поменяв себе должность.
+  async function move(user, { departmentId, position }) {
+    const leaving = departmentId !== user.departmentId
+    const leadOf = leaving ? leadDepartmentOf(user) : null
+    if (leadOf) {
+      const res = await updateDepartment(leadOf.id, { leadId: null })
+      if (!res.ok) return res
+    }
+
+    const res = await updateUser(user.id, {
+      departmentId,
+      // Должность главного служебная — модалка её не отдаёт, и перезаписывать
+      // «Начальник отдела» первой должностью из списка нельзя.
+      ...(position ? { position } : {}),
+      ...(leadOf ? { role: 'staff' } : {}),
+    })
+    await refresh()
+    return res
+  }
+
+  // Бэк снимает отдел, роль и доступ, но leadId в отделе не чистит — иначе
+  // отдел остался бы ссылаться на уволенного. Чистим сами и строго до
+  // увольнения: не прошло — увольнять нельзя.
+  async function dismiss(user) {
+    if (lock.current) return
+    lock.current = true
+    setBusy(true)
+    setError(null)
+
+    const leadOf = leadDepartmentOf(user)
+    if (leadOf) {
+      const cleared = await updateDepartment(leadOf.id, { leadId: null })
+      if (!cleared.ok) {
+        lock.current = false
+        setBusy(false)
+        return setError(cleared.error)
+      }
+    }
+
+    const res = await deactivateUser(user.id)
+    await refresh()
+    lock.current = false
+    setBusy(false)
+    setDismissing(null)
+    if (!res.ok) setError(res.error)
+  }
+
+  const loading = (usersLoading || departmentsLoading) && users.length === 0 && departments.length === 0
+
   return (
-    <PageSection pill="Админ-панель" title="Админ-панель">
-      <EmptyState label="Пусто" text="Страница в разработке." />
+    <PageSection
+      pill="Админ-панель"
+      title="Управление командой"
+      actions={
+        <>
+          <Button variant="secondary" onClick={() => setDeptOpen(true)}>+ Отдел</Button>
+          <Button onClick={() => setInviteOpen(true)}>+ Сотрудник</Button>
+        </>
+      }
+    >
+      {error && (
+        <div className="rounded-xl border border-danger/35 bg-danger/10 px-4 py-3 text-[13px] text-danger">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <Card pad="lg" className="grid place-items-center">
+          <Spinner size={22} />
+        </Card>
+      ) : departments.length === 0 ? (
+        <Card pad="md">
+          <EmptyState
+            label="Отделов нет"
+            text="Создайте первый отдел и заведите в нём должности — без этого нельзя пригласить сотрудника."
+            action={<Button onClick={() => setDeptOpen(true)}>+ Отдел</Button>}
+          />
+        </Card>
+      ) : (
+        // z-10: меню сотрудника вылезает за карточку и рисуется поверх таблицы
+        <div className="relative z-10 grid gap-4 lg:grid-cols-2">
+          {departments.map((d) => (
+            <DepartmentCard
+              key={d.id}
+              department={d}
+              users={users}
+              onPromote={promote}
+              onMove={setMoving}
+              onDismiss={setDismissing}
+            />
+          ))}
+        </div>
+      )}
+
+      <div className="relative z-0">
+        <AllUsersTable
+          users={users}
+          departments={departments}
+          currentUserId={currentUser?.id}
+          onDismiss={setDismissing}
+        />
+      </div>
+
+      <CreateDepartmentModal
+        open={deptOpen}
+        onClose={() => setDeptOpen(false)}
+        onSubmit={async (payload) => {
+          const res = await createDepartment(payload)
+          if (res.ok) await refresh()
+          return res
+        }}
+      />
+
+      <InviteUserModal
+        open={inviteOpen}
+        onClose={() => setInviteOpen(false)}
+        departments={departments}
+        onSubmit={async (payload) => {
+          const res = await inviteMember(payload)
+          if (res.ok) await refresh()
+          return res
+        }}
+      />
+
+      <MoveUserModal
+        user={moving}
+        departments={departments}
+        onClose={() => setMoving(null)}
+        onSubmit={move}
+      />
+
+      <ConfirmModal
+        open={Boolean(dismissing)}
+        onClose={() => setDismissing(null)}
+        onConfirm={() => dismiss(dismissing)}
+        loading={busy}
+        danger
+        title="Уволить сотрудника?"
+        confirmText="Уволить"
+        text={
+          dismissing
+            ? displayName(dismissing) +
+              ' потеряет доступ к системе. Запись и его задачи останутся, отдел и должность снимутся.'
+            : ''
+        }
+      />
     </PageSection>
   )
 }
