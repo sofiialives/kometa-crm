@@ -25,7 +25,7 @@ export function TaskDetailModal({ task, onClose, isMine, onMove }) {
 
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
-            <Avatar name={task.owner?.name || '?'} src={task.owner?.avatarUrl} size={26} />
+            <Avatar name={task.owner?.name || '?'} src={task.owner?.avatarUrl} color={task.owner?.avatarColor} size={26} />
             <span className="text-sm text-ink-2">{task.owner?.name || 'Без имени'}</span>
           </div>
           <span className="mono-caption">{dateLabel} · {timeLabel} МСК</span>

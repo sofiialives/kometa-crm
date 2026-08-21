@@ -15,7 +15,7 @@ export function MemberRow({ user, isLead = false, canPromote = true, onPromote, 
         isLead ? 'glass border border-brand-purple/35' : 'hover:bg-white/[0.03]',
       )}
     >
-      <Avatar name={displayName(user)} src={user.avatarUrl} size={isLead ? 36 : 30} ring={isLead} />
+      <Avatar name={displayName(user)} src={user.avatarUrl} color={user.avatarColor} size={isLead ? 36 : 30} ring={isLead} />
 
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium leading-tight">{displayName(user)}</p>

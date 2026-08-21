@@ -1,7 +1,5 @@
 import { withPlural } from '../shared/lib/plural'
 
-export const ALL_DEPARTMENTS = 'all'
-
 const WORK_STATUS = {
   active: { label: 'В работе', tone: 'brand' },
   done: { label: 'Готово', tone: 'ok' },

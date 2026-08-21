@@ -22,7 +22,7 @@ export function DepartmentPanel({ department, users, worksCount, canSeeMembers, 
         <span className="mono-caption">Главный отдела</span>
         {head ? (
           <div className="flex items-center gap-3">
-            <Avatar name={displayName(head)} src={head.avatarUrl} size={40} ring />
+            <Avatar name={displayName(head)} src={head.avatarUrl} color={head.avatarColor} size={40} ring />
             <div className="min-w-0">
               <p className="truncate text-sm font-medium leading-tight">{displayName(head)}</p>
               <p className="mono-caption truncate">{head.position || 'Начальник отдела'}</p>

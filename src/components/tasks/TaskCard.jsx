@@ -26,7 +26,7 @@ export function TaskCard({ task, col, isMine, onMove, onOpen }) {
 
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <Avatar name={task.owner?.name || '?'} src={task.owner?.avatarUrl} size={22} />
+          <Avatar name={task.owner?.name || '?'} src={task.owner?.avatarUrl} color={task.owner?.avatarColor} size={22} />
           <span className="mono-caption truncate">
             {dateLabel && <span className="text-brand-light">{dateLabel} · </span>}
             {time}

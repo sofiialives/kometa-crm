@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '../../core/store/authStore'
 import { useUiStore } from '../../core/store/uiStore'
 import { Avatar } from '../ui/Avatar'
@@ -23,11 +23,13 @@ export function Header() {
         <div className="flex items-center gap-3">
           {user && (
             <div className="hidden md:flex items-center gap-3">
-              <div className="flex flex-col items-end leading-tight">
-                <span className="text-sm font-medium">{user.name}</span>
+              <Link to="/settings" className="flex flex-col items-end leading-tight" title="Настройки профиля">
+                <span className="text-sm font-medium hover:text-brand-light transition-colors">{user.name}</span>
                 <span className="mono-caption">{roleLabel(user.role)}</span>
-              </div>
-              <Avatar name={user.name} src={user.avatarUrl} size={34} />
+              </Link>
+              <Link to="/settings" title="Настройки профиля">
+                <Avatar name={user.name} src={user.avatarUrl} color={user.avatarColor} size={34} />
+              </Link>
               <Button variant="ghost" size="sm" onClick={() => setConfirmOut(true)}>
                 Выйти
               </Button>

@@ -23,6 +23,7 @@ export function WorkCard({
     id: u.id,
     name: displayName(u),
     src: u.avatarUrl,
+    color: u.avatarColor,
   }))
 
   return (

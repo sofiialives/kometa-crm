@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate, Link } from 'react-router-dom'
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuthStore } from '../../core/store/authStore'
@@ -13,6 +13,9 @@ function useNavItems() {
   return [
     ...(isAdmin ? [{ to: '/admin', label: 'Админ-панель', icon: IconShield }] : []),
     { to: '/', label: 'Иерархия', icon: IconTree },
+    // У админа нет своего отдела, поэтому «Задачи» для него — это только
+    // его личные задачи, не работа с чужими. Называем это явно, иначе
+    // легко перепутать с управлением отделами в Иерархии.
     { to: '/tasks', label: 'Задачи', icon: IconBoard },
   ]
 }
@@ -54,11 +57,13 @@ function UserCard() {
   return (
     <>
       <div className="glass rounded-2xl p-3 flex items-center gap-3">
-        <Avatar name={user.name} src={user.avatarUrl} size={36} />
-        <div className="flex-1 min-w-0 leading-tight">
-          <p className="text-sm font-medium truncate">{user.name}</p>
+        <Link to="/settings" title="Настройки профиля" className="shrink-0">
+          <Avatar name={user.name} src={user.avatarUrl} color={user.avatarColor} size={36} />
+        </Link>
+        <Link to="/settings" className="flex-1 min-w-0 leading-tight">
+          <p className="text-sm font-medium truncate hover:text-brand-light transition-colors">{user.name}</p>
           <p className="mono-caption">{roleLabel(user.role)}</p>
-        </div>
+        </Link>
         <button
           onClick={() => setConfirmOut(true)}
           className="grid place-items-center w-8 h-8 rounded-lg text-ink-3 hover:text-danger hover:bg-danger/10 transition-colors cursor-pointer"

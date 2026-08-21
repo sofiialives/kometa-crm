@@ -88,6 +88,28 @@ export const useAuthStore = create(
           return { ok: false, error: e.message }
         }
       },
+
+      /** Страница настроек: имя, фото (data URL), цвет кружка-аватарки. */
+      async updateProfile(patch) {
+        set({ error: null })
+        try {
+          const updated = await api.patch('/auth/me', patch)
+          set({ user: { ...get().user, ...updated } })
+          return { ok: true }
+        } catch (e) {
+          set({ error: e.message })
+          return { ok: false, error: e.message }
+        }
+      },
+
+      async changePassword({ currentPassword, newPassword }) {
+        try {
+          await api.patch('/auth/me/password', { currentPassword, newPassword })
+          return { ok: true }
+        } catch (e) {
+          return { ok: false, error: e.message }
+        }
+      },
     }),
     { name: 'kometa-crm-auth', partialize: (s) => ({ user: s.user, token: s.token, refreshToken: s.refreshToken }) },
   ),

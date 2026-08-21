@@ -35,7 +35,7 @@ export function TaskLine({ task, canToggle, canManage, busy, onToggle, onEdit, o
         )}
       </button>
 
-      <Avatar name={task.owner?.name || '?'} src={task.owner?.avatarUrl} size={22} title={task.owner?.name} />
+      <Avatar name={task.owner?.name || '?'} src={task.owner?.avatarUrl} color={task.owner?.avatarColor} size={22} title={task.owner?.name} />
 
       <div className="min-w-0 flex-1">
         <p className={cx('truncate text-sm', done ? 'text-ink-3 line-through' : 'text-ink-2')}>

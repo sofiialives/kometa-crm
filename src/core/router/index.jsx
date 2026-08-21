@@ -5,6 +5,7 @@ import LoginPage from '../../pages/Login'
 import HierarchyPage from '../../pages/Hierarchy'
 import TasksPage from '../../pages/Tasks'
 import AdminPage from '../../pages/Admin'
+import SettingsPage from '../../pages/Settings'
 import UiKitPage from '../../pages/UiKit'
 
 function Protected() {
@@ -31,6 +32,7 @@ export const router = createBrowserRouter([
         children: [
           { path: '/', element: <HierarchyPage /> },
           { path: '/tasks', element: <TasksPage /> },
+          { path: '/settings', element: <SettingsPage /> },
           {
             element: <AdminOnly />,
             children: [{ path: '/admin', element: <AdminPage /> }],

@@ -15,8 +15,9 @@ import { AssigneesModal } from '../../components/hierarchy/AssigneesModal'
 import { ExtendDeadlineModal } from '../../components/hierarchy/ExtendDeadlineModal'
 import { EditTaskModal } from '../../components/hierarchy/EditTaskModal'
 import { InviteUserModal } from '../../components/admin/InviteUserModal'
+import { ClientGroup } from '../../components/hierarchy/ClientGroup'
 import { inviteMember } from '../../core/store/team'
-import { ALL_DEPARTMENTS, sortWorks, tasksOfWork, visibleDepartments } from '../../utils/hierarchy'
+import { sortWorks, tasksOfWork, visibleDepartments } from '../../utils/hierarchy'
 
 export default function HierarchyPage() {
   const currentUser = useAuthStore((s) => s.user)
@@ -49,7 +50,7 @@ export default function HierarchyPage() {
   const isAdmin = currentUser?.role === 'admin'
   const canManage = isAdmin || currentUser?.role === 'lead'
 
-  const [activeDept, setActiveDept] = useState(ALL_DEPARTMENTS)
+  const [activeDept, setActiveDept] = useState(null)
   const [workOpen, setWorkOpen] = useState(false)
   const [invitingTo, setInvitingTo] = useState(null)
   const [addingTaskTo, setAddingTaskTo] = useState(null)
@@ -75,36 +76,50 @@ export default function HierarchyPage() {
     [departments, currentUser],
   )
 
-  // Не-админ видит ровно один отдел, поэтому вкладок у него нет и выбранным
-  // всегда остаётся его собственный.
+  // Вкладки «Все» больше нет — и у админа, и у обычного пользователя
+  // всегда выбран конкретный отдел, по умолчанию первый из доступных.
   useEffect(() => {
-    if (!isAdmin && myDepartments.length > 0) setActiveDept(myDepartments[0].id)
-  }, [isAdmin, myDepartments])
+    if (!activeDept && myDepartments.length > 0) setActiveDept(myDepartments[0].id)
+  }, [myDepartments, activeDept])
 
   const shownDepartments = useMemo(
-    () => (activeDept === ALL_DEPARTMENTS ? myDepartments : myDepartments.filter((d) => d.id === activeDept)),
+    () => myDepartments.filter((d) => d.id === activeDept),
     [myDepartments, activeDept],
   )
 
-  const shownWorks = useMemo(
-    () => sortWorks(activeDept === ALL_DEPARTMENTS ? works : works.filter((w) => w.departmentId === activeDept)),
-    [works, activeDept],
-  )
+  // Рядовой сотрудник видит только те работы, где сам в исполнителях
+  // или у него там есть хотя бы одна задача — не весь отдел целиком,
+  // иначе с ростом числа клиентов страницу не пролистать.
+  const shownWorks = useMemo(() => {
+    const deptWorks = works.filter((w) => w.departmentId === activeDept)
+    if (canManage) return sortWorks(deptWorks)
+
+    const myId = currentUser?.id
+    const relevant = deptWorks.filter((w) => {
+      const isAssignee = (w.assignees || []).some((u) => u.id === myId)
+      const hasMyTask = tasks.some((t) => t.workId === w.id && t.ownerId === myId)
+      return isAssignee || hasMyTask
+    })
+    return sortWorks(relevant)
+  }, [works, activeDept, canManage, currentUser, tasks])
 
   const clients = useMemo(
     () => [...new Set(works.map((w) => w.clientName).filter(Boolean))].sort(),
     [works],
   )
 
-  const tabs = useMemo(
-    () => [{ id: ALL_DEPARTMENTS, name: 'Все' }, ...myDepartments],
-    [myDepartments],
-  )
+  const worksByClient = useMemo(() => {
+    const map = new Map()
+    for (const w of shownWorks) {
+      const key = w.clientName || 'Без клиента'
+      if (!map.has(key)) map.set(key, [])
+      map.get(key).push(w)
+    }
+    return [...map.entries()]
+  }, [shownWorks])
 
   const activeWorksOf = (departmentId) =>
     works.filter((w) => w.departmentId === departmentId && w.status === 'active').length
-
-  const departmentName = (id) => departments.find((d) => d.id === id)?.name
 
   // Ошибку показываем одну: свежую от действия, иначе первую сорванную загрузку.
   const error = actionError || departmentsError || worksError || tasksError
@@ -150,8 +165,8 @@ export default function HierarchyPage() {
         </div>
       )}
 
-      {isAdmin && myDepartments.length > 0 && (
-        <DeptTabs departments={tabs} active={activeDept} onSelect={setActiveDept} />
+      {isAdmin && myDepartments.length > 1 && (
+        <DeptTabs departments={myDepartments} active={activeDept} onSelect={setActiveDept} />
       )}
 
       {loading ? (
@@ -191,25 +206,31 @@ export default function HierarchyPage() {
                 />
               </Card>
             ) : (
-              shownWorks.map((w) => (
-                <WorkCard
-                  key={w.id}
-                  work={w}
-                  // На вкладке «Все» отделов несколько, и без подписи работа
-                  // читается как принадлежащая соседней карточке отдела.
-                  departmentName={isAdmin && activeDept === ALL_DEPARTMENTS ? departmentName(w.departmentId) : undefined}
-                  tasks={tasksOfWork(tasks, w.id)}
-                  currentUser={currentUser}
-                  busyTaskId={busyTaskId}
-                  canManage={canManage}
-                  onToggleTask={toggleTask}
-                  onAddTask={setAddingTaskTo}
-                  onEditAssignees={() => setEditingAssignees(w)}
-                  onEditTask={setEditingTask}
-                  onExtendTask={setExtendingTask}
-                  onDeleteTask={setDeletingTask}
-                  onDeleteWork={setDeletingWork}
-                />
+              worksByClient.map(([clientName, worksForClient]) => (
+                <ClientGroup
+                  key={clientName}
+                  clientName={clientName}
+                  works={worksForClient}
+                  taskCounts={worksForClient.map((w) => tasksOfWork(tasks, w.id).length)}
+                >
+                  {worksForClient.map((w) => (
+                    <WorkCard
+                      key={w.id}
+                      work={w}
+                      tasks={tasksOfWork(tasks, w.id)}
+                      currentUser={currentUser}
+                      busyTaskId={busyTaskId}
+                      canManage={canManage}
+                      onToggleTask={toggleTask}
+                      onAddTask={setAddingTaskTo}
+                      onEditAssignees={() => setEditingAssignees(w)}
+                      onEditTask={setEditingTask}
+                      onExtendTask={setExtendingTask}
+                      onDeleteTask={setDeletingTask}
+                      onDeleteWork={setDeletingWork}
+                    />
+                  ))}
+                </ClientGroup>
               ))
             )}
           </div>
@@ -221,7 +242,7 @@ export default function HierarchyPage() {
         onClose={() => setWorkOpen(false)}
         departments={myDepartments}
         clients={clients}
-        defaultDepartmentId={activeDept === ALL_DEPARTMENTS ? undefined : activeDept}
+        defaultDepartmentId={activeDept || undefined}
         onSubmit={async (payload) => {
           const res = await createWork(payload)
           if (res.ok) await fetchWorks()

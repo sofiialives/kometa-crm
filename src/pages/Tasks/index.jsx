@@ -10,6 +10,8 @@ import { CreateTaskModal } from '../../components/tasks/CreateTaskModal'
 import { TaskDetailModal } from '../../components/tasks/TaskDetailModal'
 import { COLUMNS, REFRESH_MS, scopeHint } from '../../utils/tasks'
 
+const MINE = '__mine__'
+
 export default function TasksPage() {
   const currentUser = useAuthStore((s) => s.user)
   const tasks = useTasksStore((s) => s.tasks)
@@ -36,16 +38,20 @@ export default function TasksPage() {
   }, [fetchTasks, fetchDepartments, isAdmin])
 
   useEffect(() => {
-    if (isAdmin && !activeDept && departments.length > 0) {
-      setActiveDept(departments[0].id)
-    }
-  }, [isAdmin, departments, activeDept])
+    if (isAdmin && !activeDept) setActiveDept(MINE)
+  }, [isAdmin, activeDept])
 
   const visibleTasks = useMemo(() => {
     if (!isAdmin) return tasks
     if (!activeDept) return []
+    if (activeDept === MINE) return tasks.filter((t) => t.ownerId === currentUser?.id)
     return tasks.filter((t) => t.departmentId === activeDept)
-  }, [tasks, isAdmin, activeDept])
+  }, [tasks, isAdmin, activeDept, currentUser])
+
+  const tabs = useMemo(
+    () => (isAdmin ? [{ id: MINE, name: 'Мои задачи' }, ...departments] : []),
+    [isAdmin, departments],
+  )
 
   const byColumn = useMemo(() => {
     const map = { today: [], progress: [], done: [] }
@@ -53,7 +59,10 @@ export default function TasksPage() {
     return map
   }, [visibleTasks])
 
-  const noDepartments = isAdmin && !departmentsLoading && departments.length === 0
+  // «Мои задачи» доступна всегда, даже если отделов ещё нет — а вот
+  // пустое состояние про «создайте отдел» показываем только когда
+  // реально выбрана вкладка отдела, а не своя.
+  const noDepartments = isAdmin && activeDept !== MINE && !departmentsLoading && departments.length === 0
 
   return (
     <PageSection
@@ -62,8 +71,8 @@ export default function TasksPage() {
       subtitle={scopeHint(currentUser)}
       actions={<Button onClick={() => setCreateOpen(true)}>+ Задача на день</Button>}
     >
-      {isAdmin && departments.length > 0 && (
-        <DeptTabs departments={departments} active={activeDept} onSelect={setActiveDept} />
+      {isAdmin && (
+        <DeptTabs departments={tabs} active={activeDept} onSelect={setActiveDept} />
       )}
 
       {noDepartments ? (
@@ -86,7 +95,15 @@ export default function TasksPage() {
         </div>
       )}
 
-      <CreateTaskModal open={createOpen} onClose={() => setCreateOpen(false)} onSubmit={createTask} />
+      <CreateTaskModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onSubmit={async (payload) => {
+          const res = await createTask(payload)
+          if (res.ok && isAdmin) setActiveDept(MINE)
+          return res
+        }}
+      />
 
       <TaskDetailModal
         task={openTask}

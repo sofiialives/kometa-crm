@@ -37,7 +37,7 @@ export function AllUsersTable({ users, departments, currentUserId, onDismiss }) 
                   <tr key={u.id} className="border-b border-white/5 last:border-0 transition-colors hover:bg-white/[0.02]">
                     <Td>
                       <div className="flex items-center gap-3">
-                        <Avatar name={displayName(u)} src={u.avatarUrl} size={30} />
+                        <Avatar name={displayName(u)} src={u.avatarUrl} color={u.avatarColor} size={30} />
                         <div className="min-w-0">
                           <p className="truncate text-sm font-medium leading-tight">{displayName(u)}</p>
                           <p className="mono-caption truncate">{u.email}</p>
