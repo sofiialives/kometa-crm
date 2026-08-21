@@ -33,12 +33,12 @@ export function Modal({ open, onClose, title, size = 'md', closeOnOverlay = true
           sizes[size],
         )}
       >
-        <div className="flex items-center justify-between gap-4 px-6 pt-5 pb-4 border-b border-white/8">
+        <div className="flex items-center justify-between gap-4 px-6 pt-5 pb-4 border-b border-line">
           <h3 className="text-[17px] font-semibold tracking-tight">{title}</h3>
           {!hideClose && (
             <button
               onClick={onClose}
-              className="grid place-items-center w-8 h-8 rounded-lg text-ink-3 hover:text-ink hover:bg-white/5 transition-colors cursor-pointer"
+              className="grid place-items-center w-8 h-8 rounded-lg text-ink-3 hover:text-ink hover:bg-surface-3 transition-colors cursor-pointer"
               aria-label="Закрыть"
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"

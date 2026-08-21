@@ -12,7 +12,7 @@ export function MemberRow({ user, isLead = false, canPromote = true, onPromote, 
     <div
       className={cx(
         'flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors',
-        isLead ? 'glass border border-brand-purple/35' : 'hover:bg-white/[0.03]',
+        isLead ? 'glass border border-brand-purple/35' : 'hover:bg-surface-3',
       )}
     >
       <Avatar name={displayName(user)} src={user.avatarUrl} color={user.avatarColor} size={isLead ? 36 : 30} ring={isLead} />
@@ -102,7 +102,7 @@ function RowMenu({ canPromote, onPromote, onMove, onDismiss }) {
         onClick={toggle}
         aria-label="Действия"
         aria-expanded={open}
-        className="grid h-7 w-7 place-items-center rounded-lg text-ink-3 transition-colors hover:bg-white/5 hover:text-ink cursor-pointer"
+        className="grid h-7 w-7 place-items-center rounded-lg text-ink-3 transition-colors hover:bg-surface-3 hover:text-ink cursor-pointer"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
           <circle cx="5" cy="12" r="1.7" />
@@ -119,7 +119,7 @@ function RowMenu({ canPromote, onPromote, onMove, onDismiss }) {
         >
           {canPromote && <MenuItem onClick={() => pick(onPromote)}>Повысить до главного</MenuItem>}
           <MenuItem onClick={() => pick(onMove)}>Отдел и должность</MenuItem>
-          <div className="my-1 h-px bg-white/8" />
+          <div className="my-1 h-px bg-surface-3" />
           <MenuItem danger onClick={() => pick(onDismiss)}>Уволить</MenuItem>
         </div>,
         document.body,
@@ -134,7 +134,7 @@ function MenuItem({ danger, onClick, children }) {
       onClick={onClick}
       className={cx(
         'block w-full px-4 py-2.5 text-left text-sm transition-colors cursor-pointer',
-        danger ? 'text-danger hover:bg-danger/10' : 'text-ink-2 hover:bg-white/5 hover:text-ink',
+        danger ? 'text-danger hover:bg-danger/10' : 'text-ink-2 hover:bg-surface-3 hover:text-ink',
       )}
     >
       {children}

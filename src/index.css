@@ -1,26 +1,104 @@
 @import "tailwindcss";
 
 /* ==========================================================================
-   KOMETA CRM — дизайн-токены из наших КП
+   KOMETA CRM — дизайн-система
+   Палитра и типографика взяты из фирменного стиля KOMETA WEB3 AGENCY.
+   Темы: тёмная, светлая, системная. Все цвета — семантические токены,
+   значения переключаются на :root, поэтому компоненты про тему не знают.
    ========================================================================== */
+
 @theme {
-  --color-space: #0e0e12;
-  --color-space-2: #14131c;
-  --color-ink: #f2f2f5;
-  --color-ink-2: #b8b8c4;
-  --color-ink-3: #7a7a88;
+  /* Фирменные константы — одинаковы в любой теме */
   --color-brand-blue: #504cff;
   --color-brand-purple: #854cff;
   --color-brand-light: #8f8cff;
+
+  /* Значения по умолчанию = тёмная тема. Светлая переопределяет их ниже. */
+  --color-space: #0e0e12;
+  --color-space-2: #16161f;
+  --color-surface-3: #1e1e2a;
+  --color-ink: #f4f4f7;
+  --color-ink-2: #c3c3d0;
+  --color-ink-3: #9a9aab;
+  --color-line: #33334a;
+  --color-line-strong: #4b4b68;
+  --color-accent: #8f8cff;
   --color-ok: #4ade80;
   --color-warn: #ffba26;
-  --color-danger: #ff6b6b;
+  --color-danger: #ff7a7a;
 
-  --font-sans: "Jost", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Nekst", "Jost", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Radiotechnika", "Nekst", "Jost", ui-sans-serif, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
-  --radius-card: 20px;
-  --radius-field: 14px;
+  --radius-card: 18px;
+  --radius-field: 12px;
+}
+
+/* ---- Тёмная тема (основная) ---- */
+:root,
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-space: #0e0e12;
+  --color-space-2: #16161f;
+  --color-surface-3: #1e1e2a;
+  --color-ink: #f4f4f7;
+  --color-ink-2: #c3c3d0;
+  --color-ink-3: #9a9aab;
+  --color-line: #33334a;
+  --color-line-strong: #4b4b68;
+  --color-accent: #8f8cff;
+  --color-ok: #4ade80;
+  --color-warn: #ffba26;
+  --color-danger: #ff7a7a;
+
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --ring: rgba(143, 140, 255, 0.55);
+}
+
+/* ---- Светлая тема: собственные значения, а не инверсия тёмной ---- */
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --color-space: #fafafa;
+  --color-space-2: #ffffff;
+  --color-surface-3: #f1f1f5;
+  --color-ink: #14141c;
+  --color-ink-2: #4a4a5c;
+  --color-ink-3: #64647a;
+  --color-line: #d9d9d9;
+  --color-line-strong: #b0b0c0;
+  --color-accent: #5a45e0;
+  --color-ok: #157f45;
+  --color-warn: #8a5a00;
+  --color-danger: #c02b2b;
+
+  --glass-bg: rgba(255, 255, 255, 0.75);
+  --ring: rgba(90, 69, 224, 0.5);
+}
+
+/* Системная: атрибута нет — идём за настройкой ОС. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']):not([data-theme='light']) {
+  color-scheme: light;
+
+  --color-space: #fafafa;
+  --color-space-2: #ffffff;
+  --color-surface-3: #f1f1f5;
+  --color-ink: #14141c;
+  --color-ink-2: #4a4a5c;
+  --color-ink-3: #64647a;
+  --color-line: #d9d9d9;
+  --color-line-strong: #b0b0c0;
+  --color-accent: #5a45e0;
+  --color-ok: #157f45;
+  --color-warn: #8a5a00;
+  --color-danger: #c02b2b;
+
+  --glass-bg: rgba(255, 255, 255, 0.75);
+  --ring: rgba(90, 69, 224, 0.5);
+  }
 }
 
 /* ---- База ---- */
@@ -36,17 +114,24 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* ---- Стекло (как glass-карточки в КП) ---- */
+/* Клавиатурный фокус виден всегда и во всех темах. */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ---- Поверхность: граница читается, глубина через осветление ---- */
 .glass {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--glass-bg);
+  border: 1px solid var(--color-line);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
 
-/* ---- Градиентный текст ---- */
 .text-gradient {
   background: linear-gradient(120deg, var(--color-brand-blue), var(--color-brand-purple));
   -webkit-background-clip: text;
@@ -54,11 +139,14 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
-/* ---- mono-подпись как в КП ---- */
+/* ---- Служебная подпись ----------------------------------------------------
+   Была 11px с разрядкой 0.14em — на такой мелкоте капслок читается тяжело.
+   Подняли кегль, ослабили разрядку, цвет вывели на контраст выше 4.5:1. */
 .mono-caption {
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.14em;
+  font-size: var(--text-caption);
+  line-height: 1.35;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-ink-3);
 }
@@ -108,6 +196,14 @@ body {
   .cosmos__star, .cosmos__blob { animation: none; }
 }
 
+/* В светлой теме звёзды не видны, а блобы мутят фон — приглушаем. */
+:root[data-theme='light'] .cosmos__star { display: none; }
+:root[data-theme='light'] .cosmos__blob { opacity: 0.35; filter: blur(120px); }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']):not([data-theme='light']) .cosmos__star { display: none; }
+  :root:not([data-theme='dark']):not([data-theme='light']) .cosmos__blob { opacity: 0.35; filter: blur(120px); }
+}
+
 /* ---- Скроллбар в тон ---- */
 ::-webkit-scrollbar {
   width: 10px;
@@ -117,11 +213,11 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--color-line);
   border-radius: 100px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(133, 76, 255, 0.4);
+  background: var(--color-line-strong);
 }
 
 /* ---- Появление модалки ---- */

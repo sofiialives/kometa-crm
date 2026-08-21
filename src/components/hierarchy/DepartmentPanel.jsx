@@ -29,7 +29,7 @@ export function DepartmentPanel({ department, users, worksCount, canSeeMembers, 
             </div>
           </div>
         ) : (
-          <p className="rounded-xl border border-dashed border-white/12 px-3 py-2.5 text-[13px] text-ink-3">
+          <p className="rounded-xl border border-dashed border-line px-3 py-2.5 text-[13px] text-ink-3">
             Не назначен
           </p>
         )}
@@ -59,7 +59,7 @@ export function DepartmentPanel({ department, users, worksCount, canSeeMembers, 
         </div>
       )}
 
-      <div className="border-t border-white/8 pt-3">
+      <div className="border-t border-line pt-3">
         <p className="mono-caption">Активные работы · {worksCount}</p>
       </div>
     </Card>

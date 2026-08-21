@@ -36,7 +36,7 @@ function NavList({ onNavigate }) {
               'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all',
               isActive
                 ? 'bg-gradient-to-r from-brand-blue/25 to-brand-purple/12 text-ink border border-brand-purple/35 shadow-[0_0_24px_rgba(133,76,255,0.15)]'
-                : 'text-ink-3 border border-transparent hover:text-ink hover:bg-white/5',
+                : 'text-ink-3 border border-transparent hover:text-ink hover:bg-surface-3',
             )
           }
         >
@@ -93,11 +93,11 @@ function UserCard() {
 
 export function Sidebar() {
   return (
-    <aside className="hidden md:flex w-60 shrink-0 sticky top-16 h-[calc(100vh-64px)] border-r border-white/8 bg-space-2/50 backdrop-blur-xl">
+    <aside className="hidden md:flex w-60 shrink-0 sticky top-16 h-[calc(100vh-64px)] border-r border-line bg-space-2/50 backdrop-blur-xl">
       <div className="flex flex-col gap-4 w-full p-3">
         <NavList />
         <div className="mt-auto flex flex-col gap-3">
-          <div className="h-px bg-white/8" />
+          <div className="h-px bg-surface-3" />
           <UserCard />
         </div>
       </div>
@@ -112,16 +112,16 @@ export function MobileNav() {
   return createPortal(
     <div className="fixed inset-0 z-50 md:hidden animate-fade-in" onMouseDown={(e) => e.target === e.currentTarget && closeNav()}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onMouseDown={closeNav} />
-      <div className="absolute right-0 top-0 bottom-0 w-72 max-w-[85vw] bg-space-2/95 glass border-l border-white/10 p-4 flex flex-col gap-4 animate-modal-in">
+      <div className="absolute right-0 top-0 bottom-0 w-72 max-w-[85vw] bg-space-2/95 glass border-l border-line p-4 flex flex-col gap-4 animate-modal-in">
         <div className="flex items-center justify-between">
-          <img src="/kometa.png" alt="KOMETA" className="h-6 w-auto" />
-          <button onClick={closeNav} className="grid place-items-center w-9 h-9 rounded-lg text-ink-3 hover:text-ink hover:bg-white/5 cursor-pointer" aria-label="Закрыть меню">
+          <img src="/kometa.png" alt="KOMETA" className="logo-mark h-6 w-auto" />
+          <button onClick={closeNav} className="grid place-items-center w-9 h-9 rounded-lg text-ink-3 hover:text-ink hover:bg-surface-3 cursor-pointer" aria-label="Закрыть меню">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
           </button>
         </div>
         <NavList onNavigate={closeNav} />
         <div className="mt-auto flex flex-col gap-3">
-          <div className="h-px bg-white/8" />
+          <div className="h-px bg-surface-3" />
           <UserCard />
         </div>
       </div>

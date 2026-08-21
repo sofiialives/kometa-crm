@@ -99,9 +99,9 @@ export default function LoginPage() {
             </Form>
 
             <div className="flex items-center gap-3 -my-1">
-              <span className="h-px flex-1 bg-white/10" />
+              <span className="h-px flex-1 bg-line" />
               <span className="mono-caption">или</span>
-              <span className="h-px flex-1 bg-white/10" />
+              <span className="h-px flex-1 bg-line" />
             </div>
 
             <GoogleButton onCredential={onGoogleCredential} disabled={loading} />

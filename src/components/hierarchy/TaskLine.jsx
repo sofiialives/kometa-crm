@@ -18,7 +18,7 @@ export function TaskLine({ task, canToggle, canManage, busy, onToggle, onEdit, o
           'grid h-5 w-5 shrink-0 place-items-center rounded-md border transition-all duration-150',
           done
             ? 'border-transparent bg-gradient-to-br from-brand-blue to-brand-purple'
-            : 'border-white/25 bg-white/[0.04]',
+            : 'border-line-strong bg-surface-3',
           canToggle ? 'cursor-pointer hover:border-brand-purple/60' : 'cursor-not-allowed opacity-60',
         )}
       >
@@ -82,7 +82,7 @@ function IconButton({ label, danger, onClick, children }) {
       title={label}
       className={cx(
         'grid h-6 w-6 place-items-center rounded-md transition-colors cursor-pointer',
-        danger ? 'text-ink-3 hover:bg-danger/10 hover:text-danger' : 'text-ink-3 hover:bg-white/5 hover:text-ink',
+        danger ? 'text-ink-3 hover:bg-danger/10 hover:text-danger' : 'text-ink-3 hover:bg-surface-3 hover:text-ink',
       )}
     >
       {children}

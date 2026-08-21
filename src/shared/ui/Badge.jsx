@@ -5,7 +5,7 @@ const tones = {
   warn: 'bg-warn/10 text-warn border-warn/30',
   danger: 'bg-danger/10 text-danger border-danger/30',
   brand: 'bg-brand-purple/12 text-brand-light border-brand-purple/35',
-  neutral: 'bg-white/5 text-ink-3 border-white/12',
+  neutral: 'bg-surface-3 text-ink-3 border-line',
 }
 
 export function Badge({ tone = 'neutral', dot = true, className, children }) {

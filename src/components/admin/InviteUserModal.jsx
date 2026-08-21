@@ -99,7 +99,7 @@ export function InviteUserModal({ open, onClose, departments, defaultDepartmentI
               error={noPositions ? 'В этом отделе не заведено ни одной должности' : undefined}
             />
           ) : (
-            <p className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[13px] text-ink-3">
+            <p className="rounded-xl border border-line bg-surface-3 px-4 py-3 text-[13px] text-ink-3">
               Должность главного проставится автоматически — «Начальник отдела».
             </p>
           )}

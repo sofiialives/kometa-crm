@@ -3,15 +3,15 @@ import { Spinner } from './Spinner'
 
 const variants = {
   primary:
-    'bg-gradient-to-br from-brand-blue to-brand-purple text-white shadow-[0_6px_24px_rgba(133,76,255,0.35)] hover:shadow-[0_8px_32px_rgba(133,76,255,0.5)] hover:-translate-y-px',
+    'bg-gradient-to-br from-brand-blue to-brand-purple text-white border border-transparent shadow-[0_6px_24px_rgba(133,76,255,0.35)] hover:shadow-[0_10px_34px_rgba(133,76,255,0.55)] hover:-translate-y-px active:translate-y-0',
   secondary:
-    'glass text-ink hover:border-brand-purple/50 hover:-translate-y-px',
+    'bg-surface-3 border border-line-strong text-ink hover:border-accent hover:bg-space-2 hover:-translate-y-px active:translate-y-0',
   outline:
-    'bg-transparent border border-white/25 text-ink-2 hover:text-ink hover:border-brand-purple/60',
+    'bg-transparent border border-line-strong text-ink-2 hover:text-ink hover:border-accent hover:bg-surface-3',
   ghost:
-    'bg-transparent text-ink-3 hover:text-ink hover:bg-white/5',
+    'bg-transparent border border-transparent text-ink-2 hover:text-ink hover:bg-surface-3 hover:border-line',
   danger:
-    'bg-danger/10 border border-danger/40 text-danger hover:bg-danger/20',
+    'bg-danger/12 border border-danger/55 text-danger hover:bg-danger/22 hover:border-danger',
 }
 
 const sizes = {

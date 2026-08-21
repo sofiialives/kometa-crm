@@ -29,7 +29,7 @@ export function DepartmentCard({ department, users, onPromote, onMove, onDismiss
 
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             {department.positions?.map((p) => (
-              <span key={p} className="mono-caption rounded-full border border-white/10 px-2 py-0.5">{p}</span>
+              <span key={p} className="mono-caption rounded-full border border-line px-2 py-0.5">{p}</span>
             ))}
 
             {adding ? (
@@ -51,7 +51,7 @@ export function DepartmentCard({ department, users, onPromote, onMove, onDismiss
             ) : (
               <button
                 onClick={() => setAdding(true)}
-                className="mono-caption rounded-full border border-dashed border-white/20 px-2 py-0.5 text-ink-3 transition-colors hover:border-brand-purple/50 hover:text-ink cursor-pointer"
+                className="mono-caption rounded-full border border-dashed border-line-strong px-2 py-0.5 text-ink-3 transition-colors hover:border-brand-purple/50 hover:text-ink cursor-pointer"
               >
                 + должность
               </button>
@@ -75,12 +75,12 @@ export function DepartmentCard({ department, users, onPromote, onMove, onDismiss
           {lead ? (
             <MemberRow user={lead} isLead onMove={onMove} onDismiss={onDismiss} />
           ) : (
-            <p className="rounded-xl border border-dashed border-white/12 px-3 py-2.5 text-[13px] text-ink-3">
+            <p className="rounded-xl border border-dashed border-line px-3 py-2.5 text-[13px] text-ink-3">
               Главный не назначен
             </p>
           )}
 
-          {staff.length > 0 && <div className="mt-1 h-px bg-white/8" />}
+          {staff.length > 0 && <div className="mt-1 h-px bg-surface-3" />}
 
           {staff.map((u) => (
             <MemberRow

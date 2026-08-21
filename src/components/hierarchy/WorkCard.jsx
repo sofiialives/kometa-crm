@@ -70,7 +70,7 @@ export function WorkCard({
         <span className="mono-caption shrink-0">{taskCount(tasks.length)}</span>
       </div>
 
-      <div className="border-t border-white/8 pt-3">
+      <div className="border-t border-line pt-3">
         <span className="mono-caption">Задачи</span>
         {tasks.length === 0 ? (
           <p className="pt-2 text-[13px] text-ink-3">Задач пока нет.</p>

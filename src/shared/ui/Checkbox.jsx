@@ -8,7 +8,7 @@ export function Checkbox({ label, id: propId, className, ...props }) {
       <input id={id} type="checkbox" className="peer sr-only" {...props} />
       <span
         className={cx(
-          'grid place-items-center w-5 h-5 rounded-md border border-white/25 bg-white/[0.04]',
+          'grid place-items-center w-5 h-5 rounded-md border border-line-strong bg-surface-3',
           'transition-all duration-150 group-hover:border-brand-purple/60',
           'peer-checked:border-transparent peer-checked:bg-gradient-to-br peer-checked:from-brand-blue peer-checked:to-brand-purple',
           'peer-checked:[&>svg]:opacity-100',
