@@ -99,14 +99,14 @@ export function InviteUserModal({ open, onClose, departments, defaultDepartmentI
               error={noPositions ? 'В этом отделе не заведено ни одной должности' : undefined}
             />
           ) : (
-            <p className="rounded-xl border border-line bg-surface-3 px-4 py-3 text-[13px] text-ink-3">
+            <p className="rounded-xl border border-line bg-surface-3 px-4 py-3 text-sm text-ink-3">
               Должность главного проставится автоматически — «Начальник отдела».
             </p>
           )}
 
-          {error && <p className="text-[13px] text-danger">{error}</p>}
+          {error && <p className="text-sm text-danger">{error}</p>}
 
-          <p className="text-[12.5px] leading-relaxed text-ink-3">
+          <p className="text-xs leading-relaxed text-ink-3">
             Письмо не отправляется. Сотрудник заходит по этой почте и сам задаёт пароль при первом входе.
           </p>
         </div>

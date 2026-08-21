@@ -51,7 +51,7 @@ export function EditTaskModal({ task, onClose, onSubmit }) {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
-          {error && <p className="text-[13px] text-danger">{error}</p>}
+          {error && <p className="text-sm text-danger">{error}</p>}
         </div>
       )}
     </Modal>

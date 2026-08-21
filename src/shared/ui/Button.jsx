@@ -15,9 +15,9 @@ const variants = {
 }
 
 const sizes = {
-  sm: 'h-8 px-3.5 text-[13px] rounded-[10px] gap-1.5',
+  sm: 'h-8 px-3.5 text-sm rounded-[10px] gap-1.5',
   md: 'h-10 px-5 text-sm rounded-xl gap-2',
-  lg: 'h-12 px-7 text-[15px] rounded-[14px] gap-2.5',
+  lg: 'h-12 px-7 text-base rounded-[14px] gap-2.5',
 }
 
 export function Button({
@@ -36,7 +36,7 @@ export function Button({
       className={cx(
         'inline-flex items-center justify-center font-semibold select-none',
         'transition-all duration-200 cursor-pointer',
-        'disabled:opacity-50 disabled:pointer-events-none',
+        'disabled:opacity-70 disabled:pointer-events-none',
         variants[variant],
         sizes[size],
         full && 'w-full',

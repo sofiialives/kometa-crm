@@ -10,7 +10,7 @@ export function AllUsersTable({ users, departments, currentUserId, onDismiss }) 
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-ink-3">
           <path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1m4 0h1M9 13h1m4 0h1M9 17h1m4 0h1" strokeLinecap="round" />
         </svg>
-        <h2 className="text-[15px] font-semibold tracking-tight">Все сотрудники</h2>
+        <h2 className="text-base font-semibold tracking-tight">Все сотрудники</h2>
       </div>
 
       {users.length === 0 ? (

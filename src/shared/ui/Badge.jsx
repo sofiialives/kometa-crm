@@ -13,7 +13,7 @@ export function Badge({ tone = 'neutral', dot = true, className, children }) {
     <span
       className={cx(
         'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border',
-        'font-mono text-[10px] uppercase tracking-wider whitespace-nowrap',
+        'font-mono text-[12px] leading-none uppercase tracking-[0.06em] whitespace-nowrap',
         tones[tone],
         className,
       )}

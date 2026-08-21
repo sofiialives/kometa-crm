@@ -22,7 +22,7 @@ export default function SettingsPage() {
           <div>
             <p className="font-medium">{user?.name}</p>
             <p className="mono-caption">{roleLabel(user?.role)}{user?.position ? ' · ' + user.position : ''}</p>
-            <p className="mt-1 text-[13px] text-ink-3">{user?.email}</p>
+            <p className="mt-1 text-sm text-ink-3">{user?.email}</p>
           </div>
         </Card>
 
@@ -132,8 +132,8 @@ function ProfileForm() {
         </div>
       </div>
 
-      {notice && <p className="text-[13px] text-ok">{notice}</p>}
-      {error && <p className="text-[13px] text-danger">{error}</p>}
+      {notice && <p className="text-sm text-ok">{notice}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
     </Card>
   )
 }
@@ -188,8 +188,8 @@ function PasswordForm() {
           value={confirm}
           onChange={(e) => { setConfirm(e.target.value); setError(null) }}
         />
-        {notice && <p className="text-[13px] text-ok">{notice}</p>}
-        {error && <p className="text-[13px] text-danger">{error}</p>}
+        {notice && <p className="text-sm text-ok">{notice}</p>}
+        {error && <p className="text-sm text-danger">{error}</p>}
         <Button type="submit" loading={saving} className="self-start">Сменить пароль</Button>
       </form>
     </Card>

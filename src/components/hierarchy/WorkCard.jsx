@@ -34,7 +34,7 @@ export function WorkCard({
             Клиент · {work.clientName}
             {departmentName ? ' · ' + departmentName : ''}
           </p>
-          <h3 className="mt-1 truncate text-[15px] font-semibold tracking-tight">{work.title}</h3>
+          <h3 className="mt-1 truncate text-base font-semibold tracking-tight">{work.title}</h3>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <Badge tone={badge.tone}>{badge.label}</Badge>
@@ -64,7 +64,7 @@ export function WorkCard({
           {assignees.length > 0 ? (
             <AvatarStack users={assignees} size={28} />
           ) : (
-            <span className="text-[13px] text-ink-3">Исполнители не назначены</span>
+            <span className="text-sm text-ink-3">Исполнители не назначены</span>
           )}
         </button>
         <span className="mono-caption shrink-0">{taskCount(tasks.length)}</span>
@@ -73,7 +73,7 @@ export function WorkCard({
       <div className="border-t border-line pt-3">
         <span className="mono-caption">Задачи</span>
         {tasks.length === 0 ? (
-          <p className="pt-2 text-[13px] text-ink-3">Задач пока нет.</p>
+          <p className="pt-2 text-sm text-ink-3">Задач пока нет.</p>
         ) : (
           <div className="pt-1">
             {tasks.map((t) => (

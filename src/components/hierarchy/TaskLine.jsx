@@ -42,7 +42,7 @@ export function TaskLine({ task, canToggle, canManage, busy, onToggle, onEdit, o
           {task.title}
         </p>
         {task.description && (
-          <p className="truncate text-[12.5px] text-ink-3" title={task.description}>
+          <p className="truncate text-xs text-ink-3" title={task.description}>
             {task.description}
           </p>
         )}

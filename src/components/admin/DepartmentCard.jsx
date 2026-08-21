@@ -25,7 +25,7 @@ export function DepartmentCard({ department, users, onPromote, onMove, onDismiss
     <Card pad="md" className="flex flex-col gap-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-[17px] font-semibold tracking-tight">{department.name}</h2>
+          <h2 className="truncate text-lg font-semibold tracking-tight">{department.name}</h2>
 
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             {department.positions?.map((p) => (
@@ -75,7 +75,7 @@ export function DepartmentCard({ department, users, onPromote, onMove, onDismiss
           {lead ? (
             <MemberRow user={lead} isLead onMove={onMove} onDismiss={onDismiss} />
           ) : (
-            <p className="rounded-xl border border-dashed border-line px-3 py-2.5 text-[13px] text-ink-3">
+            <p className="rounded-xl border border-dashed border-line px-3 py-2.5 text-sm text-ink-3">
               Главный не назначен
             </p>
           )}

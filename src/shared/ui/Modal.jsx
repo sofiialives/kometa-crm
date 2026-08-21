@@ -34,7 +34,7 @@ export function Modal({ open, onClose, title, size = 'md', closeOnOverlay = true
         )}
       >
         <div className="flex items-center justify-between gap-4 px-6 pt-5 pb-4 border-b border-line">
-          <h3 className="text-[17px] font-semibold tracking-tight">{title}</h3>
+          <h3 className="text-lg font-semibold tracking-tight">{title}</h3>
           {!hideClose && (
             <button
               onClick={onClose}

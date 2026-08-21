@@ -48,12 +48,12 @@ export function GoogleButton({ onCredential, disabled }) {
   }, [onCredential])
 
   if (!CLIENT_ID) {
-    return <p className="text-[13px] text-danger text-center">Не задан VITE_GOOGLE_CLIENT_ID</p>
+    return <p className="text-sm text-danger text-center">Не задан VITE_GOOGLE_CLIENT_ID</p>
   }
 
   return (
     <div className="min-h-12 flex items-center justify-center">
-      <div ref={boxRef} className={disabled ? 'pointer-events-none opacity-50' : ''} />
+      <div ref={boxRef} className={disabled ? 'pointer-events-none opacity-70' : ''} />
       {!ready && (
         <span
           className="w-5 h-5 rounded-full border-2 border-line border-t-brand-light animate-spin"

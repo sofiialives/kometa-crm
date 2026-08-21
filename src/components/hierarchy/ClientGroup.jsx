@@ -21,7 +21,7 @@ export function ClientGroup({ clientName, works, taskCounts, defaultOpen = false
             {clientName.slice(0, 1).toUpperCase()}
           </span>
           <div className="min-w-0">
-            <p className="truncate text-[15px] font-semibold tracking-tight">{clientName}</p>
+            <p className="truncate text-base font-semibold tracking-tight">{clientName}</p>
             <p className="mono-caption">
               {withPlural(works.length, 'работа', 'работы', 'работ')}
               {totalTasks > 0 && ` · ${withPlural(totalTasks, 'задача', 'задачи', 'задач')}`}

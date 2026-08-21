@@ -160,7 +160,7 @@ export default function HierarchyPage() {
       actions={canManage && <Button onClick={() => setWorkOpen(true)}>+ Работа</Button>}
     >
       {error && (
-        <div className="rounded-xl border border-danger/35 bg-danger/10 px-4 py-3 text-[13px] text-danger">
+        <div className="rounded-xl border border-danger/35 bg-danger/10 px-4 py-3 text-sm text-danger">
           {error}
         </div>
       )}

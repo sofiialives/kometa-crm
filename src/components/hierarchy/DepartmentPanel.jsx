@@ -12,7 +12,7 @@ export function DepartmentPanel({ department, users, worksCount, canSeeMembers, 
   return (
     <Card pad="md" className="flex flex-col gap-5">
       <div className="flex items-start justify-between gap-3">
-        <h2 className="text-[17px] font-semibold tracking-tight">{department.name}</h2>
+        <h2 className="text-lg font-semibold tracking-tight">{department.name}</h2>
         {canSeeMembers && (
           <Badge tone="neutral" dot={false}>{memberCount(members.length)}</Badge>
         )}
@@ -29,7 +29,7 @@ export function DepartmentPanel({ department, users, worksCount, canSeeMembers, 
             </div>
           </div>
         ) : (
-          <p className="rounded-xl border border-dashed border-line px-3 py-2.5 text-[13px] text-ink-3">
+          <p className="rounded-xl border border-dashed border-line px-3 py-2.5 text-sm text-ink-3">
             Не назначен
           </p>
         )}
@@ -42,7 +42,7 @@ export function DepartmentPanel({ department, users, worksCount, canSeeMembers, 
             {staff.length > 0 ? (
               <AvatarStack users={staff.map((u) => ({ id: u.id, name: displayName(u), src: u.avatarUrl }))} size={30} />
             ) : (
-              <span className="text-[13px] text-ink-3">Пока никого</span>
+              <span className="text-sm text-ink-3">Пока никого</span>
             )}
             {canInvite && (
               <button

@@ -12,9 +12,9 @@ export function Field({ label, hint, error, required, htmlFor, children, classNa
       )}
       {children}
       {error ? (
-        <p className="text-[12.5px] text-danger leading-snug">{error}</p>
+        <p className="text-xs text-danger leading-snug">{error}</p>
       ) : hint ? (
-        <p className="text-[12.5px] text-ink-3 leading-snug">{hint}</p>
+        <p className="text-xs text-ink-3 leading-snug">{hint}</p>
       ) : null}
     </div>
   )
@@ -25,8 +25,8 @@ export function controlClasses({ error, size = 'md' }) {
     'w-full bg-surface-3 border text-ink placeholder:text-ink-3',
     'rounded-[--radius-field] outline-none transition-all duration-200',
     'focus:border-brand-purple/70 focus:bg-surface-3 focus:shadow-[0_0_0_3px_rgba(133,76,255,0.15)]',
-    size === 'sm' ? 'h-9 px-3 text-[13.5px]' : 'h-11 px-4 text-sm',
-    error ? 'border-danger/60' : 'border-line',
+    size === 'sm' ? 'h-9 px-3 text-sm' : 'h-11 px-4 text-sm',
+    error ? 'border-danger' : 'border-line-strong',
   )
 }
 

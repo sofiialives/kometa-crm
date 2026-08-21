@@ -12,7 +12,7 @@ export function TaskCard({ task, col, isMine, onMove, onOpen }) {
       onClick={() => onOpen(task)}
       className={cx(
         'glass rounded-2xl p-3.5 flex flex-col gap-2.5 transition-colors cursor-pointer',
-        isDone ? 'opacity-55 grayscale' : 'hover:border-brand-purple/35',
+        isDone ? 'opacity-80' : 'hover:border-brand-purple/35',
       )}
     >
       <div>
