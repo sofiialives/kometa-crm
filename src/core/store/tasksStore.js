@@ -24,10 +24,15 @@ export const useTasksStore = create((set, get) => ({
     }
   },
 
-  async createTask({ title, description, deadline }) {
+  async createTask({ title, description, deadline, workId }) {
     set({ error: null })
     try {
-      const task = await api.post('/tasks', { title, description: description || undefined, deadline })
+      const task = await api.post('/tasks', {
+        title,
+        description: description || undefined,
+        deadline,
+        ...(workId ? { workId } : {}),
+      })
       set({ tasks: [task, ...get().tasks] })
       return { ok: true }
     } catch (e) {
