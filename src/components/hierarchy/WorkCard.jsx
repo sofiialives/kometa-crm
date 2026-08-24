@@ -17,6 +17,7 @@ export function WorkCard({
   onToggleTask,
   onAddTask,
   onEditAssignees,
+  onEditClient,
   onOpenTask,
   onDeleteWork,
 }) {
@@ -33,7 +34,21 @@ export function WorkCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="caption truncate">
-            Клиент · {work.client?.name}
+            Клиент ·{' '}
+            {canManage ? (
+              <button
+                onClick={() => onEditClient(work)}
+                className={cx(
+                  'cursor-pointer underline decoration-dotted underline-offset-2 hover:text-ink',
+                  !work.client && 'text-danger',
+                )}
+                title="Изменить клиента"
+              >
+                {work.client?.name || 'без клиента — нажмите, чтобы указать'}
+              </button>
+            ) : (
+              work.client?.name || 'без клиента'
+            )}
             {departmentName ? ' · ' + departmentName : ''}
           </p>
           <h3 className="mt-1 truncate text-base font-semibold tracking-tight">{work.title}</h3>

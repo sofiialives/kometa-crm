@@ -13,6 +13,7 @@ import { WorkCard } from '../../components/hierarchy/WorkCard'
 import { CreateWorkModal } from '../../components/hierarchy/CreateWorkModal'
 import { AddTaskModal } from '../../components/hierarchy/AddTaskModal'
 import { AssigneesModal } from '../../components/hierarchy/AssigneesModal'
+import { EditWorkClientModal } from '../../components/hierarchy/EditWorkClientModal'
 import { ExtendDeadlineModal } from '../../components/hierarchy/ExtendDeadlineModal'
 import { EditTaskModal } from '../../components/hierarchy/EditTaskModal'
 import { TaskDetailModal } from '../../components/hierarchy/TaskDetailModal'
@@ -62,6 +63,7 @@ export default function HierarchyPage() {
   const [membersOfDept, setMembersOfDept] = useState(null)
   const [addingTaskTo, setAddingTaskTo] = useState(null)
   const [editingAssignees, setEditingAssignees] = useState(null)
+  const [editingClientOf, setEditingClientOf] = useState(null)
   const [extendingTask, setExtendingTask] = useState(null)
   const [editingTask, setEditingTask] = useState(null)
   const [deletingTask, setDeletingTask] = useState(null)
@@ -229,6 +231,7 @@ export default function HierarchyPage() {
                       onToggleTask={toggleTask}
                       onAddTask={setAddingTaskTo}
                       onEditAssignees={() => setEditingAssignees(w)}
+                      onEditClient={setEditingClientOf}
                       onOpenTask={setOpenTask}
                       onDeleteWork={setDeletingWork}
                     />
@@ -277,6 +280,17 @@ export default function HierarchyPage() {
         onClose={() => setEditingAssignees(null)}
         onSubmit={async (work, assignees) => {
           const res = await updateWork(work.id, { assignees })
+          if (res.ok) await fetchWorks()
+          return res
+        }}
+      />
+
+      <EditWorkClientModal
+        work={editingClientOf}
+        clients={clients}
+        onClose={() => setEditingClientOf(null)}
+        onSubmit={async (workId, clientId) => {
+          const res = await updateWork(workId, { clientId })
           if (res.ok) await fetchWorks()
           return res
         }}
