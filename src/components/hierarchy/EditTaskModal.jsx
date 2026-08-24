@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Modal, Button, Input, Textarea } from '../../shared/ui'
+import { Modal, Button, Input, Textarea, PriorityPicker } from '../../shared/ui'
 
 export function EditTaskModal({ task, onClose, onSubmit }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [priority, setPriority] = useState('medium')
   const [error, setError] = useState(null)
   const [saving, setSaving] = useState(false)
 
@@ -11,6 +12,7 @@ export function EditTaskModal({ task, onClose, onSubmit }) {
     if (!task) return
     setTitle(task.title || '')
     setDescription(task.description || '')
+    setPriority(task.priority || 'medium')
     setError(null)
   }, [task])
 
@@ -18,7 +20,7 @@ export function EditTaskModal({ task, onClose, onSubmit }) {
     if (!title.trim()) return setError('Укажите название')
 
     setSaving(true)
-    const res = await onSubmit(task.id, { title: title.trim(), description: description.trim() })
+    const res = await onSubmit(task.id, { title: title.trim(), description: description.trim(), priority })
     setSaving(false)
     if (res?.ok) onClose()
     else setError(res?.error || 'Не удалось сохранить')
@@ -51,6 +53,7 @@ export function EditTaskModal({ task, onClose, onSubmit }) {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
+          <PriorityPicker value={priority} onChange={setPriority} />
           {error && <p className="text-sm text-danger">{error}</p>}
         </div>
       )}

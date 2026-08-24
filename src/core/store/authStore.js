@@ -72,6 +72,11 @@ export const useAuthStore = create(
         set({ user: null, token: null, refreshToken: null, error: null })
       },
 
+      /** Вызывается api-клиентом после успешного тихого обновления access-токена. */
+      setTokens({ accessToken, refreshToken }) {
+        set({ token: accessToken, ...(refreshToken ? { refreshToken } : {}) })
+      },
+
       /**
        * После первого входа бэк держит в name только первую букву почты —
        * этим методом человек один раз ставит своё настоящее имя, и оно

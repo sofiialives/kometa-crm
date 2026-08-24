@@ -31,9 +31,9 @@ export default function TasksPage() {
   const [activeDept, setActiveDept] = useState(null)
 
   useEffect(() => {
-    fetchTasks()
+    fetchTasks({ standalone: true })
     if (isAdmin) fetchDepartments()
-    const timer = setInterval(fetchTasks, REFRESH_MS)
+    const timer = setInterval(() => fetchTasks({ standalone: true }), REFRESH_MS)
     return () => clearInterval(timer)
   }, [fetchTasks, fetchDepartments, isAdmin])
 

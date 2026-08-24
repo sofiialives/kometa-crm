@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Button, Input, Modal, Textarea } from '../../shared/ui'
+import { Button, Input, Modal, Textarea, PriorityPicker } from '../../shared/ui'
 import { buildTodayDeadlineMsk, defaultMskTimeValue } from '../../utils/tasks'
 
 export function CreateTaskModal({ open, onClose, onSubmit }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [time, setTime] = useState(defaultMskTimeValue)
+  const [priority, setPriority] = useState('medium')
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
 
@@ -14,7 +15,7 @@ export function CreateTaskModal({ open, onClose, onSubmit }) {
   }, [open])
 
   function reset() {
-    setTitle(''); setDescription(''); setTime(defaultMskTimeValue()); setError(null)
+    setTitle(''); setDescription(''); setTime(defaultMskTimeValue()); setPriority('medium'); setError(null)
   }
 
   async function handleSubmit(e) {
@@ -30,7 +31,7 @@ export function CreateTaskModal({ open, onClose, onSubmit }) {
     }
 
     setLoading(true)
-    const res = await onSubmit({ title, description, deadline })
+    const res = await onSubmit({ title, description, deadline, priority })
     setLoading(false)
     if (res.ok) { reset(); onClose() } else { setError(res.error) }
   }
@@ -61,6 +62,7 @@ export function CreateTaskModal({ open, onClose, onSubmit }) {
           onChange={(e) => setTime(e.target.value)}
           required
         />
+        <PriorityPicker value={priority} onChange={setPriority} />
         {error && <p className="text-xs text-danger -mt-2">{error}</p>}
         <div className="flex items-center justify-end gap-3 pt-1">
           <Button type="button" variant="ghost" onClick={() => { reset(); onClose() }}>Отмена</Button>

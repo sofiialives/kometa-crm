@@ -12,10 +12,16 @@ export const useTasksStore = create((set, get) => ({
   loading: false,
   error: null,
 
-  async fetchTasks() {
+  /**
+   * standalone: true — только личные задачи (без привязки к работе из
+   * Иерархии). Личная доска «Задачи» всегда вызывает именно так — задачи
+   * из Иерархии туда не должны попадать никогда, даже себе.
+   */
+  async fetchTasks({ standalone } = {}) {
     set({ loading: true, error: null })
     try {
-      const tasks = await api.get('/tasks')
+      const query = standalone ? '?standalone=true' : ''
+      const tasks = await api.get(`/tasks${query}`)
       set({ tasks, loading: false })
       return { ok: true }
     } catch (e) {
@@ -24,17 +30,23 @@ export const useTasksStore = create((set, get) => ({
     }
   },
 
-  async createTask({ title, description, deadline, workId, ownerId }) {
+  /**
+   * ownerIds — массив: можно назначить задачу сразу нескольким людям
+   * (только из Иерархии, lead/admin). Бэк создаёт отдельную задачу на
+   * каждого и всегда возвращает массив, даже если исполнитель один.
+   */
+  async createTask({ title, description, deadline, workId, ownerIds, priority }) {
     set({ error: null })
     try {
-      const task = await api.post('/tasks', {
+      const created = await api.post('/tasks', {
         title,
         description: description || undefined,
         deadline,
+        priority,
         ...(workId ? { workId } : {}),
-        ...(ownerId ? { ownerId } : {}),
+        ...(ownerIds && ownerIds.length > 0 ? { ownerIds } : {}),
       })
-      set({ tasks: [task, ...get().tasks] })
+      set({ tasks: [...created, ...get().tasks] })
       return { ok: true }
     } catch (e) {
       set({ error: e.message })

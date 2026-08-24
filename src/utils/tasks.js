@@ -86,3 +86,15 @@ export function scopeHint(user) {
   if (user.role === 'lead') return 'Вы видите задачи всего отдела, но двигать можно только свои.'
   return 'Вы видите и двигаете только свои задачи.'
 }
+
+/** Единый источник подписей/цветов приоритета — переиспользуется везде,
+ * где задача создаётся или показывается (доска, Иерархия, карточки). */
+export const PRIORITY_OPTIONS = [
+  { value: 'low', label: 'Низкий', tone: 'neutral' },
+  { value: 'medium', label: 'Средний', tone: 'warn' },
+  { value: 'high', label: 'Высокий', tone: 'danger' },
+]
+
+export function priorityMeta(priority) {
+  return PRIORITY_OPTIONS.find((p) => p.value === priority) || PRIORITY_OPTIONS[1]
+}

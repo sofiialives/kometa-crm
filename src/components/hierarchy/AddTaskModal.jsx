@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Modal, Button, Input, Textarea, Select } from '../../shared/ui'
+import { Modal, Button, Input, Textarea, Checkbox, Avatar, PriorityPicker } from '../../shared/ui'
 import { displayName, membersOf } from '../../utils/admin'
 import { buildDeadlineMsk, defaultMskDateValue, defaultMskTimeValue } from '../../utils/tasks'
 
@@ -8,7 +8,8 @@ export function AddTaskModal({ work, currentUser, users, onClose, onSubmit }) {
   const [description, setDescription] = useState('')
   const [date, setDate] = useState('')
   const [time, setTime] = useState('')
-  const [ownerId, setOwnerId] = useState('')
+  const [ownerIds, setOwnerIds] = useState([])
+  const [priority, setPriority] = useState('medium')
   const [error, setError] = useState(null)
   const [saving, setSaving] = useState(false)
 
@@ -26,15 +27,21 @@ export function AddTaskModal({ work, currentUser, users, onClose, onSubmit }) {
     setDescription('')
     setDate(defaultMskDateValue())
     setTime(defaultMskTimeValue())
-    setOwnerId('')
+    setOwnerIds([])
+    setPriority('medium')
     setError(null)
   }, [work])
+
+  function toggleOwner(id) {
+    setError(null)
+    setOwnerIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+  }
 
   async function submit() {
     if (!title.trim()) return setError('Укажите название')
     // Админ не состоит ни в одном отделе — самоназначение для него
-    // не имеет смысла, сотрудника выбрать обязательно.
-    if (isAdmin && !ownerId) return setError('Выберите сотрудника')
+    // не имеет смысла, хотя бы одного сотрудника выбрать обязательно.
+    if (isAdmin && ownerIds.length === 0) return setError('Выберите хотя бы одного сотрудника')
 
     let deadline
     try {
@@ -48,8 +55,9 @@ export function AddTaskModal({ work, currentUser, users, onClose, onSubmit }) {
       title: title.trim(),
       description: description.trim(),
       deadline,
+      priority,
       workId: work.id,
-      ...(ownerId ? { ownerId } : {}),
+      ...(ownerIds.length > 0 ? { ownerIds } : {}),
     })
     setSaving(false)
     if (res?.ok) onClose()
@@ -105,15 +113,32 @@ export function AddTaskModal({ work, currentUser, users, onClose, onSubmit }) {
             />
           </div>
 
+          <PriorityPicker value={priority} onChange={setPriority} />
+
           {canPick ? (
-            <Select
-              label="Кому"
-              required={isAdmin}
-              placeholder={isAdmin ? 'Выберите сотрудника' : `Себе${currentUser ? ' · ' + displayName(currentUser) : ''}`}
-              value={ownerId}
-              onChange={(e) => { setOwnerId(e.target.value); setError(null) }}
-              options={pickable.map((u) => ({ value: u.id, label: displayName(u) + (u.position ? ' · ' + u.position : '') }))}
-            />
+            <div>
+              <p className="caption mb-1.5">
+                Кому {!isAdmin && <span className="text-ink-3">— никого не выбрано = себе ({displayName(currentUser)})</span>}
+              </p>
+              <div className="flex max-h-52 flex-col gap-1 overflow-y-auto rounded-lg border border-line p-2">
+                {pickable.map((u) => (
+                  <div
+                    key={u.id}
+                    className="flex items-center gap-2.5 rounded-md px-2 py-1.5 hover:bg-panel-2"
+                  >
+                    <Checkbox checked={ownerIds.includes(u.id)} onChange={() => toggleOwner(u.id)} />
+                    <Avatar name={displayName(u)} src={u.avatarUrl} color={u.avatarColor} size={22} />
+                    <span className="min-w-0 flex-1 truncate text-sm">
+                      {displayName(u)}
+                      {u.position && <span className="text-ink-3"> · {u.position}</span>}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              {ownerIds.length > 1 && (
+                <p className="caption mt-1.5">Каждому создастся своя отдельная задача — {ownerIds.length} шт.</p>
+              )}
+            </div>
           ) : (
             <p className="text-xs leading-relaxed text-ink-3">
               {isAdmin
