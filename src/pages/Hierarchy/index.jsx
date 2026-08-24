@@ -3,6 +3,7 @@ import { useAuthStore } from '../../core/store/authStore'
 import { useUsersStore } from '../../core/store/usersStore'
 import { useDepartmentsStore } from '../../core/store/departmentsStore'
 import { useWorksStore } from '../../core/store/worksStore'
+import { useClientsStore } from '../../core/store/clientsStore'
 import { useTasksStore } from '../../core/store/tasksStore'
 import { PageSection } from '../../widgets'
 import { Button, Card, EmptyState, Spinner, ConfirmModal } from '../../shared/ui'
@@ -40,6 +41,9 @@ export default function HierarchyPage() {
   const updateWork = useWorksStore((s) => s.updateWork)
   const deleteWork = useWorksStore((s) => s.deleteWork)
 
+  const clients = useClientsStore((s) => s.clients)
+  const fetchClients = useClientsStore((s) => s.fetchClients)
+
   const tasks = useTasksStore((s) => s.tasks)
   const tasksError = useTasksStore((s) => s.error)
   const fetchTasks = useTasksStore((s) => s.fetchTasks)
@@ -70,10 +74,11 @@ export default function HierarchyPage() {
   useEffect(() => {
     fetchDepartments()
     fetchWorks()
+    fetchClients()
     fetchTasks()
     // GET /users открыт только админу и главному, рядовому он вернёт 403.
     if (canManage) fetchUsers()
-  }, [fetchDepartments, fetchWorks, fetchTasks, fetchUsers, canManage])
+  }, [fetchDepartments, fetchWorks, fetchClients, fetchTasks, fetchUsers, canManage])
 
   const myDepartments = useMemo(
     () => visibleDepartments(departments, currentUser),
@@ -107,15 +112,10 @@ export default function HierarchyPage() {
     return sortWorks(relevant)
   }, [works, activeDept, canManage, currentUser, tasks])
 
-  const clients = useMemo(
-    () => [...new Set(works.map((w) => w.clientName).filter(Boolean))].sort(),
-    [works],
-  )
-
   const worksByClient = useMemo(() => {
     const map = new Map()
     for (const w of shownWorks) {
-      const key = w.clientName || 'Без клиента'
+      const key = w.client?.name || 'Без клиента'
       if (!map.has(key)) map.set(key, [])
       map.get(key).push(w)
     }
@@ -327,7 +327,7 @@ export default function HierarchyPage() {
         confirmText="Удалить"
         text={
           deletingWork
-            ? `«${deletingWork.title}» для клиента «${deletingWork.clientName}» пропадёт. Задачи останутся у сотрудников, но отвяжутся от этой работы.`
+            ? `«${deletingWork.title}» для клиента «${deletingWork.client?.name}» пропадёт. Задачи останутся у сотрудников, но отвяжутся от этой работы.`
             : ''
         }
       />

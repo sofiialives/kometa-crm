@@ -33,7 +33,7 @@ export function WorkCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="caption truncate">
-            Клиент · {work.clientName}
+            Клиент · {work.client?.name}
             {departmentName ? ' · ' + departmentName : ''}
           </p>
           <h3 className="mt-1 truncate text-base font-semibold tracking-tight">{work.title}</h3>

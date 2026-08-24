@@ -20,10 +20,10 @@ export const useWorksStore = create((set, get) => ({
     }
   },
 
-  async createWork({ clientName, title, departmentId, assignees }) {
+  async createWork({ clientId, title, departmentId, assignees }) {
     set({ error: null })
     try {
-      const work = await api.post('/works', { clientName, title, departmentId, assignees })
+      const work = await api.post('/works', { clientId, title, departmentId, assignees })
       set({ works: [work, ...get().works] })
       return { ok: true, work }
     } catch (e) {
@@ -49,24 +49,6 @@ export const useWorksStore = create((set, get) => ({
     try {
       await api.del(`/works/${id}`)
       set({ works: get().works.filter((w) => w.id !== id) })
-      return { ok: true }
-    } catch (e) {
-      set({ error: e.message })
-      return { ok: false, error: e.message }
-    }
-  },
-
-  /**
-   * Клиента как отдельной сущности в базе нет — это просто повторяющееся
-   * clientName внутри Work. Удаление сносит разом все работы этого
-   * клиента (во всех отделах, раз это делает только admin), их задачи
-   * не теряются — отвязываются от работы, как и при удалении одной.
-   */
-  async deleteClient(clientName) {
-    set({ error: null })
-    try {
-      await api.del(`/works/client/${encodeURIComponent(clientName)}`)
-      set({ works: get().works.filter((w) => w.clientName !== clientName) })
       return { ok: true }
     } catch (e) {
       set({ error: e.message })

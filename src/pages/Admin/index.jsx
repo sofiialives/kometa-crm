@@ -4,11 +4,13 @@ import { useUsersStore } from '../../core/store/usersStore'
 import { useDepartmentsStore } from '../../core/store/departmentsStore'
 import { useTasksStore } from '../../core/store/tasksStore'
 import { useWorksStore } from '../../core/store/worksStore'
+import { useClientsStore } from '../../core/store/clientsStore'
 import { PageSection } from '../../widgets'
 import { Button, Card, EmptyState, Spinner, ConfirmModal } from '../../shared/ui'
 import { DepartmentCard } from '../../components/admin/DepartmentCard'
 import { AllUsersTable } from '../../components/admin/AllUsersTable'
 import { ClientsList } from '../../components/admin/ClientsList'
+import { CreateClientModal } from '../../components/admin/CreateClientModal'
 import { CreateDepartmentModal } from '../../components/admin/CreateDepartmentModal'
 import { InviteUserModal } from '../../components/admin/InviteUserModal'
 import { MoveUserModal } from '../../components/admin/MoveUserModal'
@@ -36,7 +38,12 @@ export default function AdminPage() {
 
   const works = useWorksStore((s) => s.works)
   const fetchWorks = useWorksStore((s) => s.fetchWorks)
-  const deleteClient = useWorksStore((s) => s.deleteClient)
+
+  const clients = useClientsStore((s) => s.clients)
+  const fetchClients = useClientsStore((s) => s.fetchClients)
+  const createClient = useClientsStore((s) => s.createClient)
+  const updateClient = useClientsStore((s) => s.updateClient)
+  const deleteClient = useClientsStore((s) => s.deleteClient)
 
   const [deptOpen, setDeptOpen] = useState(false)
   const [inviteOpen, setInviteOpen] = useState(false)
@@ -44,6 +51,8 @@ export default function AdminPage() {
   const [dismissing, setDismissing] = useState(null)
   const [deletingDept, setDeletingDept] = useState(null)
   const [deletingClient, setDeletingClient] = useState(null)
+  const [addingClient, setAddingClient] = useState(false)
+  const [editingClient, setEditingClient] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   // Два быстрых клика подряд прочитали бы устаревший leadId из замыкания.
@@ -60,7 +69,8 @@ export default function AdminPage() {
     // Работы нужны, чтобы сказать про них до удаления отдела, а не после:
     // бэк такой отдел не отдаст, и человек узнавал об этом уже нажав «Удалить».
     fetchWorks()
-  }, [fetchUsers, fetchDepartments, fetchTasks, fetchWorks])
+    fetchClients()
+  }, [fetchUsers, fetchDepartments, fetchTasks, fetchWorks, fetchClients])
 
   async function refresh() {
     await Promise.all([fetchUsers(), fetchDepartments()])
@@ -156,21 +166,21 @@ export default function AdminPage() {
     return map
   }, [works])
 
-  // Клиент как сущность в базе не хранится — это просто повторяющееся
-  // clientName внутри Work. Список для админки собираем на лету из уже
-  // загруженных работ по всем отделам, отдельный эндпоинт не нужен.
-  const clients = useMemo(() => {
+  // Сколько у клиента работ и задач — считается на лету из уже
+  // загруженных works/tasks, отдельный эндпоинт под статистику не нужен.
+  const statsByClient = useMemo(() => {
     const map = {}
     for (const w of works) {
-      if (!map[w.clientName]) map[w.clientName] = { name: w.clientName, worksCount: 0, tasksCount: 0 }
-      map[w.clientName].worksCount += 1
+      if (!w.client) continue
+      if (!map[w.client.id]) map[w.client.id] = { worksCount: 0, tasksCount: 0 }
+      map[w.client.id].worksCount += 1
     }
     for (const t of tasks) {
       if (!t.workId) continue
       const work = works.find((w) => w.id === t.workId)
-      if (work && map[work.clientName]) map[work.clientName].tasksCount += 1
+      if (work?.client && map[work.client.id]) map[work.client.id].tasksCount += 1
     }
-    return Object.values(map).sort((a, b) => a.name.localeCompare(b.name))
+    return map
   }, [works, tasks])
 
   async function confirmDeleteDepartment() {
@@ -185,7 +195,7 @@ export default function AdminPage() {
   async function confirmDeleteClient() {
     if (!deletingClient) return
     setBusy(true)
-    const res = await deleteClient(deletingClient.name)
+    const res = await deleteClient(deletingClient.id)
     setBusy(false)
     setDeletingClient(null)
     if (!res.ok) setError(res.error)
@@ -255,7 +265,13 @@ export default function AdminPage() {
         />
       </div>
 
-      <ClientsList clients={clients} onDelete={setDeletingClient} />
+      <ClientsList
+        clients={clients}
+        statsByClient={statsByClient}
+        onAdd={() => setAddingClient(true)}
+        onEdit={setEditingClient}
+        onDelete={setDeletingClient}
+      />
 
       <CreateDepartmentModal
         open={deptOpen}
@@ -322,9 +338,22 @@ export default function AdminPage() {
         confirmText="Удалить"
         text={
           deletingClient
-            ? `Клиент «${deletingClient.name}» и все его работы (${deletingClient.worksCount}) пропадут без возможности отменить. Задачи сотрудников останутся, но отвяжутся от этих работ.`
+            ? `Клиент «${deletingClient.name}» и все его работы (${statsByClient[deletingClient.id]?.worksCount || 0}) пропадут без возможности отменить. Задачи сотрудников останутся, но отвяжутся от этих работ.`
             : ''
         }
+      />
+
+      <CreateClientModal
+        open={addingClient}
+        onClose={() => setAddingClient(false)}
+        onSubmit={createClient}
+      />
+
+      <CreateClientModal
+        open={Boolean(editingClient)}
+        client={editingClient}
+        onClose={() => setEditingClient(null)}
+        onSubmit={updateClient}
       />
     </PageSection>
   )

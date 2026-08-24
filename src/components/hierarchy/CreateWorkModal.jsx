@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Modal, Button, Input, Select } from '../../shared/ui'
-import { cx } from '../../shared/lib/cx'
 
 export function CreateWorkModal({ open, onClose, departments, clients, defaultDepartmentId, onSubmit }) {
-  const [clientName, setClientName] = useState('')
+  const [clientId, setClientId] = useState('')
   const [title, setTitle] = useState('')
   const [departmentId, setDepartmentId] = useState('')
   const [error, setError] = useState(null)
@@ -11,26 +10,20 @@ export function CreateWorkModal({ open, onClose, departments, clients, defaultDe
 
   useEffect(() => {
     if (!open) return
-    setClientName('')
+    setClientId('')
     setTitle('')
     setDepartmentId(defaultDepartmentId || departments[0]?.id || '')
     setError(null)
   }, [open, departments, defaultDepartmentId])
 
-  const suggestions = useMemo(() => {
-    const query = clientName.trim().toLowerCase()
-    if (!query) return clients.slice(0, 6)
-    return clients.filter((c) => c.toLowerCase().includes(query) && c.toLowerCase() !== query).slice(0, 6)
-  }, [clients, clientName])
-
   async function submit() {
-    if (!clientName.trim()) return setError('Укажите клиента')
+    if (!clientId) return setError('Выберите клиента')
     if (!title.trim()) return setError('Укажите название работы')
     if (!departmentId) return setError('Выберите отдел')
 
     setSaving(true)
     const res = await onSubmit({
-      clientName: clientName.trim(),
+      clientId,
       title: title.trim(),
       departmentId,
       assignees: [],
@@ -48,40 +41,26 @@ export function CreateWorkModal({ open, onClose, departments, clients, defaultDe
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>Отмена</Button>
-          <Button loading={saving} disabled={departments.length === 0} onClick={submit}>Создать</Button>
+          <Button loading={saving} disabled={departments.length === 0 || clients.length === 0} onClick={submit}>Создать</Button>
         </>
       }
     >
       {departments.length === 0 ? (
         <p className="text-sm text-ink-2">Сначала нужен хотя бы один отдел.</p>
+      ) : clients.length === 0 ? (
+        <p className="text-sm text-ink-2">
+          Клиентов пока нет — добавьте хотя бы одного в Админ-панели, прежде чем создавать работу.
+        </p>
       ) : (
         <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <Input
-              label="Клиент"
-              required
-              placeholder="Начните вводить название"
-              value={clientName}
-              onChange={(e) => { setClientName(e.target.value); setError(null) }}
-              hint="Можно выбрать из тех, с кем уже работали, или вписать нового"
-            />
-            {suggestions.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {suggestions.map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => setClientName(c)}
-                    className={cx(
-                      'rounded-full panel px-3 py-1.5 text-sm text-ink-2 transition-colors cursor-pointer',
-                      'hover:border-accent/50 hover:text-ink',
-                    )}
-                  >
-                    {c}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <Select
+            label="Клиент"
+            required
+            placeholder="Выберите клиента"
+            value={clientId}
+            onChange={(e) => { setClientId(e.target.value); setError(null) }}
+            options={clients.map((c) => ({ value: c.id, label: c.name }))}
+          />
 
           <Input
             label="Название работы"

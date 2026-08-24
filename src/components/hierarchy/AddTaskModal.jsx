@@ -78,7 +78,7 @@ export function AddTaskModal({ work, currentUser, users, onClose, onSubmit }) {
     >
       {!work ? null : (
         <div className="flex flex-col gap-4">
-          <p className="caption">{work.clientName} · {work.title}</p>
+          <p className="caption">{work.client?.name} · {work.title}</p>
 
           <Input
             label="Название"
