@@ -8,6 +8,7 @@ import { PageSection } from '../../widgets'
 import { Button, Card, EmptyState, Spinner, ConfirmModal } from '../../shared/ui'
 import { DepartmentCard } from '../../components/admin/DepartmentCard'
 import { AllUsersTable } from '../../components/admin/AllUsersTable'
+import { ClientsList } from '../../components/admin/ClientsList'
 import { CreateDepartmentModal } from '../../components/admin/CreateDepartmentModal'
 import { InviteUserModal } from '../../components/admin/InviteUserModal'
 import { MoveUserModal } from '../../components/admin/MoveUserModal'
@@ -35,12 +36,14 @@ export default function AdminPage() {
 
   const works = useWorksStore((s) => s.works)
   const fetchWorks = useWorksStore((s) => s.fetchWorks)
+  const deleteClient = useWorksStore((s) => s.deleteClient)
 
   const [deptOpen, setDeptOpen] = useState(false)
   const [inviteOpen, setInviteOpen] = useState(false)
   const [moving, setMoving] = useState(null)
   const [dismissing, setDismissing] = useState(null)
   const [deletingDept, setDeletingDept] = useState(null)
+  const [deletingClient, setDeletingClient] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   // Два быстрых клика подряд прочитали бы устаревший leadId из замыкания.
@@ -153,12 +156,38 @@ export default function AdminPage() {
     return map
   }, [works])
 
+  // Клиент как сущность в базе не хранится — это просто повторяющееся
+  // clientName внутри Work. Список для админки собираем на лету из уже
+  // загруженных работ по всем отделам, отдельный эндпоинт не нужен.
+  const clients = useMemo(() => {
+    const map = {}
+    for (const w of works) {
+      if (!map[w.clientName]) map[w.clientName] = { name: w.clientName, worksCount: 0, tasksCount: 0 }
+      map[w.clientName].worksCount += 1
+    }
+    for (const t of tasks) {
+      if (!t.workId) continue
+      const work = works.find((w) => w.id === t.workId)
+      if (work && map[work.clientName]) map[work.clientName].tasksCount += 1
+    }
+    return Object.values(map).sort((a, b) => a.name.localeCompare(b.name))
+  }, [works, tasks])
+
   async function confirmDeleteDepartment() {
     if (!deletingDept) return
     setBusy(true)
     const res = await deleteDepartment(deletingDept.id)
     setBusy(false)
     setDeletingDept(null)
+    if (!res.ok) setError(res.error)
+  }
+
+  async function confirmDeleteClient() {
+    if (!deletingClient) return
+    setBusy(true)
+    const res = await deleteClient(deletingClient.name)
+    setBusy(false)
+    setDeletingClient(null)
     if (!res.ok) setError(res.error)
   }
 
@@ -226,6 +255,8 @@ export default function AdminPage() {
         />
       </div>
 
+      <ClientsList clients={clients} onDelete={setDeletingClient} />
+
       <CreateDepartmentModal
         open={deptOpen}
         onClose={() => setDeptOpen(false)}
@@ -279,6 +310,21 @@ export default function AdminPage() {
         title="Удалить отдел?"
         confirmText="Удалить"
         text={deletingDept ? `Отдел «${deletingDept.name}» пропадёт без возможности отменить.` : ''}
+      />
+
+      <ConfirmModal
+        open={Boolean(deletingClient)}
+        onClose={() => setDeletingClient(null)}
+        onConfirm={confirmDeleteClient}
+        loading={busy}
+        danger
+        title="Удалить клиента?"
+        confirmText="Удалить"
+        text={
+          deletingClient
+            ? `Клиент «${deletingClient.name}» и все его работы (${deletingClient.worksCount}) пропадут без возможности отменить. Задачи сотрудников останутся, но отвяжутся от этих работ.`
+            : ''
+        }
       />
     </PageSection>
   )

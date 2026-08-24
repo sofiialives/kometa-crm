@@ -17,9 +17,7 @@ export function WorkCard({
   onToggleTask,
   onAddTask,
   onEditAssignees,
-  onEditTask,
-  onExtendTask,
-  onDeleteTask,
+  onOpenTask,
   onDeleteWork,
 }) {
   const badge = workBadge(work.status)
@@ -85,12 +83,9 @@ export function WorkCard({
                 key={t.id}
                 task={t}
                 canToggle={t.ownerId === currentUser?.id}
-                canManage={canManage}
                 busy={busyTaskId === t.id}
                 onToggle={onToggleTask}
-                onEdit={onEditTask}
-                onExtend={onExtendTask}
-                onDelete={onDeleteTask}
+                onOpen={onOpenTask}
               />
             ))}
           </div>

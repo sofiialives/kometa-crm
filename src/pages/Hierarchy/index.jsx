@@ -14,6 +14,7 @@ import { AddTaskModal } from '../../components/hierarchy/AddTaskModal'
 import { AssigneesModal } from '../../components/hierarchy/AssigneesModal'
 import { ExtendDeadlineModal } from '../../components/hierarchy/ExtendDeadlineModal'
 import { EditTaskModal } from '../../components/hierarchy/EditTaskModal'
+import { TaskDetailModal } from '../../components/hierarchy/TaskDetailModal'
 import { InviteUserModal } from '../../components/admin/InviteUserModal'
 import { MembersModal } from '../../components/hierarchy/MembersModal'
 import { ClientGroup } from '../../components/hierarchy/ClientGroup'
@@ -60,6 +61,7 @@ export default function HierarchyPage() {
   const [extendingTask, setExtendingTask] = useState(null)
   const [editingTask, setEditingTask] = useState(null)
   const [deletingTask, setDeletingTask] = useState(null)
+  const [openTask, setOpenTask] = useState(null)
   const [deletingWork, setDeletingWork] = useState(null)
   const [busyTaskId, setBusyTaskId] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -227,9 +229,7 @@ export default function HierarchyPage() {
                       onToggleTask={toggleTask}
                       onAddTask={setAddingTaskTo}
                       onEditAssignees={() => setEditingAssignees(w)}
-                      onEditTask={setEditingTask}
-                      onExtendTask={setExtendingTask}
-                      onDeleteTask={setDeletingTask}
+                      onOpenTask={setOpenTask}
                       onDeleteWork={setDeletingWork}
                     />
                   ))}
@@ -292,6 +292,18 @@ export default function HierarchyPage() {
         task={editingTask}
         onClose={() => setEditingTask(null)}
         onSubmit={editTask}
+      />
+
+      <TaskDetailModal
+        task={openTask}
+        onClose={() => setOpenTask(null)}
+        canManage={canManage}
+        canToggle={openTask?.ownerId === currentUser?.id}
+        busy={busyTaskId === openTask?.id}
+        onToggle={async (task) => { await toggleTask(task); setOpenTask(null) }}
+        onEdit={(task) => { setOpenTask(null); setEditingTask(task) }}
+        onExtend={(task) => { setOpenTask(null); setExtendingTask(task) }}
+        onDelete={(task) => { setOpenTask(null); setDeletingTask(task) }}
       />
 
       <ConfirmModal

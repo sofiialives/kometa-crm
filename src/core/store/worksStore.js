@@ -55,4 +55,22 @@ export const useWorksStore = create((set, get) => ({
       return { ok: false, error: e.message }
     }
   },
+
+  /**
+   * Клиента как отдельной сущности в базе нет — это просто повторяющееся
+   * clientName внутри Work. Удаление сносит разом все работы этого
+   * клиента (во всех отделах, раз это делает только admin), их задачи
+   * не теряются — отвязываются от работы, как и при удалении одной.
+   */
+  async deleteClient(clientName) {
+    set({ error: null })
+    try {
+      await api.del(`/works/client/${encodeURIComponent(clientName)}`)
+      set({ works: get().works.filter((w) => w.clientName !== clientName) })
+      return { ok: true }
+    } catch (e) {
+      set({ error: e.message })
+      return { ok: false, error: e.message }
+    }
+  },
 }))

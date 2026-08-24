@@ -1,16 +1,17 @@
 import { Avatar, Badge, Spinner } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
 import { taskBadge } from '../../utils/hierarchy'
-import { formatMskDate, formatMskTime } from '../../utils/tasks'
+import { priorityMeta } from '../../utils/tasks'
 
-const SPINE = { ok: 'spine--ok', warn: 'spine--danger', brand: 'spine--accent', neutral: 'spine--muted' }
+const PRIORITY_DOT = { neutral: 'bg-ink-3', warn: 'bg-warn', danger: 'bg-danger' }
 
-export function TaskLine({ task, canToggle, canManage, busy, onToggle, onEdit, onExtend, onDelete }) {
+export function TaskLine({ task, canToggle, busy, onToggle, onOpen }) {
   const badge = taskBadge(task)
+  const priority = priorityMeta(task.priority)
   const done = task.status === 'done'
 
   return (
-    <div className="group flex items-center gap-3 py-2">
+    <div className="flex items-center gap-3 py-2">
       <button
         onClick={() => canToggle && !busy && onToggle(task)}
         disabled={!canToggle || busy}
@@ -18,9 +19,7 @@ export function TaskLine({ task, canToggle, canManage, busy, onToggle, onEdit, o
         title={canToggle ? undefined : 'Отмечать можно только свои задачи'}
         className={cx(
           'grid h-5 w-5 shrink-0 place-items-center rounded-md border transition-colors duration-150',
-          done
-            ? 'border-transparent bg-accent'
-            : 'border-line-2 bg-panel-2',
+          done ? 'border-transparent bg-accent' : 'border-line-2 bg-panel-2',
           canToggle ? 'cursor-pointer hover:border-accent/60' : 'cursor-not-allowed opacity-60',
         )}
       >
@@ -37,57 +36,21 @@ export function TaskLine({ task, canToggle, canManage, busy, onToggle, onEdit, o
         )}
       </button>
 
-      <Avatar name={task.owner?.name} src={task.owner?.avatarUrl} color={task.owner?.avatarColor} size={22} title={task.owner?.name} />
-
-      <div className="min-w-0 flex-1">
-        <p className={cx('truncate text-sm', done ? 'text-ink-3 line-through' : 'text-ink-2')}>
+      <button
+        onClick={() => onOpen(task)}
+        className="flex min-w-0 flex-1 items-center gap-2.5 text-left cursor-pointer"
+      >
+        <Avatar name={task.owner?.name} src={task.owner?.avatarUrl} color={task.owner?.avatarColor} size={22} title={task.owner?.name} />
+        <span
+          className={cx('h-2 w-2 shrink-0 rounded-full', PRIORITY_DOT[priority.tone])}
+          title={`Приоритет: ${priority.label}`}
+        />
+        <p className={cx('min-w-0 flex-1 truncate text-sm', done ? 'text-ink-3 line-through' : 'text-ink-2')}>
           {task.title}
         </p>
-        {task.description && (
-          <p className="truncate text-xs text-ink-3" title={task.description}>
-            {task.description}
-          </p>
-        )}
-      </div>
+      </button>
 
-      <span className="caption shrink-0">{formatMskDate(task.deadline)} · {formatMskTime(task.deadline)}</span>
       <Badge tone={badge.tone} className="shrink-0">{badge.label}</Badge>
-
-      {canManage && (
-        <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-          <IconButton label="Изменить" onClick={() => onEdit(task)}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-            </svg>
-          </IconButton>
-          <IconButton label="Продлить срок" onClick={() => onExtend(task)}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" />
-            </svg>
-          </IconButton>
-          <IconButton label="Удалить задачу" danger onClick={() => onDelete(task)}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />
-            </svg>
-          </IconButton>
-        </div>
-      )}
     </div>
-  )
-}
-
-function IconButton({ label, danger, onClick, children }) {
-  return (
-    <button
-      onClick={onClick}
-      aria-label={label}
-      title={label}
-      className={cx(
-        'grid h-6 w-6 place-items-center rounded-md transition-colors cursor-pointer',
-        danger ? 'text-ink-3 hover:bg-danger/10 hover:text-danger' : 'text-ink-3 hover:bg-panel-2 hover:text-ink',
-      )}
-    >
-      {children}
-    </button>
   )
 }

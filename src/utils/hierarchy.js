@@ -18,7 +18,9 @@ export function taskBadge(task) {
   if (task.status === 'done') return { label: 'Готово', tone: 'ok' }
   if (isOverdue(task)) return { label: 'Срок прошёл', tone: 'warn' }
   if (task.status === 'progress') return { label: 'В процессе', tone: 'brand' }
-  return { label: 'Сегодня', tone: 'neutral' }
+  // Было "Сегодня" — но это статус "ещё не взято в работу", а не дата:
+  // в Иерархии задачи ставят и на будущие дни, не только на сегодня.
+  return { label: 'К выполнению', tone: 'neutral' }
 }
 
 export function taskCount(n) {

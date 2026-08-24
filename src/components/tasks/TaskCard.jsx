@@ -1,11 +1,12 @@
 import { Avatar, Badge, Button } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
-import { formatMskDate, formatMskTime, isTodayMsk } from '../../utils/tasks'
+import { formatMskDate, formatMskTime, isTodayMsk, priorityMeta } from '../../utils/tasks'
 
 export function TaskCard({ task, col, isMine, onMove, onOpen }) {
   const time = formatMskTime(task.deadline)
   const dateLabel = isTodayMsk(task.deadline) ? null : formatMskDate(task.deadline)
   const isDone = task.status === 'done'
+  const priority = priorityMeta(task.priority)
 
   return (
     <div
@@ -32,13 +33,16 @@ export function TaskCard({ task, col, isMine, onMove, onOpen }) {
             {time}
           </span>
         </div>
-        {isDone ? (
-          <Badge tone="neutral">Готово</Badge>
-        ) : task.overdue ? (
-          <Badge tone="danger">Срок прошёл</Badge>
-        ) : (
-          <Badge tone="brand">В работе</Badge>
-        )}
+        <div className="flex items-center gap-1.5">
+          <Badge tone={priority.tone}>{priority.label}</Badge>
+          {isDone ? (
+            <Badge tone="neutral">Готово</Badge>
+          ) : task.overdue ? (
+            <Badge tone="danger">Срок прошёл</Badge>
+          ) : (
+            <Badge tone="brand">В работе</Badge>
+          )}
+        </div>
       </div>
 
       {isMine && (col.prev || col.next) && (
