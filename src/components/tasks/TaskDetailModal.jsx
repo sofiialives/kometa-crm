@@ -38,7 +38,7 @@ export function TaskDetailModal({ task, onClose, isMine, onMove }) {
           )}
         </div>
 
-        {isMine && col && (col.prev || col.next) && (
+        {isMine && !task.overdue && col && (col.prev || col.next) && (
           <div className="flex items-center gap-3 pt-1">
             {col.prev && (
               <Button variant="ghost" onClick={() => { onMove(task.id, col.prev); onClose() }}>← Назад</Button>

@@ -45,7 +45,7 @@ export function TaskCard({ task, col, isMine, onMove, onOpen }) {
         </div>
       </div>
 
-      {isMine && (col.prev || col.next) && (
+      {isMine && !task.overdue && (col.prev || col.next) && (
         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           {col.prev && (
             <Button size="sm" variant="ghost" onClick={() => onMove(task.id, col.prev)}>←</Button>
