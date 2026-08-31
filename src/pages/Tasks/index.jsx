@@ -50,7 +50,11 @@ export default function TasksPage() {
     // мгновение мелькают чужие данные из Иерархии — а при медленной
     // сети не на мгновение. Поэтому здесь ещё раз фильтруем на глазах,
     // а не доверяем слепо тому, что сейчас лежит в общем сторе.
-    const standaloneOnly = tasks.filter((t) => !t.workId)
+    // origin, а не workId — workId специально обнуляется на бэке при
+    // удалении работы/клиента (чтобы не терять историю задач), и тогда
+    // задача из Иерархии выглядит как личная. origin ставится один раз
+    // при создании и не меняется, на него можно полагаться всегда.
+    const standaloneOnly = tasks.filter((t) => t.origin === 'personal')
     if (!isAdmin) return standaloneOnly
     if (!activeDept) return []
     if (activeDept === MINE) return standaloneOnly.filter((t) => t.ownerId === currentUser?.id)
