@@ -42,10 +42,19 @@ export default function TasksPage() {
   }, [isAdmin, activeDept])
 
   const visibleTasks = useMemo(() => {
-    if (!isAdmin) return tasks
+    // Задачник и Иерархия читают один и тот же tasks в сторе — если
+    // админ до этого заходил в Иерархию, там fetchTasks() (без
+    // standalone) успел перезаписать общий список ВСЕМИ задачами,
+    // включая привязанные к работам. Пока не отработает свежий
+    // fetchTasks({standalone:true}) с этой страницы, на экране на
+    // мгновение мелькают чужие данные из Иерархии — а при медленной
+    // сети не на мгновение. Поэтому здесь ещё раз фильтруем на глазах,
+    // а не доверяем слепо тому, что сейчас лежит в общем сторе.
+    const standaloneOnly = tasks.filter((t) => !t.workId)
+    if (!isAdmin) return standaloneOnly
     if (!activeDept) return []
-    if (activeDept === MINE) return tasks.filter((t) => t.ownerId === currentUser?.id)
-    return tasks.filter((t) => t.departmentId === activeDept)
+    if (activeDept === MINE) return standaloneOnly.filter((t) => t.ownerId === currentUser?.id)
+    return standaloneOnly.filter((t) => t.departmentId === activeDept)
   }, [tasks, isAdmin, activeDept, currentUser])
 
   const tabs = useMemo(
