@@ -2,7 +2,7 @@ import { Avatar, Badge, Button, Modal } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
 import { COLUMNS, formatMskDate, formatMskTime } from '../../utils/tasks'
 
-export function TaskDetailModal({ task, onClose, isMine, onMove }) {
+export function TaskDetailModal({ task, onClose, isMine, isAdminDiary, onMove, onEdit, onExtend, onDelete }) {
   if (!task) return null
   const col = COLUMNS.find((c) => c.key === task.status)
   const isDone = task.status === 'done'
@@ -38,7 +38,7 @@ export function TaskDetailModal({ task, onClose, isMine, onMove }) {
           )}
         </div>
 
-        {isMine && !task.overdue && col && (col.prev || col.next) && (
+        {isMine && (!task.overdue || isAdminDiary) && col && (col.prev || col.next) && (
           <div className="flex items-center gap-3 pt-1">
             {col.prev && (
               <Button variant="ghost" onClick={() => { onMove(task.id, col.prev); onClose() }}>← Назад</Button>
@@ -46,6 +46,16 @@ export function TaskDetailModal({ task, onClose, isMine, onMove }) {
             {col.next && (
               <Button onClick={() => { onMove(task.id, col.next); onClose() }}>→ {col.nextLabel}</Button>
             )}
+          </div>
+        )}
+
+        {isAdminDiary && (
+          <div className="flex flex-wrap items-center gap-2 border-t border-line pt-4">
+            <Button variant="ghost" onClick={() => { onEdit(task); onClose() }}>Изменить</Button>
+            <Button variant="ghost" onClick={() => { onExtend(task); onClose() }}>Перенести срок</Button>
+            <Button variant="ghost" className="text-danger hover:text-danger" onClick={() => { onDelete(task); onClose() }}>
+              Удалить
+            </Button>
           </div>
         )}
       </div>

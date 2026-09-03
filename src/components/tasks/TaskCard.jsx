@@ -2,7 +2,7 @@ import { Avatar, Badge, Button } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
 import { formatMskDate, formatMskTime, isTodayMsk, priorityMeta } from '../../utils/tasks'
 
-export function TaskCard({ task, col, isMine, onMove, onOpen }) {
+export function TaskCard({ task, col, isMine, isAdminDiary, onMove, onOpen }) {
   const time = formatMskTime(task.deadline)
   const dateLabel = isTodayMsk(task.deadline) ? null : formatMskDate(task.deadline)
   const isDone = task.status === 'done'
@@ -45,7 +45,7 @@ export function TaskCard({ task, col, isMine, onMove, onOpen }) {
         </div>
       </div>
 
-      {isMine && !task.overdue && (col.prev || col.next) && (
+      {isMine && (!task.overdue || isAdminDiary) && (col.prev || col.next) && (
         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           {col.prev && (
             <Button size="sm" variant="ghost" onClick={() => onMove(task.id, col.prev)}>←</Button>

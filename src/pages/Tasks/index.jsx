@@ -3,11 +3,13 @@ import { useAuthStore } from '../../core/store/authStore'
 import { useTasksStore } from '../../core/store/tasksStore'
 import { useDepartmentsStore } from '../../core/store/departmentsStore'
 import { PageSection } from '../../widgets'
-import { Card, Button, EmptyState } from '../../shared/ui'
+import { Card, Button, EmptyState, ConfirmModal } from '../../shared/ui'
 import { DeptTabs } from '../../components/tasks/DeptTabs'
 import { Column } from '../../components/tasks/Column'
 import { CreateTaskModal } from '../../components/tasks/CreateTaskModal'
 import { TaskDetailModal } from '../../components/tasks/TaskDetailModal'
+import { EditTaskModal } from '../../components/hierarchy/EditTaskModal'
+import { ExtendDeadlineModal } from '../../components/hierarchy/ExtendDeadlineModal'
 import { COLUMNS, REFRESH_MS, scopeHint } from '../../utils/tasks'
 
 const MINE = '__mine__'
@@ -19,6 +21,9 @@ export default function TasksPage() {
   const fetchTasks = useTasksStore((s) => s.fetchTasks)
   const createTask = useTasksStore((s) => s.createTask)
   const moveTask = useTasksStore((s) => s.moveTask)
+  const editTask = useTasksStore((s) => s.editTask)
+  const extendDeadline = useTasksStore((s) => s.extendDeadline)
+  const removeTask = useTasksStore((s) => s.removeTask)
 
   const departments = useDepartmentsStore((s) => s.departments)
   const departmentsLoading = useDepartmentsStore((s) => s.loading)
@@ -28,6 +33,10 @@ export default function TasksPage() {
 
   const [createOpen, setCreateOpen] = useState(false)
   const [openTask, setOpenTask] = useState(null)
+  const [editingTask, setEditingTask] = useState(null)
+  const [extendingTask, setExtendingTask] = useState(null)
+  const [deletingTask, setDeletingTask] = useState(null)
+  const [deleteBusy, setDeleteBusy] = useState(false)
   const [activeDept, setActiveDept] = useState(null)
 
   useEffect(() => {
@@ -77,6 +86,21 @@ export default function TasksPage() {
   // реально выбрана вкладка отдела, а не своя.
   const noDepartments = isAdmin && activeDept !== MINE && !departmentsLoading && departments.length === 0
 
+  // Личный дневник: у админа в его собственном "Мои задачи" — без
+  // авто-удаления по ночам, с полным редактированием и удалением, и
+  // стрелки переноса не блокируются просрочкой. У остальных сотрудников
+  // ничего из этого нет — доска работает как и раньше.
+  const isAdminDiary = (task) => isAdmin && task.ownerId === currentUser?.id
+
+  async function confirmDelete() {
+    if (!deletingTask) return
+    setDeleteBusy(true)
+    const res = await removeTask(deletingTask.id)
+    setDeleteBusy(false)
+    setDeletingTask(null)
+    if (!res.ok) window.alert(res.error || 'Не удалось удалить задачу')
+  }
+
   return (
     <PageSection
       pill="Задачи"
@@ -122,7 +146,26 @@ export default function TasksPage() {
         task={openTask}
         onClose={() => setOpenTask(null)}
         isMine={openTask?.ownerId === currentUser?.id}
+        isAdminDiary={openTask ? isAdminDiary(openTask) : false}
         onMove={moveTask}
+        onEdit={setEditingTask}
+        onExtend={setExtendingTask}
+        onDelete={setDeletingTask}
+      />
+
+      <EditTaskModal task={editingTask} onClose={() => setEditingTask(null)} onSubmit={editTask} />
+
+      <ExtendDeadlineModal task={extendingTask} onClose={() => setExtendingTask(null)} onSubmit={extendDeadline} />
+
+      <ConfirmModal
+        open={Boolean(deletingTask)}
+        onClose={() => setDeletingTask(null)}
+        onConfirm={confirmDelete}
+        loading={deleteBusy}
+        danger
+        title="Удалить задачу?"
+        confirmText="Удалить"
+        text={deletingTask ? `«${deletingTask.title}» пропадёт без возможности отменить.` : ''}
       />
     </PageSection>
   )

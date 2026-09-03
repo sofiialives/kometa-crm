@@ -18,6 +18,7 @@ export function Column({ col, tasks, loading, currentUser, onMove, onOpen }) {
           task={t}
           col={col}
           isMine={t.ownerId === currentUser?.id}
+          isAdminDiary={currentUser?.role === 'admin' && t.ownerId === currentUser?.id}
           onMove={onMove}
           onOpen={onOpen}
         />
