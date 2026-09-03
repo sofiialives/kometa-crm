@@ -25,6 +25,8 @@ export default function AdminPage() {
   const fetchUsers = useUsersStore((s) => s.fetchUsers)
   const updateUser = useUsersStore((s) => s.updateUser)
   const deactivateUser = useUsersStore((s) => s.deactivateUser)
+  const taskStats = useUsersStore((s) => s.taskStats)
+  const fetchTaskStats = useUsersStore((s) => s.fetchTaskStats)
 
   const departments = useDepartmentsStore((s) => s.departments)
   const departmentsLoading = useDepartmentsStore((s) => s.loading)
@@ -64,24 +66,31 @@ export default function AdminPage() {
     fetchDepartments()
     // Админ видит все задачи (без scope) — этого достаточно, чтобы
     // посчитать готово/просрочено на каждого сотрудника без отдельного
-    // эндпоинта под статистику.
+    // эндпоинта под статистику. Но это только СЕГОДНЯШНИЕ, ещё не
+    // удалённые ночной чисткой — накопленное за прошлые дни отдельно
+    // подтягиваем из копилки (fetchTaskStats).
     fetchTasks()
+    fetchTaskStats()
     // Работы нужны, чтобы сказать про них до удаления отдела, а не после:
     // бэк такой отдел не отдаст, и человек узнавал об этом уже нажав «Удалить».
     fetchWorks()
     fetchClients()
-  }, [fetchUsers, fetchDepartments, fetchTasks, fetchWorks, fetchClients])
+  }, [fetchUsers, fetchDepartments, fetchTasks, fetchTaskStats, fetchWorks, fetchClients])
 
   async function refresh() {
     await Promise.all([fetchUsers(), fetchDepartments()])
   }
 
-  // done — сколько задач сотрудник довёл до статуса "done" (когда угодно,
-  // не только сегодня); overdue — сколько сейчас просрочено и не закрыто.
-  // Оба числа считаются на лету из уже загруженного списка задач, отдельный
-  // эндпоинт под это не нужен.
+  // done — сколько задач сотрудник довёл до статуса "done" за всё время;
+  // overdue — сколько всего было просрочено и не закрыто за всё время.
+  // Копилка (taskStats) хранит то, что уже удалила ночная чистка Задачника,
+  // сюда прибавляем ещё не удалённые сегодняшние — иначе к вечеру перед
+  // самой чисткой счётчик на секунду "отстаёт" от реальности.
   const statsByUser = useMemo(() => {
     const map = {}
+    for (const [userId, s] of Object.entries(taskStats)) {
+      map[userId] = { done: s.doneCount, overdue: s.overdueCount }
+    }
     for (const t of tasks) {
       if (!t.ownerId) continue
       if (!map[t.ownerId]) map[t.ownerId] = { done: 0, overdue: 0 }
@@ -89,7 +98,7 @@ export default function AdminPage() {
       else if (t.overdue) map[t.ownerId].overdue += 1
     }
     return map
-  }, [tasks])
+  }, [tasks, taskStats])
 
   const leadDepartmentOf = (user) => departments.find((d) => d.leadId === user.id) || null
 

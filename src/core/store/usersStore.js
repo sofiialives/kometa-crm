@@ -5,6 +5,9 @@ export const useUsersStore = create((set, get) => ({
   users: [],
   loading: false,
   error: null,
+  // Копилка done/overdue на каждого сотрудника, которая переживает
+  // ночную чистку Задачника — { [userId]: { doneCount, overdueCount } }.
+  taskStats: {},
 
   async fetchUsers() {
     set({ loading: true, error: null })
@@ -14,6 +17,18 @@ export const useUsersStore = create((set, get) => ({
       return { ok: true }
     } catch (e) {
       set({ error: e.message, loading: false })
+      return { ok: false, error: e.message }
+    }
+  },
+
+  async fetchTaskStats() {
+    try {
+      const rows = await api.get('/users/task-stats')
+      const taskStats = {}
+      for (const r of rows) taskStats[r.userId] = r
+      set({ taskStats })
+      return { ok: true }
+    } catch (e) {
       return { ok: false, error: e.message }
     }
   },
