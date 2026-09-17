@@ -127,6 +127,7 @@ export default function TasksPage() {
               currentUser={currentUser}
               onMove={moveTask}
               onOpen={setOpenTask}
+              splitFuture={col.key === 'today'}
             />
           ))}
         </div>

@@ -1,32 +1,62 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Button, Input, Modal, Textarea, PriorityPicker } from '../../shared/ui'
-import { buildTodayDeadlineMsk, defaultMskTimeValue } from '../../utils/tasks'
+import { cx } from '../../shared/lib/cx'
+import {
+  buildDeadlineMsk,
+  deadlineDayOptions,
+  defaultMskTimeValue,
+  isPastMsk,
+  mskDateValueIn,
+} from '../../utils/tasks'
 
 export function CreateTaskModal({ open, onClose, onSubmit }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [date, setDate] = useState(mskDateValueIn)
   const [time, setTime] = useState(defaultMskTimeValue)
   const [priority, setPriority] = useState('medium')
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
 
+  // Дни считаются от текущего момента, поэтому пересчитываем их при каждом
+  // открытии: вкладку могли не закрывать с вечера, и «сегодня» уже другое.
+  const days = useMemo(() => deadlineDayOptions(), [open])
+
+  // Состояние отстаёт на кадр: список дней пересчитывается уже в рендере, а
+  // сброс даты — в эффекте после него. Без запасного варианта подсказка успеет
+  // моргнуть пустотой у того, кто не закрывал вкладку с вечера.
+  const chosen = days.find((d) => d.value === date) || days[0]
+  const past = isPastMsk(chosen.value, time)
+  const hint = past
+    ? 'Это время уже прошло — задача сразу получит пометку «срок прошёл»'
+    : `Срок: ${chosen.label.toLowerCase()}, ${chosen.full}, до ${time}`
+
   useEffect(() => {
-    if (open) setTime(defaultMskTimeValue())
+    if (open) {
+      setDate(mskDateValueIn())
+      setTime(defaultMskTimeValue())
+    }
   }, [open])
 
   function reset() {
-    setTitle(''); setDescription(''); setTime(defaultMskTimeValue()); setPriority('medium'); setError(null)
+    setTitle(''); setDescription(''); setDate(mskDateValueIn()); setTime(defaultMskTimeValue()); setPriority('medium'); setError(null)
   }
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError(null)
 
+    // Ровно сценарий, ради которого всё затевалось: окно открыли вечером, а
+    // отправили уже за полночь. Выбранный день к этому моменту вчерашний —
+    // задача родилась бы просроченной, поэтому подтягиваем к сегодняшнему.
+    const today = mskDateValueIn()
+    const day = chosen.value < today ? today : chosen.value
+
     let deadline
     try {
-      deadline = buildTodayDeadlineMsk(time)
+      deadline = buildDeadlineMsk(day, time)
     } catch {
-      setError('Укажите корректный срок (часы и минуты)')
+      setError('Укажите корректный срок (день, часы и минуты)')
       return
     }
 
@@ -54,10 +84,31 @@ export function CreateTaskModal({ open, onClose, onSubmit }) {
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
         />
+        <div className="flex flex-col gap-2">
+          <span className="caption select-none">День</span>
+          <div className="flex flex-wrap gap-2">
+            {days.map((d) => (
+              <button
+                key={d.value}
+                type="button"
+                onClick={() => setDate(d.value)}
+                className={cx(
+                  'rounded-[8px] border px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer',
+                  chosen.value === d.value
+                    ? 'border-accent bg-accent text-on-accent'
+                    : 'border-line-2 text-ink-2 hover:border-accent hover:text-ink',
+                )}
+              >
+                {d.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <Input
           type="time"
-          label="Срок на сегодня (МСК)"
-          hint="После этого времени задача пометится «срок прошёл»"
+          label="Время (МСК)"
+          hint={hint}
           value={time}
           onChange={(e) => setTime(e.target.value)}
           required

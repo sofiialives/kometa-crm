@@ -73,11 +73,66 @@ export function formatMskDate(iso) {
   return new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', timeZone: MSK_TZ })
 }
 
+/**
+ * На сколько дней вперёд разрешено ставить задачу на личной доске.
+ * Ноль — сегодня, поэтому всего вариантов DAYS_AHEAD + 1.
+ */
+export const DAYS_AHEAD = 3
+
+/** Дата по МСК, сдвинутая на N дней вперёд, в формате YYYY-MM-DD. */
+export function mskDateValueIn(days = 0) {
+  const d = new Date(Date.now() + MSK_OFFSET_MS + days * 24 * 60 * 60 * 1000)
+  const y = d.getUTCFullYear()
+  const mo = String(d.getUTCMonth() + 1).padStart(2, '0')
+  const da = String(d.getUTCDate()).padStart(2, '0')
+  return `${y}-${mo}-${da}`
+}
+
+/**
+ * Дни, на которые можно поставить задачу: сегодня и ещё три вперёд.
+ * Короткая подпись для кнопки, полная — для строки «Срок: …», чтобы
+ * человек видел не только «завтра», но и само число.
+ */
+export function deadlineDayOptions() {
+  const names = ['Сегодня', 'Завтра', 'Послезавтра']
+  return Array.from({ length: DAYS_AHEAD + 1 }, (_, i) => {
+    const value = mskDateValueIn(i)
+    const full = new Date(value + 'T12:00:00Z').toLocaleDateString('ru-RU', {
+      day: 'numeric', month: 'long', timeZone: MSK_TZ,
+    })
+    return { value, label: names[i] || full, full }
+  })
+}
+
+/** Прошло ли уже это время сегодняшнего дня по МСК. */
+export function isPastMsk(dateStr, hhmm) {
+  if (!dateStr || !/^\d{1,2}:\d{2}/.test(hhmm || '')) return false
+  try {
+    return new Date(buildDeadlineMsk(dateStr, hhmm)).getTime() < Date.now()
+  } catch {
+    return false
+  }
+}
+
 /** Совпадает ли дата задачи (по МСК) с сегодняшним днём (по МСК). */
 export function isTodayMsk(iso) {
   const target = new Date(iso).toLocaleDateString('ru-RU', { timeZone: MSK_TZ })
   const today = new Date().toLocaleDateString('ru-RU', { timeZone: MSK_TZ })
   return target === today
+}
+
+/**
+ * Срок приходится на день позже сегодняшнего (по МСК). Нужен доске:
+ * колонка «Сегодня» не должна врать счётчиком, когда в ней лежат задачи,
+ * поставленные наперёд.
+ */
+export function isFutureDayMsk(iso) {
+  return mskDayKey(iso) > mskDayKey(Date.now())
+}
+
+function mskDayKey(value) {
+  const d = new Date(new Date(value).getTime() + MSK_OFFSET_MS)
+  return d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate()
 }
 
 export function scopeHint(user) {
