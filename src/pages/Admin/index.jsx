@@ -81,11 +81,6 @@ export default function AdminPage() {
     await Promise.all([fetchUsers(), fetchDepartments()])
   }
 
-  // done — сколько задач сотрудник довёл до статуса "done" за всё время;
-  // overdue — сколько всего было просрочено и не закрыто за всё время.
-  // Копилка (taskStats) хранит то, что уже удалила ночная чистка Задачника,
-  // сюда прибавляем ещё не удалённые сегодняшние — иначе к вечеру перед
-  // самой чисткой счётчик на секунду "отстаёт" от реальности.
   const statsByUser = useMemo(() => {
     const map = {}
     for (const [userId, s] of Object.entries(taskStats)) {
