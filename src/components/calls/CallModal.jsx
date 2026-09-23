@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Button, Input, Modal, Textarea } from '../../shared/ui'
-import { buildDeadlineMsk, defaultMskTimeValue, isPastMsk, mskDateValueIn, splitDeadlineMsk, MSK_TZ } from '../../utils/tasks'
+import { Avatar, Button, DatePicker, Input, Modal, Textarea } from '../../shared/ui'
+import { buildDeadlineMsk, defaultMskTimeValue, isPastMsk, mskDateValueIn, splitDeadlineMsk } from '../../utils/tasks'
+import { todayKey } from '../../utils/calls'
 
 /**
  * Одно окно и на создание, и на правку: поля те же, и держать две почти
@@ -10,7 +11,7 @@ import { buildDeadlineMsk, defaultMskTimeValue, isPastMsk, mskDateValueIn, split
  * Правка нужна именно под перенос: звонок сдвинули на час или на день,
  * и человек меняет время сам, не заводя карточку заново.
  */
-export function CallModal({ open, call, presetDay, canManage = true, onClose, onSubmit, onDelete }) {
+export function CallModal({ open, call, presetDay, canManage = true, author, onClose, onSubmit, onDelete }) {
   const editing = Boolean(call)
 
   const [title, setTitle] = useState('')
@@ -41,10 +42,13 @@ export function CallModal({ open, call, presetDay, canManage = true, onClose, on
   }, [open, call, presetDay])
 
   const past = isPastMsk(date, time)
-  const whenLabel = safeWhenLabel(date, time)
-  const hint = past
-    ? 'Это время уже прошло — звонок сразу получит пометку «прошёл» и уйдёт ночью'
-    : whenLabel
+  const hint = past ? 'Это время уже прошло — звонок сразу получит пометку «прошёл» и уйдёт ночью' : ''
+
+  // У существующего звонка автор и отдел приходят с сервера; у нового
+  // показываем того, на кого он запишется, — чтобы было видно сразу,
+  // а не после создания карточки.
+  const who = call?.owner?.name?.trim() || author?.name || 'Вы'
+  const whereFrom = call?.department?.name || author?.department || null
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -66,13 +70,24 @@ export function CallModal({ open, call, presetDay, canManage = true, onClose, on
   }
 
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title={editing ? 'Звонок' : 'Новый звонок'}
-      size="sm"
-    >
+    <Modal open={open} onClose={onClose} title={editing ? 'Звонок' : 'Новый звонок'} size="sm">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div className="flex items-center gap-2.5 rounded-[--radius-field] bg-panel-2 px-3 py-2.5">
+          <Avatar
+            name={who}
+            src={call?.owner?.avatarUrl || author?.avatarUrl}
+            color={call?.owner?.avatarColor || author?.avatarColor}
+            size={26}
+          />
+          <div className="min-w-0 leading-tight">
+            <p className="text-sm font-medium truncate">{who}</p>
+            <p className="caption truncate">
+              {editing ? 'поставил звонок' : 'звонок запишется на вас'}
+              {whereFrom && ` · ${whereFrom}`}
+            </p>
+          </div>
+        </div>
+
         <Input
           label="С кем звонок"
           placeholder="Например: Ozon, обсудить бюджет"
@@ -83,16 +98,20 @@ export function CallModal({ open, call, presetDay, canManage = true, onClose, on
           autoFocus
         />
 
-        <div className="grid grid-cols-2 gap-3">
-          <Input
-            type="date"
+        {/* Дню нужно больше места: «ср, 23 сентября» в половине ширины
+            обрезалось многоточием, а времени хватает и меньшего поля. */}
+        <div className="grid grid-cols-5 gap-3">
+          <DatePicker
+            className="col-span-3"
             label="День"
             value={date}
-            onChange={(e) => setDate(e.target.value)}
+            onChange={setDate}
+            today={todayKey()}
             disabled={!canManage}
             required
           />
           <Input
+            className="col-span-2"
             type="time"
             label="Время (МСК)"
             value={time}
@@ -102,7 +121,7 @@ export function CallModal({ open, call, presetDay, canManage = true, onClose, on
           />
         </div>
 
-        {hint && <p className="caption -mt-1">{hint}</p>}
+        {hint && <p className="text-xs text-warn leading-snug -mt-1">{hint}</p>}
 
         <Textarea
           label="Заметка"
@@ -131,15 +150,4 @@ export function CallModal({ open, call, presetDay, canManage = true, onClose, on
       </form>
     </Modal>
   )
-}
-
-function safeWhenLabel(date, time) {
-  if (!date || !time) return ''
-  try {
-    const d = new Date(`${date}T12:00:00Z`)
-    const when = d.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long', timeZone: MSK_TZ })
-    return `Звонок: ${when}, в ${time}`
-  } catch {
-    return ''
-  }
 }

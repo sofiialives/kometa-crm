@@ -81,6 +81,11 @@ function monthOf(full) {
   return full.replace(/^\d+\s/, '')
 }
 
+/** Звонок стоит на сегодня (по МСК). */
+export function isTodayCall(iso) {
+  return callDayKey(iso) === todayKey()
+}
+
 /** Звонок уже прошёл — карточка гаснет и получает пометку. Ночью такие удаляются. */
 export function isPastCall(iso) {
   return new Date(iso).getTime() < Date.now()
@@ -96,4 +101,16 @@ export function callsScopeHint(user) {
   if (user.role === 'admin') return 'Свои звонки и вкладка со звонками всего агентства.'
   if (user.role === 'lead') return 'Вы видите звонки всего отдела, но менять можно только свои.'
   return 'Вы видите и ставите только свои звонки.'
+}
+
+/**
+ * «Николай Волков» → «Николай В.». В колонку шириной 159px полное имя не
+ * помещается и обрезается многоточием на середине фамилии — сокращение
+ * читается лучше, чем «Николай Во…». Полное имя остаётся в подсказке.
+ */
+export function shortName(full) {
+  const parts = String(full || '').trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return 'Без имени'
+  if (parts.length === 1) return parts[0]
+  return `${parts[0]} ${parts[1][0].toUpperCase()}.`
 }

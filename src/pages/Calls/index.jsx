@@ -88,6 +88,20 @@ export default function CallsPage() {
     setModalOpen(true)
   }
 
+  // Отдел текущего человека во фронте нигде не лежит — при входе сервер
+  // отдаёт только departmentId. Берём название из его же звонков: там
+  // отдел приходит с сервера. До первого звонка подписи отдела не будет,
+  // и это честнее, чем показывать идентификатор.
+  const author = useMemo(() => {
+    const own = calls.find((c) => c.ownerId === currentUser?.id && c.department?.name)
+    return {
+      name: currentUser?.name,
+      avatarUrl: currentUser?.avatarUrl,
+      avatarColor: currentUser?.avatarColor,
+      department: own?.department?.name || null,
+    }
+  }, [calls, currentUser])
+
   // Бэк проверяет права сам; здесь только прячем кнопки, которые всё
   // равно получили бы отказ. Главный отдела видит звонки лишь своего
   // отдела, поэтому отдельная сверка departmentId тут не нужна.
@@ -130,17 +144,23 @@ export default function CallsPage() {
         )}
       </div>
 
-      <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
-        {days.map((day) => (
-          <DayColumn
-            key={day.key}
-            day={day}
-            groups={groupsFor(day.key)}
-            showOwner={groupByDept || currentUser?.role === 'lead'}
-            onOpen={openCall}
-            onAdd={openCreate}
-          />
-        ))}
+      {/* Колонкам задан жёсткий минимум ширины: при добавлении звонков они
+          больше не сжимаются, а неделя уезжает в горизонтальную прокрутку.
+          На широком экране 1098px влезают целиком, и прокрутки нет вовсе.
+          На телефоне семь колонок в ряд нечитаемы — там дни идут стопкой. */}
+      <div className="sm:overflow-x-auto sm:pb-1">
+        <div className="flex flex-col gap-2.5 sm:grid sm:grid-cols-7 sm:gap-2 sm:min-w-[1098px]">
+          {days.map((day) => (
+            <DayColumn
+              key={day.key}
+              day={day}
+              groups={groupsFor(day.key)}
+              showOwner={groupByDept || currentUser?.role === 'lead'}
+              onOpen={openCall}
+              onAdd={openCreate}
+            />
+          ))}
+        </div>
       </div>
 
       {/* onDelete закрывает карточку до подтверждения: два модальных окна
@@ -151,6 +171,7 @@ export default function CallsPage() {
         call={editingCall}
         presetDay={presetDay}
         canManage={canManage(editingCall)}
+        author={author}
         onClose={() => setModalOpen(false)}
         onSubmit={(payload) =>
           editingCall
