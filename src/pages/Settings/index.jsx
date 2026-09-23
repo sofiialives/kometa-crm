@@ -3,6 +3,7 @@ import { useAuthStore } from '../../core/store/authStore'
 import { PageSection } from '../../widgets'
 import { Card, Avatar, Button, Input, PasswordInput } from '../../shared/ui'
 import { AvatarCropper } from '../../components/settings/AvatarCropper'
+import { TelegramCard } from '../../components/settings/TelegramCard'
 import { roleLabel } from '../../shared/layout/Header'
 
 const AVATAR_COLORS = [
@@ -28,6 +29,7 @@ export default function SettingsPage() {
 
         <div className="flex flex-col gap-4">
           <ProfileForm />
+          <TelegramCard />
           <PasswordForm />
         </div>
       </div>
