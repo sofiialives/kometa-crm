@@ -25,6 +25,13 @@
   --color-danger: #b42318;
   --color-danger-soft: #fdeceb;
 
+  /* Салатовый для метки «Сегодня» в календаре звонков. На тёмной теме
+     это ровно тот #9AF064, который просили; на светлой он на белом даёт
+     около 1.5:1 и не читается, поэтому здесь взят тот же оттенок,
+     затемнённый до рабочего контраста. */
+  --color-now: #4d7c0f;
+  --color-now-soft: #eefbe0;
+
   --font-sans: "Manrope", ui-sans-serif, system-ui, -apple-system, sans-serif;
 
   --radius-card: 12px;
@@ -71,6 +78,9 @@
   --color-warn-soft: #2a2214;
   --color-danger: #f47a72;
   --color-danger-soft: #2c1a1a;
+
+  --color-now: #9af064;
+  --color-now-soft: #1e2a14;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -97,6 +107,9 @@
     --color-warn-soft: #2a2214;
     --color-danger: #f47a72;
     --color-danger-soft: #2c1a1a;
+
+  --color-now: #9af064;
+  --color-now-soft: #1e2a14;
   }
 }
 

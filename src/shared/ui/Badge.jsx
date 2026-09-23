@@ -10,6 +10,8 @@ const tones = {
   ok: 'bg-ok-soft text-ok border-ok/30',
   warn: 'bg-warn-soft text-warn border-warn/30',
   danger: 'bg-danger-soft text-danger border-danger/30',
+  // Салатовый — «прямо сейчас»: звонок стоит на сегодня и ещё не прошёл.
+  now: 'bg-now-soft text-now border-now/35',
 }
 
 export function Badge({ tone = 'neutral', className, children }) {

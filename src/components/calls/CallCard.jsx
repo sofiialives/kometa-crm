@@ -30,9 +30,9 @@ export function CallCard({ call, onOpen, showOwner = false }) {
           {callTime(call.scheduledAt)}
         </span>
         {past ? (
-          <Badge tone="neutral">Прошёл</Badge>
+          <Badge tone="danger">Прошёл</Badge>
         ) : today ? (
-          <Badge tone="brand">Сегодня</Badge>
+          <Badge tone="now">Сегодня</Badge>
         ) : null}
       </div>
 

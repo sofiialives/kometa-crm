@@ -10,10 +10,25 @@ export function Modal({ open, onClose, title, size = 'md', closeOnOverlay = true
     if (!open) return
     const onKey = (e) => e.key === 'Escape' && !hideClose && onClose?.()
     document.addEventListener('keydown', onKey)
+
+    // В index.css у полосы прокрутки задана ширина, поэтому Chrome рисует
+    // её занимающей место в раскладке, а не поверх содержимого. Убирая
+    // прокрутку под окном, возвращаем эти пиксели отступом — без этого
+    // страница под окном становится на ширину полосы шире, и вся CRM
+    // заметно прыгает вбок в момент открытия.
+    const gap = window.innerWidth - document.documentElement.clientWidth
+    const prevOverflow = document.body.style.overflow
+    const prevPadding = document.body.style.paddingRight
     document.body.style.overflow = 'hidden'
+    if (gap > 0) document.body.style.paddingRight = `${gap}px`
+
+    // Возвращаем прежние значения, а не пустые: окна бывают вложенными
+    // (карточка и подтверждение поверх неё), и закрытие верхнего не
+    // должно возвращать прокрутку, пока открыто нижнее.
     return () => {
       document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = ''
+      document.body.style.overflow = prevOverflow
+      document.body.style.paddingRight = prevPadding
     }
   }, [open, onClose, hideClose])
 
