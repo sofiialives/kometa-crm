@@ -17,6 +17,7 @@ function useNavItems() {
     // его личные задачи, не работа с чужими. Называем это явно, иначе
     // легко перепутать с управлением отделами в Иерархии.
     { to: '/tasks', label: 'Задачи', icon: IconBoard },
+    { to: '/calls', label: 'Звонки', icon: IconPhone },
   ]
 }
 
@@ -136,6 +137,9 @@ function IconTree() {
 }
 function IconBoard() {
   return (<svg {...ic}><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 3v18M15 3v18"/></svg>)
+}
+function IconPhone() {
+  return (<svg {...ic}><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/><path d="M9.5 14.2c.6 1.3 1.6 2.3 2.9 2.9l.9-.9c.2-.2.5-.3.8-.2l1.6.5c.3.1.5.4.5.7v1.3c0 .4-.4.8-.8.7-3.4-.3-6.1-3-6.4-6.4 0-.4.3-.8.7-.8h1.3c.3 0 .6.2.7.5l.5 1.6c.1.3 0 .6-.2.8z"/></svg>)
 }
 function IconShield() {
   return (<svg {...ic}><path d="M12 2l8 3v6c0 5-3.5 9.4-8 11-4.5-1.6-8-6-8-11V5z"/><path d="M9 12l2 2 4-4"/></svg>)
