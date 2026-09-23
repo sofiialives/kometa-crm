@@ -71,8 +71,7 @@ export default function AdminPage() {
     // подтягиваем из копилки (fetchTaskStats).
     fetchTasks()
     fetchTaskStats()
-    // Работы нужны, чтобы сказать про них до удаления отдела, а не после:
-    // бэк такой отдел не отдаст, и человек узнавал об этом уже нажав «Удалить».
+
     fetchWorks()
     fetchClients()
   }, [fetchUsers, fetchDepartments, fetchTasks, fetchTaskStats, fetchWorks, fetchClients])
