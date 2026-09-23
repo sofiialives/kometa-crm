@@ -6,7 +6,10 @@ export const COLUMNS = [
 
 export const REFRESH_MS = 60_000
 export const MSK_TZ = 'Europe/Moscow'
-const MSK_OFFSET_MS = 3 * 60 * 60 * 1000
+// Москва без перехода на летнее время, поэтому сдвиг фиксированный.
+// Экспортируется: календарь звонков считает по нему недели и дни,
+// и второй копии этой константы в проекте быть не должно.
+export const MSK_OFFSET_MS = 3 * 60 * 60 * 1000
 
 export function buildTodayDeadlineMsk(hhmm) {
   if (!/^\d{1,2}:\d{2}(:\d{2})?$/.test(hhmm || '')) throw new Error('invalid time')

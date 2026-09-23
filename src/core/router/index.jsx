@@ -4,6 +4,7 @@ import { AppLayout } from '../../shared/layout/AppLayout'
 import LoginPage from '../../pages/Login'
 import HierarchyPage from '../../pages/Hierarchy'
 import TasksPage from '../../pages/Tasks'
+import CallsPage from '../../pages/Calls'
 import AdminPage from '../../pages/Admin'
 import SettingsPage from '../../pages/Settings'
 
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
         children: [
           { path: '/', element: <HierarchyPage /> },
           { path: '/tasks', element: <TasksPage /> },
+          { path: '/calls', element: <CallsPage /> },
           { path: '/settings', element: <SettingsPage /> },
           {
             element: <AdminOnly />,
