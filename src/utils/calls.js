@@ -32,6 +32,21 @@ export function todayKey() {
 }
 
 /**
+ * На сколько суток вперёд разрешено ставить звонок.
+ *
+ * Сетка при этом остаётся календарной, Пн–Вс: «следующая неделя» видна
+ * целиком, но её дальние дни звонки уже не принимают. Иначе горизонт
+ * дышал бы по дню недели — в понедельник 13 суток, в воскресенье 7.
+ */
+export const PLAN_DAYS_AHEAD = 7
+
+/** Последний день, на который можно поставить звонок. */
+export function maxPlanKey() {
+  const d = mskShifted()
+  return dayKeyOf(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + PLAN_DAYS_AHEAD)))
+}
+
+/**
  * Семь дней недели, Пн–Вс. offset сдвигает на недели: 0 — текущая,
  * 1 — следующая, -1 — прошлая.
  *
@@ -47,6 +62,7 @@ export function weekDays(offset = 0) {
     + offset * 7 * DAY_MS
 
   const today = todayKey()
+  const maxPlan = maxPlanKey()
 
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(mondayMs + i * DAY_MS)
@@ -61,6 +77,8 @@ export function weekDays(offset = 0) {
       full: d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', timeZone: 'UTC' }),
       isToday: key === today,
       isPast: key < today,
+      // День виден, но звонки не принимает: он дальше горизонта.
+      isBeyondPlan: key > maxPlan,
       isWeekend: i >= 5,
     }
   })

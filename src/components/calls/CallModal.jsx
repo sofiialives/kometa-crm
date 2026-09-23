@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Avatar, AvatarStack, Button, DatePicker, Input, Modal, Textarea } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
 import { buildDeadlineMsk, defaultMskTimeValue, isPastMsk, mskDateValueIn, splitDeadlineMsk } from '../../utils/tasks'
-import { shortName, todayKey } from '../../utils/calls'
+import { maxPlanKey, PLAN_DAYS_AHEAD, shortName, todayKey } from '../../utils/calls'
 
 /**
  * Одно окно и на создание, и на правку: поля те же, и держать две почти
@@ -99,6 +99,16 @@ export function CallModal({ open, call, presetDay, canManage = true, author, dir
       setError('Добавьте заметку — по ней потом будет понятно, зачем звонили')
       return
     }
+    // Календарь дальние дни и так не даёт выбрать, но карточку могли
+    // открыть старую — с датой, поставленной до появления ограничения.
+    if (date > maxPlanKey()) {
+      setError(`Звонки ставят не дальше чем на ${PLAN_DAYS_AHEAD} дней вперёд`)
+      return
+    }
+    if (date < todayKey()) {
+      setError('Этот день уже прошёл — выберите другой')
+      return
+    }
 
     let scheduledAt
     try {
@@ -159,6 +169,7 @@ export function CallModal({ open, call, presetDay, canManage = true, author, dir
             value={date}
             onChange={setDate}
             today={todayKey()}
+            max={maxPlanKey()}
             disabled={!canManage}
             required
           />

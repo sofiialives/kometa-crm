@@ -28,7 +28,7 @@ function parse(value) {
  * сотрудника может стоять в другом поясе — вычислять «сегодня» внутри
  * компонента значило бы подсветить не тот день.
  */
-export function DatePicker({ label, hint, error, required, disabled, value, onChange, today, id: propId, className }) {
+export function DatePicker({ label, hint, error, required, disabled, value, onChange, today, max, id: propId, className }) {
   const id = useFieldId(propId)
   const [open, setOpen] = useState(false)
   const boxRef = useRef(null)
@@ -147,18 +147,24 @@ export function DatePicker({ label, hint, error, required, disabled, value, onCh
                 const k = key(view.y, view.m, d)
                 const isSelected = k === value
                 const isToday = k === today
+                // За горизонтом планирования день виден, но не кликается:
+                // спрятать его целиком значило бы порвать сетку месяца.
+                const blocked = (max && k > max) || (today && k < today)
                 return (
                   <button
                     key={k}
                     type="button"
+                    disabled={blocked}
                     onClick={() => { onChange(k); setOpen(false) }}
                     className={cx(
-                      'h-8 rounded-lg text-sm transition-colors cursor-pointer',
-                      isSelected
-                        ? 'bg-accent text-on-accent font-semibold'
-                        : isToday
-                          ? 'text-accent font-semibold hover:bg-accent-soft'
-                          : 'text-ink-2 hover:bg-panel-2 hover:text-ink',
+                      'h-8 rounded-lg text-sm transition-colors',
+                      blocked
+                        ? 'text-ink-3/35 cursor-default'
+                        : isSelected
+                          ? 'bg-accent text-on-accent font-semibold cursor-pointer'
+                          : isToday
+                            ? 'text-accent font-semibold hover:bg-accent-soft cursor-pointer'
+                            : 'text-ink-2 hover:bg-panel-2 hover:text-ink cursor-pointer',
                     )}
                   >
                     {d}
