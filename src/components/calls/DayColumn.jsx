@@ -16,8 +16,12 @@ import { CallCard } from './CallCard'
  * ночной уборки лежат уже состоявшиеся звонки, да и неделя из шести
  * дней выглядела бы сломанной.
  */
-export function DayColumn({ day, groups, showOwner, onOpen, onAdd }) {
+export function DayColumn({ day, groups, count, showOwner, onOpen, onAdd }) {
+  // Во «Всех звонках» один звонок попадает сразу в несколько отделов —
+  // сумма по группам посчитала бы его дважды. Поэтому счётчик приходит
+  // снаружи, уже по уникальным звонкам.
   const total = groups.reduce((n, g) => n + g.calls.length, 0)
+  const shown = count ?? total
 
   return (
     <Card
@@ -25,7 +29,9 @@ export function DayColumn({ day, groups, showOwner, onOpen, onAdd }) {
       className={cx(
         'p-2.5 flex flex-col gap-2 xl:min-h-[180px]',
         day.isToday && 'border-accent/40',
-        day.isPast && 'opacity-70',
+        // Прошедший день и день за горизонтом гасим одинаково, но смысл
+        // разный, поэтому пустая колонка подписана по-разному ниже.
+        (day.isPast || day.isBeyondPlan) && 'opacity-70',
       )}
     >
       <div className="flex items-center justify-between gap-1.5 px-1 pt-0.5">
@@ -37,8 +43,8 @@ export function DayColumn({ day, groups, showOwner, onOpen, onAdd }) {
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
-          {total > 0 && <span className="caption !text-accent">{total}</span>}
-          {!day.isPast && (
+          {shown > 0 && <span className="caption !text-accent">{shown}</span>}
+          {!day.isPast && !day.isBeyondPlan && (
             <button
               type="button"
               onClick={() => onAdd(day.key)}
@@ -55,7 +61,12 @@ export function DayColumn({ day, groups, showOwner, onOpen, onAdd }) {
       </div>
 
       {total === 0 ? (
-        <p className="caption px-1 py-2 opacity-60">—</p>
+        <p
+          className="caption px-1 py-2 opacity-60"
+          title={day.isBeyondPlan ? 'Звонки ставят не дальше чем на неделю вперёд' : undefined}
+        >
+          {day.isBeyondPlan ? 'пока рано' : '—'}
+        </p>
       ) : (
         groups.map((g) =>
           g.calls.length === 0 ? null : (
