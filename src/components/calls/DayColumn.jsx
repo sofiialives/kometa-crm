@@ -16,8 +16,12 @@ import { CallCard } from './CallCard'
  * ночной уборки лежат уже состоявшиеся звонки, да и неделя из шести
  * дней выглядела бы сломанной.
  */
-export function DayColumn({ day, groups, showOwner, onOpen, onAdd }) {
+export function DayColumn({ day, groups, count, showOwner, onOpen, onAdd }) {
+  // Во «Всех звонках» один звонок попадает сразу в несколько отделов —
+  // сумма по группам посчитала бы его дважды. Поэтому счётчик приходит
+  // снаружи, уже по уникальным звонкам.
   const total = groups.reduce((n, g) => n + g.calls.length, 0)
+  const shown = count ?? total
 
   return (
     <Card
@@ -37,7 +41,7 @@ export function DayColumn({ day, groups, showOwner, onOpen, onAdd }) {
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
-          {total > 0 && <span className="caption !text-accent">{total}</span>}
+          {shown > 0 && <span className="caption !text-accent">{shown}</span>}
           {!day.isPast && (
             <button
               type="button"

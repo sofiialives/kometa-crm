@@ -13,6 +13,10 @@ import { api } from '../api/client'
 export const useCallsStore = create((set, get) => ({
   calls: [],
   allCalls: [],
+  // Короткий справочник сотрудников для выбора участников: имя, аватар,
+  // отдел. Отдельная ручка, потому что обычный список людей закрыт для
+  // рядового сотрудника и отдаёт лишнее — почты, роли, статусы.
+  directory: [],
   loading: false,
   error: null,
 
@@ -40,9 +44,23 @@ export const useCallsStore = create((set, get) => ({
     }
   },
 
-  async createCall({ title, note, scheduledAt }) {
+  async fetchDirectory() {
     try {
-      const created = await api.post('/calls', { title, note: note || undefined, scheduledAt })
+      set({ directory: await api.get('/users/directory') })
+      return { ok: true }
+    } catch (e) {
+      return { ok: false, error: e.message }
+    }
+  },
+
+  async createCall({ title, note, scheduledAt, participantIds }) {
+    try {
+      const created = await api.post('/calls', {
+        title,
+        note,
+        scheduledAt,
+        ...(participantIds?.length ? { participantIds } : {}),
+      })
       set({ calls: [...get().calls, created], allCalls: [...get().allCalls, created] })
       return { ok: true }
     } catch (e) {

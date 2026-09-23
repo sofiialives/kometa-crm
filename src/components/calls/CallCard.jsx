@@ -1,4 +1,4 @@
-import { Avatar, Badge } from '../../shared/ui'
+import { Avatar, AvatarStack, Badge } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
 import { callTime, isPastCall, isTodayCall, shortName } from '../../utils/calls'
 
@@ -23,6 +23,10 @@ export function CallCard({ call, onOpen, showOwner = false }) {
   const past = isPastCall(call.scheduledAt)
   const today = isTodayCall(call.scheduledAt)
   const owner = call.owner?.name?.trim() || 'Без имени'
+  const participants = call.participants || []
+  // Когда в звонке несколько человек, аватары показываем всегда — даже в
+  // своём календаре: важно с ходу видеть, что созвон не один на один.
+  const people = [call.owner, ...participants].filter(Boolean)
 
   return (
     <div
@@ -50,12 +54,23 @@ export function CallCard({ call, onOpen, showOwner = false }) {
         )}
       </div>
 
-      {showOwner && (
+      {participants.length > 0 ? (
+        <div className="flex items-center gap-2 min-w-0">
+          <AvatarStack
+            size={20}
+            max={4}
+            users={people.map((u) => ({ id: u.id, name: u.name, src: u.avatarUrl, color: u.avatarColor }))}
+          />
+          <span className="caption truncate" title={people.map((u) => u.name).join(', ')}>
+            {people.length} чел.
+          </span>
+        </div>
+      ) : showOwner ? (
         <div className="flex items-center gap-2 min-w-0">
           <Avatar name={owner} src={call.owner?.avatarUrl} color={call.owner?.avatarColor} size={20} />
           <span className="caption truncate" title={owner}>{shortName(owner)}</span>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }
