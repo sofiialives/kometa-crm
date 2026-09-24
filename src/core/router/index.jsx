@@ -5,6 +5,7 @@ import LoginPage from '../../pages/Login'
 import HierarchyPage from '../../pages/Hierarchy'
 import TasksPage from '../../pages/Tasks'
 import CallsPage from '../../pages/Calls'
+import ArchivePage from '../../pages/Archive'
 import AdminPage from '../../pages/Admin'
 import SettingsPage from '../../pages/Settings'
 
@@ -32,6 +33,7 @@ export const router = createBrowserRouter([
           { path: '/', element: <HierarchyPage /> },
           { path: '/tasks', element: <TasksPage /> },
           { path: '/calls', element: <CallsPage /> },
+          { path: '/archive', element: <ArchivePage /> },
           { path: '/settings', element: <SettingsPage /> },
           {
             element: <AdminOnly />,

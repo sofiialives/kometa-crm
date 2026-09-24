@@ -18,7 +18,17 @@ function useNavItems() {
     // легко перепутать с управлением отделами в Иерархии.
     { to: '/tasks', label: 'Задачи', icon: IconBoard },
     { to: '/calls', label: 'Звонки', icon: IconPhone },
+    { to: '/archive', label: 'Архив', icon: IconArchive },
   ]
+}
+
+function IconArchive() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="4" rx="1" />
+      <path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8M10 12h4" />
+    </svg>
+  )
 }
 
 function NavList({ onNavigate }) {
