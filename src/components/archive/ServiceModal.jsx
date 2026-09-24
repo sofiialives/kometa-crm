@@ -8,6 +8,10 @@ import { Button, Input, Modal, Select } from '../../shared/ui'
  * Отдел выбирается только при создании: перенос услуги в другой отдел —
  * это смена видимости всех её отчётов разом, и делать это мимоходом
  * через правку названия не стоит.
+ *
+ * Заводит услугу любой сотрудник у себя в отделе. Если отдел один,
+ * выбирать не из чего — поле всё равно показываем, чтобы человек видел,
+ * куда попадёт услуга и кто её потом увидит.
  */
 export function ServiceModal({ open, onClose, onSubmit, service, departments, defaultDepartmentId }) {
   const editing = Boolean(service)
