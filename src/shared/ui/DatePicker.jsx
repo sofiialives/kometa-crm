@@ -54,6 +54,11 @@ export function DatePicker({ label, hint, error, required, disabled, value, onCh
     const place = () => {
       const r = boxRef.current?.getBoundingClientRect()
       if (!r) return
+
+      // Поле уехало с экрана целиком — держать календарь висящим над
+      // чужим содержимым незачем.
+      if (r.bottom < 0 || r.top > window.innerHeight) { setOpen(false); return }
+
       const H = 320
       const below = window.innerHeight - r.bottom
       setPos({
@@ -63,7 +68,21 @@ export function DatePicker({ label, hint, error, required, disabled, value, onCh
     }
     place()
     window.addEventListener('resize', place)
-    return () => window.removeEventListener('resize', place)
+
+    // Панель нарисована порталом поверх страницы и стоит на fixed, то есть
+    // не двигается при прокрутке. Поле при этом уезжает — и календарь
+    // отрывается от него, будто прыгает. На телефоне, где прокрутка есть
+    // почти всегда, это заметнее всего.
+    //
+    // Слушаем в фазе захвата: прокручиваться может не только окно, но и
+    // контейнер внутри страницы — например, тело модального окна, у
+    // которого свой overflow.
+    window.addEventListener('scroll', place, { capture: true, passive: true })
+
+    return () => {
+      window.removeEventListener('resize', place)
+      window.removeEventListener('scroll', place, { capture: true })
+    }
   }, [open])
 
   useEffect(() => {
