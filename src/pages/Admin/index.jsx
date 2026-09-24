@@ -57,8 +57,7 @@ export default function AdminPage() {
   const [editingClient, setEditingClient] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
-  // Два быстрых клика подряд прочитали бы устаревший leadId из замыкания.
-  // Лочим по ссылке: setState асинхронный и от гонки не спасает.
+
   const lock = useRef(false)
 
   useEffect(() => {
