@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Button, DatePicker, Input, Select } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
 
-const FIELDS = ['clientId', 'authorId', 'from', 'to']
+const FIELDS = ['clientId', 'serviceTitle', 'authorId', 'from', 'to']
 
 /**
  * Панель фильтров, общая для обоих режимов вкладки.
@@ -16,7 +16,7 @@ const FIELDS = ['clientId', 'authorId', 'from', 'to']
  * а нужны они далеко не каждый раз. Строка поиска остаётся на виду
  * всегда: с неё начинают чаще всего.
  */
-export function ArchiveFilters({ value, onChange, clients, authors, onReset }) {
+export function ArchiveFilters({ value, onChange, clients, services, authors, onReset }) {
   const active = FIELDS.filter((k) => value[k]).length
   const [open, setOpen] = useState(active > 0)
   const set = (patch) => onChange({ ...value, ...patch })
@@ -28,7 +28,7 @@ export function ArchiveFilters({ value, onChange, clients, authors, onReset }) {
           className="flex-1"
           value={value.q || ''}
           onChange={(e) => set({ q: e.target.value })}
-          placeholder="Поиск по названию, услуге, клиенту и тексту внутри отчётов"
+          placeholder="Поиск по клиенту, услуге, названию файла и тексту внутри отчётов"
           aria-label="Поиск по архиву"
         />
         <button
@@ -58,13 +58,23 @@ export function ArchiveFilters({ value, onChange, clients, authors, onReset }) {
 
       {open && (
         <div className="flex flex-col gap-3">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <Select
               label="Клиент"
               placeholder="Любой"
               value={value.clientId || ''}
               onChange={(e) => set({ clientId: e.target.value })}
               options={clients.map((c) => ({ value: c.id, label: c.name }))}
+            />
+            {/* По названию, а не по записи: одна и та же услуга заводится
+                под разными клиентами отдельно, и «Мини-апп» должен
+                показывать её у всех сразу. */}
+            <Select
+              label="Услуга"
+              placeholder="Любая"
+              value={value.serviceTitle || ''}
+              onChange={(e) => set({ serviceTitle: e.target.value })}
+              options={services.map((t) => ({ value: t, label: t }))}
             />
             <Select
               label="Кто заливал"
