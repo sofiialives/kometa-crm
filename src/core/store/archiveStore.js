@@ -155,24 +155,41 @@ export const useArchiveStore = create((set, get) => ({
   },
 
   /**
-   * Открыть PDF. Прямой ссылки на файл не существует — он закрыт токеном
-   * и отдаётся нашим сервером после проверки отдела. Поэтому тянем файл
-   * сами и показываем из памяти браузера.
+   * Достать файл с сервера.
+   *
+   * Прямой ссылки на отчёт не существует: он закрыт токеном и отдаётся
+   * нашим сервером после проверки отдела, а тег <a href> заголовок
+   * авторизации не отправит. Поэтому тянем содержимое сами и дальше
+   * работаем с ним из памяти браузера.
    */
-  async openReportFile(id, fileName) {
+  async openReportFile(id, fileName, { download = false } = {}) {
     try {
       const blob = await api.blob(`/archive/reports/${id}/file`)
       const url = URL.createObjectURL(blob)
-      const win = window.open(url, '_blank', 'noopener')
-      // Всплывающее окно могли заблокировать — тогда просто скачиваем.
-      if (!win) {
+
+      if (download) {
         const a = document.createElement('a')
         a.href = url
         a.download = fileName || 'отчёт.pdf'
+        document.body.appendChild(a)
         a.click()
+        a.remove()
+      } else {
+        const win = window.open(url, '_blank', 'noopener')
+        // Всплывающее окно могли заблокировать — тогда сохраняем файл,
+        // это лучше, чем молча ничего не сделать.
+        if (!win) {
+          const a = document.createElement('a')
+          a.href = url
+          a.download = fileName || 'отчёт.pdf'
+          document.body.appendChild(a)
+          a.click()
+          a.remove()
+        }
       }
-      // Ссылку держим до закрытия вкладки: отозвать сразу — значит закрыть
-      // документ у человека перед носом.
+
+      // Ссылку держим до закрытия вкладки: отозвать сразу — значит
+      // закрыть документ у человека перед носом или оборвать сохранение.
       setTimeout(() => URL.revokeObjectURL(url), 60_000)
       return { ok: true }
     } catch (e) {

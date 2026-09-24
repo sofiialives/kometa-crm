@@ -11,7 +11,7 @@ import { archiveDate, reportsWord } from '../../utils/archive'
  */
 export function ClientModal({
   open, onClose, data, loading, rights,
-  onAddService, onEditService, onDeleteService, onUpload, onOpenReport, onDeleteReport, onRemoveClient,
+  onAddService, onEditService, onDeleteService, onUpload, onOpenReport, onDownloadReport, onDeleteReport, onRemoveClient,
 }) {
   return (
     <Modal
@@ -55,6 +55,7 @@ export function ClientModal({
                 onDelete={() => onDeleteService(service)}
                 onUpload={() => onUpload(service)}
                 onOpenReport={onOpenReport}
+                onDownloadReport={onDownloadReport}
                 onDeleteReport={onDeleteReport}
               />
             ))
@@ -69,7 +70,7 @@ export function ClientModal({
   )
 }
 
-function ServiceBlock({ service, rights, onEdit, onDelete, onUpload, onOpenReport, onDeleteReport }) {
+function ServiceBlock({ service, rights, onEdit, onDelete, onUpload, onOpenReport, onDownloadReport, onDeleteReport }) {
   const canWrite = rights.canUploadTo(service.departmentId)
   const canManage = rights.canManageServiceIn(service.departmentId)
 
@@ -101,6 +102,7 @@ function ServiceBlock({ service, rights, onEdit, onDelete, onUpload, onOpenRepor
               key={report.id}
               report={report}
               onOpen={() => onOpenReport(report)}
+              onDownload={() => onDownloadReport(report)}
               onDelete={() => onDeleteReport(report, service)}
               canDelete={rights.canDeleteReport(report, service.departmentId)}
             />

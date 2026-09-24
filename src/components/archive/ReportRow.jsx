@@ -6,8 +6,18 @@ import { archiveDateShort, fileSize } from '../../utils/archive'
  * Строка отчёта. Заголовка у отчёта нет — заказчик сказал, что поля не
  * нужны, файл приносят готовым. Поэтому в списке имя файла, как его
  * назвал автор.
+ *
+ * Два разных действия с файлом: клик по названию открывает его для
+ * чтения, отдельная кнопка сохраняет на компьютер. Одного открытия мало —
+ * отчёт нередко нужно переслать или положить к себе.
+ *
+ * Имя того, кто залил, написано текстом, а не спрятано в подсказку у
+ * аватарки: по кружку с инициалами не понять, кто это, а именно это и
+ * спрашивают в первую очередь, когда ищут, с кем обсудить отчёт.
  */
-export function ReportRow({ report, onOpen, onDelete, canDelete, showContext }) {
+export function ReportRow({ report, onOpen, onDownload, onDelete, canDelete, showContext }) {
+  const author = report.author?.name
+
   return (
     <div className="group flex items-center gap-3 rounded-[10px] border border-line px-3 py-2.5 transition-colors hover:border-line-2 hover:bg-panel-2">
       <PdfIcon />
@@ -15,6 +25,7 @@ export function ReportRow({ report, onOpen, onDelete, canDelete, showContext }) 
       <button
         onClick={onOpen}
         className="flex min-w-0 flex-1 flex-col items-start gap-0.5 text-left cursor-pointer"
+        title="Открыть отчёт"
       >
         <span className="w-full truncate text-sm font-medium group-hover:text-accent transition-colors">
           {report.fileName}
@@ -23,36 +34,57 @@ export function ReportRow({ report, onOpen, onDelete, canDelete, showContext }) 
           {showContext && report.service && (
             <>
               <span className="truncate">{report.service.archiveClient?.client?.name}</span>
-              <span aria-hidden="true">·</span>
+              <Dot />
               <span className="truncate">{report.service.title}</span>
-              <span aria-hidden="true">·</span>
+              <Dot />
             </>
           )}
           <span className="tabular-nums">{archiveDateShort(report.workedAt)}</span>
           {report.fileSize ? (
             <>
-              <span aria-hidden="true">·</span>
+              <Dot />
               <span className="tabular-nums">{fileSize(report.fileSize)}</span>
             </>
           ) : null}
+          {author && (
+            <>
+              <Dot />
+              <span className="truncate">{author}</span>
+            </>
+          )}
         </span>
       </button>
 
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex shrink-0 items-center gap-1.5">
         <Avatar
-          name={report.author?.name}
+          name={author}
           src={report.author?.avatarUrl}
           color={report.author?.avatarColor}
           size={26}
-          title={report.author?.name}
+          title={author ? `Загрузил ${author}` : undefined}
         />
+
+        <Button
+          variant="ghost"
+          size="sm"
+          className="!text-ink-3 hover:!text-accent"
+          onClick={onDownload}
+          title="Скачать на компьютер"
+          aria-label={`Скачать ${report.fileName}`}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 3v12M7 11l5 5 5-5M5 21h14" />
+          </svg>
+        </Button>
+
         {canDelete && (
           <Button
             variant="ghost"
             size="sm"
-            className={cx('!text-ink-3 hover:!text-danger', 'opacity-0 group-hover:opacity-100 focus:opacity-100')}
+            className={cx('!text-ink-3 hover:!text-danger', 'sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100')}
             onClick={onDelete}
-            aria-label="Удалить отчёт"
+            title="Удалить отчёт"
+            aria-label={`Удалить ${report.fileName}`}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
@@ -63,6 +95,8 @@ export function ReportRow({ report, onOpen, onDelete, canDelete, showContext }) 
     </div>
   )
 }
+
+const Dot = () => <span aria-hidden="true">·</span>
 
 function PdfIcon() {
   return (

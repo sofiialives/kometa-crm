@@ -207,6 +207,7 @@ export default function ArchivePage() {
           loading={loading}
           rights={rights}
           onOpen={(r) => openReportFile(r.id, r.fileName)}
+          onDownload={(r) => openReportFile(r.id, r.fileName, { download: true })}
           onDelete={(r) => setConfirm({ kind: 'report', report: r, departmentId: r.service?.department?.id })}
           onMore={() => setPage((p) => p + 1)}
         />
@@ -223,6 +224,7 @@ export default function ArchivePage() {
         onDeleteService={(service) => setConfirm({ kind: 'service', service })}
         onUpload={(service) => setUploadFor(service)}
         onOpenReport={(r) => openReportFile(r.id, r.fileName)}
+        onDownloadReport={(r) => openReportFile(r.id, r.fileName, { download: true })}
         onDeleteReport={(report, service) => setConfirm({ kind: 'report', report, departmentId: service.departmentId })}
         onRemoveClient={() => setConfirm({ kind: 'client' })}
       />
@@ -314,7 +316,7 @@ function ClientsGrid({ clients, loading, onOpen, canAdd, onAdd }) {
   )
 }
 
-function ReportsList({ reports, total, loading, rights, onOpen, onDelete, onMore }) {
+function ReportsList({ reports, total, loading, rights, onOpen, onDownload, onDelete, onMore }) {
   if (loading && reports.length === 0) {
     return <div className="grid place-items-center py-14"><Spinner /></div>
   }
@@ -331,6 +333,7 @@ function ReportsList({ reports, total, loading, rights, onOpen, onDelete, onMore
             report={report}
             showContext
             onOpen={() => onOpen(report)}
+            onDownload={() => onDownload(report)}
             onDelete={() => onDelete(report)}
             canDelete={rights.canDeleteReport(report, report.service?.department?.id)}
           />
