@@ -35,7 +35,7 @@ export default function ArchivePage() {
   const isLead = user?.role === 'lead'
 
   const {
-    clients, openClient, reports, reportsTotal, authors, loading,
+    clients, openClient, reports, reportsTotal, authors, loading, error,
     fetchClients, fetchClient, closeClient, addClient, removeClient,
     createService, editService, removeService,
     fetchReports, fetchAuthors, uploadReport, removeReport, openReportFile,
@@ -58,7 +58,14 @@ export default function ArchivePage() {
     to: params.get('to') || '',
   }), [params])
 
+  // Строка листания живёт рядом с фильтрами: сбрасывать её отдельным
+  // эффектом нельзя — тот успевал сработать после запроса, и на смену
+  // фильтра уходило два обращения к серверу, причём первое со старым
+  // смещением и в режиме «дозагрузить».
+  const [page, setPage] = useState(0)
+
   const setFilters = useCallback((patch) => {
+    setPage(0)
     setParams((prev) => {
       const next = new URLSearchParams(prev)
       for (const [k, v] of Object.entries(patch)) {
@@ -85,7 +92,6 @@ export default function ArchivePage() {
   const [uploadFor, setUploadFor] = useState(null)
   const [confirm, setConfirm] = useState(null)
   const [busy, setBusy] = useState(false)
-  const [page, setPage] = useState(0)
 
   useEffect(() => { fetchDepartments(); fetchAllClients() }, [fetchDepartments, fetchAllClients])
 
@@ -97,7 +103,8 @@ export default function ArchivePage() {
 
   useEffect(() => { fetchAuthors(departmentId) }, [fetchAuthors, departmentId])
 
-  useEffect(() => { setPage(0) }, [departmentId, debouncedQ, filters.clientId, filters.authorId, filters.from, filters.to, filters.mode])
+  // Поиск набирают в поле, а не через setFilters — сбрасываем отдельно.
+  useEffect(() => { setPage(0) }, [debouncedQ])
 
   useEffect(() => {
     if (filters.mode !== 'reports') return
@@ -149,11 +156,15 @@ export default function ArchivePage() {
     fetchAuthors(departmentId)
   }, [fetchClients, fetchClient, fetchAuthors, departmentId, debouncedQ, filters.mode, openId])
 
-  async function run(action) {
+  async function run(action, failMessage) {
     setBusy(true)
     const res = await action()
     setBusy(false)
     if (res?.ok) await refresh()
+    // Молча проглоченный отказ — худшее, что здесь может быть: человек
+    // жмёт «Удалить», окно закрывается, и всё остаётся на месте без
+    // единого слова. Способ показа тот же, что в Задачах и Звонках.
+    else if (failMessage) window.alert(res?.error || failMessage)
     return res
   }
 
@@ -197,6 +208,10 @@ export default function ArchivePage() {
         authors={authors}
         onReset={() => setFilters({ q: '', clientId: '', authorId: '', from: '', to: '' })}
       />
+
+      {/* Без этого сотрудник без отдела видел бы «Архив пуст» вместо
+          объяснения, почему архив ему недоступен. */}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
       {filters.mode === 'clients' ? (
         <ClientsGrid clients={clients} loading={loading} onOpen={open} canAdd={rights.canAddClient} onAdd={() => setAddOpen(true)} />
@@ -279,12 +294,12 @@ export default function ArchivePage() {
           const c = confirm
           setConfirm(null)
           if (c.kind === 'client') {
-            const res = await run(() => removeClient(openId))
+            const res = await run(() => removeClient(openId), 'Не удалось убрать клиента из архива')
             if (res?.ok) { setOpenId(null); closeClient() }
           } else if (c.kind === 'service') {
-            await run(() => removeService(c.service.id))
+            await run(() => removeService(c.service.id), 'Не удалось удалить услугу')
           } else {
-            await run(() => removeReport(c.report.id))
+            await run(() => removeReport(c.report.id), 'Не удалось удалить отчёт')
           }
         }}
       />
