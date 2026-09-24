@@ -42,7 +42,7 @@ export function ClientModal({
               text={
                 rights.canManageServices
                   ? 'Заведите услугу, которой занимались для этого клиента, и складывайте отчёты под неё.'
-                  : 'Услуги заводит руководитель отдела. Как появится — сюда можно будет заливать отчёты.'
+                  : 'Услуг по этому клиенту в вашем отделе пока нет.'
               }
             />
           ) : (
@@ -72,7 +72,7 @@ export function ClientModal({
 
 function ServiceBlock({ service, rights, onEdit, onDelete, onUpload, onOpenReport, onDownloadReport, onDeleteReport }) {
   const canWrite = rights.canUploadTo(service.departmentId)
-  const canManage = rights.canManageServiceIn(service.departmentId)
+  const canManage = rights.canChangeService(service)
 
   return (
     <section className="flex flex-col gap-3 rounded-card border border-line p-4">

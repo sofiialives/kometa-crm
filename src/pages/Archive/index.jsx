@@ -123,15 +123,22 @@ export default function ArchivePage() {
   const rights = useMemo(() => ({
     canAddClient: isAdmin || isLead,
     canRemoveClient: isAdmin,
-    canManageServices: isAdmin || isLead,
-    canManageServiceIn: (deptId) => isAdmin || (isLead && user?.departmentId === deptId),
+    // Услугу заводит любой сотрудник у себя в отделе — так решил заказчик,
+    // за ним остались только клиенты.
+    canManageServices: isAdmin || Boolean(user?.departmentId),
+    // А менять уже не любой: под услугой лежат чужие отчёты, и
+    // переименование меняет то, что видят остальные.
+    canChangeService: (service) =>
+      isAdmin
+      || service.createdBy?.id === user?.id
+      || (isLead && user?.departmentId === service.departmentId),
     canUploadTo: (deptId) => isAdmin || user?.departmentId === deptId,
     canDeleteReport: (report, deptId) =>
       isAdmin || report.author?.id === user?.id || (isLead && user?.departmentId === deptId),
   }), [isAdmin, isLead, user])
 
-  // Руководитель заводит услуги только в своём отделе — предлагать ему
-  // чужие в выпадающем списке значило бы показывать заведомый отказ.
+  // Услугу заводят только в своём отделе — предлагать чужие в выпадающем
+  // списке значило бы показывать заведомый отказ.
   const pickableDepartments = useMemo(
     () => (isAdmin ? departments : departments.filter((d) => d.id === user?.departmentId)),
     [isAdmin, departments, user],
