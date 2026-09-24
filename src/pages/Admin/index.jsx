@@ -127,10 +127,6 @@ export default function AdminPage() {
     await refresh()
     return res
   }
-
-  // Бэк снимает отдел, роль и доступ, но leadId в отделе не чистит — иначе
-  // отдел остался бы ссылаться на уволенного. Чистим сами и строго до
-  // увольнения: не прошло — увольнять нельзя.
   async function dismiss(user) {
     if (lock.current) return
     lock.current = true
