@@ -32,16 +32,22 @@ async function refreshAccessToken() {
   return refreshInFlight
 }
 
-async function request(path, { method = 'GET', body, headers = {} } = {}, isRetry = false) {
+async function request(path, { method = 'GET', body, headers = {}, raw = false } = {}, isRetry = false) {
   const token = useAuthStore.getState().token
+
+  // Файлы уходят формой, а не JSON. Content-Type в этом случае не ставим
+  // руками: браузер добавляет его сам вместе с разделителем частей,
+  // который мы подобрать не можем.
+  const isForm = body instanceof FormData
+
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
     headers: {
-      'Content-Type': 'application/json',
+      ...(isForm ? {} : { 'Content-Type': 'application/json' }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...headers,
     },
-    body: body ? JSON.stringify(body) : undefined,
+    body: body ? (isForm ? body : JSON.stringify(body)) : undefined,
   })
 
   const isAuthRoute = path === '/auth/login' || path === '/auth/refresh' || path === '/auth/google'
@@ -53,7 +59,7 @@ async function request(path, { method = 'GET', body, headers = {} } = {}, isRetr
     if (!isRetry) {
       try {
         await refreshAccessToken()
-        return request(path, { method, body, headers }, true)
+        return request(path, { method, body, headers, raw }, true)
       } catch {
         useAuthStore.getState().logout()
       }
@@ -72,6 +78,10 @@ async function request(path, { method = 'GET', body, headers = {} } = {}, isRetr
     throw err
   }
 
+  // Ответ целиком нужен там, где тело не JSON: PDF отчёта отдаётся
+  // потоком, и разбирать его как объект нечем.
+  if (raw) return res
+
   return res.status === 204 ? null : res.json()
 }
 
@@ -80,4 +90,14 @@ export const api = {
   post: (path, body) => request(path, { method: 'POST', body }),
   patch: (path, body) => request(path, { method: 'PATCH', body }),
   del: (path) => request(path, { method: 'DELETE' }),
+
+  /** Отправка файла формой. Тело — готовая FormData. */
+  upload: (path, formData) => request(path, { method: 'POST', body: formData }),
+
+  /**
+   * Скачивание файла. Ссылкой не обойтись: файл закрыт токеном, а тег
+   * <a href> заголовок авторизации не отправит. Поэтому тянем сами и
+   * отдаём содержимое вызывающему.
+   */
+  blob: async (path) => (await request(path, { raw: true })).blob(),
 }
