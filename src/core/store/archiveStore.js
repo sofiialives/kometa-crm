@@ -29,13 +29,16 @@ export const useArchiveStore = create((set, get) => ({
   reports: [],
   reportsTotal: 0,
   authors: [],
+  // Названия услуг для фильтра. Берутся из самих услуг, а не из отчётов:
+  // только что заведённая услуга ещё без отчётов, но в фильтре быть должна.
+  serviceTitles: [],
   loading: false,
   error: null,
 
-  async fetchClients({ departmentId, q } = {}) {
+  async fetchClients({ departmentId, q, serviceTitle } = {}) {
     set({ loading: true, error: null })
     try {
-      const clients = await api.get(`/archive/clients${query({ departmentId, q })}`)
+      const clients = await api.get(`/archive/clients${query({ departmentId, q, serviceTitle })}`)
       set({ clients, loading: false })
       return { ok: true }
     } catch (e) {
@@ -118,6 +121,15 @@ export const useArchiveStore = create((set, get) => ({
       return { ok: true }
     } catch (e) {
       set({ error: e.message, loading: false })
+      return { ok: false, error: e.message }
+    }
+  },
+
+  async fetchServiceTitles(departmentId) {
+    try {
+      set({ serviceTitles: await api.get(`/archive/services${query({ departmentId })}`) })
+      return { ok: true }
+    } catch (e) {
       return { ok: false, error: e.message }
     }
   },

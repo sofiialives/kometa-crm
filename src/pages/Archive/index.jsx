@@ -35,10 +35,10 @@ export default function ArchivePage() {
   const isLead = user?.role === 'lead'
 
   const {
-    clients, openClient, reports, reportsTotal, authors, loading, error,
+    clients, openClient, reports, reportsTotal, authors, serviceTitles, loading, error,
     fetchClients, fetchClient, closeClient, addClient, removeClient,
     createService, editService, removeService,
-    fetchReports, fetchAuthors, uploadReport, removeReport, openReportFile,
+    fetchReports, fetchAuthors, fetchServiceTitles, uploadReport, removeReport, openReportFile,
   } = useArchiveStore()
 
   const allClients = useClientsStore((s) => s.clients)
@@ -53,6 +53,7 @@ export default function ArchivePage() {
     dept: params.get('dept') || ALL,
     q: params.get('q') || '',
     clientId: params.get('clientId') || '',
+    serviceTitle: params.get('serviceTitle') || '',
     authorId: params.get('authorId') || '',
     from: params.get('from') || '',
     to: params.get('to') || '',
@@ -98,10 +99,17 @@ export default function ArchivePage() {
   // Карточки клиентов нужны обоим режимам: в первом это сетка, во втором
   // из них собирается список для фильтра «Клиент».
   useEffect(() => {
-    fetchClients({ departmentId, q: filters.mode === 'clients' ? debouncedQ : '' })
-  }, [fetchClients, departmentId, debouncedQ, filters.mode])
+    fetchClients({
+      departmentId,
+      q: filters.mode === 'clients' ? debouncedQ : '',
+      serviceTitle: filters.serviceTitle,
+    })
+  }, [fetchClients, departmentId, debouncedQ, filters.mode, filters.serviceTitle])
 
-  useEffect(() => { fetchAuthors(departmentId) }, [fetchAuthors, departmentId])
+  useEffect(() => {
+    fetchAuthors(departmentId)
+    fetchServiceTitles(departmentId)
+  }, [fetchAuthors, fetchServiceTitles, departmentId])
 
   // Поиск набирают в поле, а не через setFilters — сбрасываем отдельно.
   useEffect(() => { setPage(0) }, [debouncedQ])
@@ -111,6 +119,7 @@ export default function ArchivePage() {
     fetchReports({
       departmentId,
       clientId: filters.clientId,
+      serviceTitle: filters.serviceTitle,
       authorId: filters.authorId,
       from: filters.from,
       to: filters.to,
@@ -118,7 +127,7 @@ export default function ArchivePage() {
       limit: PAGE,
       offset: page * PAGE,
     }, { append: page > 0 })
-  }, [fetchReports, filters.mode, departmentId, filters.clientId, filters.authorId, filters.from, filters.to, debouncedQ, page])
+  }, [fetchReports, filters.mode, departmentId, filters.clientId, filters.serviceTitle, filters.authorId, filters.from, filters.to, debouncedQ, page])
 
   const rights = useMemo(() => ({
     canAddClient: isAdmin || isLead,
@@ -145,9 +154,18 @@ export default function ArchivePage() {
   )
 
   const inArchive = useMemo(() => new Set(clients.map((c) => c.client.id)), [clients])
+  // Список для выпадающего фильтра «Клиент» копим отдельно и не сужаем
+  // выбранной услугой: иначе, выбрав услугу, человек увидел бы в списке
+  // клиентов ровно одного и не смог бы переключиться.
+  const [clientOptions, setClientOptions] = useState([])
+  useEffect(() => {
+    if (filters.serviceTitle) return
+    setClientOptions(clients.map((c) => c.client))
+  }, [clients, filters.serviceTitle])
+
   const filterClients = useMemo(
-    () => clients.map((c) => c.client).sort((a, b) => a.name.localeCompare(b.name, 'ru')),
-    [clients],
+    () => [...clientOptions].sort((a, b) => a.name.localeCompare(b.name, 'ru')),
+    [clientOptions],
   )
 
   async function open(id) {
@@ -209,11 +227,19 @@ export default function ArchivePage() {
       </div>
 
       <ArchiveFilters
-        value={{ q: filters.q, clientId: filters.clientId, authorId: filters.authorId, from: filters.from, to: filters.to }}
+        value={{
+          q: filters.q,
+          clientId: filters.clientId,
+          serviceTitle: filters.serviceTitle,
+          authorId: filters.authorId,
+          from: filters.from,
+          to: filters.to,
+        }}
         onChange={(v) => setFilters(v)}
         clients={filterClients}
+        services={serviceTitles}
         authors={authors}
-        onReset={() => setFilters({ q: '', clientId: '', authorId: '', from: '', to: '' })}
+        onReset={() => setFilters({ q: '', clientId: '', serviceTitle: '', authorId: '', from: '', to: '' })}
       />
 
       {/* Без этого сотрудник без отдела видел бы «Архив пуст» вместо
