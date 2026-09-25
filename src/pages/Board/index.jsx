@@ -48,7 +48,9 @@ export default function BoardPage() {
   const [cardLoading, setCardLoading] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
   const [serviceModal, setServiceModal] = useState(null)
-  const [leaveOpen, setLeaveOpen] = useState(false)
+  // Уход можно запустить и с карточки на доске, и из раскрытой — поэтому
+  // держим, по какому именно клиенту открыта форма, а не просто «открыта».
+  const [leaveFor, setLeaveFor] = useState(null)
   const [confirm, setConfirm] = useState(null)
   const [busy, setBusy] = useState(false)
 
@@ -124,6 +126,8 @@ export default function BoardPage() {
             cards={active}
             periodLabel={periodLabel}
             onOpen={open}
+            onLeave={setLeaveFor}
+            onReturn={(c) => run(() => markActive(c.id), 'Не удалось вернуть клиента в работу')}
             empty="Здесь появятся клиенты, с которыми работаем."
             action={<Button variant="secondary" size="sm" onClick={() => setAddOpen(true)}>Клиент на доску</Button>}
           />
@@ -132,6 +136,8 @@ export default function BoardPage() {
             cards={left}
             periodLabel={periodLabel}
             onOpen={open}
+            onLeave={setLeaveFor}
+            onReturn={(c) => run(() => markActive(c.id), 'Не удалось вернуть клиента в работу')}
             empty="Пока никто не ушёл."
           />
         </div>
@@ -146,7 +152,7 @@ export default function BoardPage() {
         onAddService={() => setServiceModal({ service: null })}
         onEditService={(service) => setServiceModal({ service })}
         onDeleteService={(service) => setConfirm({ kind: 'service', service })}
-        onLeave={() => setLeaveOpen(true)}
+        onLeave={() => setLeaveFor(card)}
         onReturn={() => run(() => markActive(openId), 'Не удалось вернуть клиента в работу')}
         onRemove={() => setConfirm({ kind: 'client' })}
       />
@@ -173,10 +179,10 @@ export default function BoardPage() {
       />
 
       <LeaveModal
-        open={leaveOpen}
-        onClose={() => setLeaveOpen(false)}
-        card={card}
-        onSubmit={(body) => run(() => markLeft(openId, body))}
+        open={Boolean(leaveFor)}
+        onClose={() => setLeaveFor(null)}
+        card={leaveFor}
+        onSubmit={(body) => run(() => markLeft(leaveFor.id, body))}
       />
 
       <ConfirmModal
@@ -206,7 +212,7 @@ export default function BoardPage() {
   )
 }
 
-function Column({ title, cards, periodLabel, onOpen, empty, action }) {
+function Column({ title, cards, periodLabel, onOpen, onLeave, onReturn, empty, action }) {
   return (
     <section className="flex flex-col gap-3">
       <div className="flex items-baseline gap-2 px-1">
@@ -219,7 +225,14 @@ function Column({ title, cards, periodLabel, onOpen, empty, action }) {
       ) : (
         <div className="flex flex-col gap-3">
           {cards.map((c) => (
-            <BoardCard key={c.id} card={c} periodLabel={periodLabel} onOpen={() => onOpen(c.id)} />
+            <BoardCard
+              key={c.id}
+              card={c}
+              periodLabel={periodLabel}
+              onOpen={() => onOpen(c.id)}
+              onLeave={() => onLeave(c)}
+              onReturn={() => onReturn(c)}
+            />
           ))}
         </div>
       )}

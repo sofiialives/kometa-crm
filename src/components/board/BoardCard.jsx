@@ -1,4 +1,4 @@
-import { Badge, Card } from '../../shared/ui'
+import { Badge, Button, Card } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
 import { dateLabel, money, servicesWord, tenure } from '../../utils/board'
 
@@ -9,7 +9,7 @@ import { dateLabel, money, servicesWord, tenure } from '../../utils/board'
  * не меняло. А «дней с нами» и «услуг за всё время» остаются общими: так
  * помечено в задании, и по смыслу они к периоду не относятся.
  */
-export function BoardCard({ card, onOpen, periodLabel }) {
+export function BoardCard({ card, onOpen, onLeave, onReturn, periodLabel }) {
   const left = card.status === 'left'
   const empty = card.serviceCountInPeriod === 0
 
@@ -53,6 +53,22 @@ export function BoardCard({ card, onOpen, periodLabel }) {
       )}
 
       {empty && !left && <p className="text-xs text-warn">В этом периоде услуг не было</p>}
+
+      {/* Перенос между колонками прямо с карточки — как стрелки в
+          Задачнике. Иначе пришлось бы открывать карточку ради одного
+          действия, которое делают чаще всего.
+          stopPropagation: клик по кнопке не должен раскрывать карточку. */}
+      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+        {left ? (
+          <Button size="sm" variant="outline" className="flex-1" onClick={onReturn}>
+            ← Вернуть в работу
+          </Button>
+        ) : (
+          <Button size="sm" variant="outline" className="flex-1" onClick={onLeave}>
+            Клиент ушёл →
+          </Button>
+        )}
+      </div>
     </Card>
   )
 }
