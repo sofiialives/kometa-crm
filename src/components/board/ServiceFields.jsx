@@ -1,4 +1,4 @@
-import { AddAction, Input, Select } from '../../shared/ui'
+import { AddAction, Input, MoneyInput, Select } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
 import { money, monthOptions } from '../../utils/board'
 
@@ -65,12 +65,11 @@ export function ServiceFields({ value, onChange, onRemove, compact }) {
           options={monthOptions([], value.month)}
           hint="Суммы относятся к этому месяцу"
         />
-        <Input
-          label="Выручка, $"
+        <MoneyInput
+          label="Сколько заплатил клиент"
           required
-          inputMode="decimal"
           value={value.revenue}
-          onChange={(e) => set({ revenue: e.target.value })}
+          onChange={(v) => set({ revenue: v })}
           placeholder="800"
         />
       </div>
@@ -82,6 +81,16 @@ export function ServiceFields({ value, onChange, onRemove, compact }) {
           <p className="text-xs text-ink-3">Расходов нет — вся выручка идёт в прибыль.</p>
         )}
 
+        {/* Колонки подписаны один раз сверху, а не у каждой строки: иначе
+            подписи повторялись бы столько раз, сколько расходов. */}
+        {value.expenses.length > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="caption flex-1">На что потратили</span>
+            <span className="caption w-28 shrink-0">Сколько</span>
+            <span className="w-7 shrink-0" aria-hidden="true" />
+          </div>
+        )}
+
         {value.expenses.map((e) => (
           <div key={e.key} className="flex items-start gap-2">
             <Input
@@ -89,14 +98,13 @@ export function ServiceFields({ value, onChange, onRemove, compact }) {
               size="sm"
               value={e.title}
               onChange={(ev) => patchExpense(e.key, { title: ev.target.value })}
-              placeholder="На что: копирайтер"
+              placeholder="Копирайтер"
             />
-            <Input
+            <MoneyInput
               className="w-28 shrink-0"
               size="sm"
-              inputMode="decimal"
               value={e.amount}
-              onChange={(ev) => patchExpense(e.key, { amount: ev.target.value })}
+              onChange={(v) => patchExpense(e.key, { amount: v })}
               placeholder="200"
             />
             <button

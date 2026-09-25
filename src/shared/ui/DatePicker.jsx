@@ -96,7 +96,7 @@ export function DatePicker({ label, hint, error, required, disabled, value, onCh
         {open && !disabled && pos && createPortal(
           <div
             ref={panelRef}
-            style={{ position: 'fixed', top: pos.top, left: pos.left }}
+            style={{ position: 'fixed', top: pos.top, left: pos.left, maxHeight: pos.maxHeight, overflowY: 'auto' }}
             className="z-[60] w-[266px] panel rounded-card bg-panel p-3 flex flex-col gap-2 animate-fade-in shadow-xl"
           >
             <div className="flex items-center justify-between gap-2">

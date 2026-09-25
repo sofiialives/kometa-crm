@@ -92,10 +92,10 @@ export function TimePicker({ label, hint, error, required, disabled, value, onCh
         {open && !disabled && pos && createPortal(
           <div
             ref={panelRef}
-            style={{ position: 'fixed', top: pos.top, left: pos.left, width: pos.width }}
-            className="z-[60] panel rounded-card bg-panel p-1 animate-fade-in shadow-xl"
+            style={{ position: 'fixed', top: pos.top, left: pos.left, width: pos.width, maxHeight: pos.maxHeight }}
+            className="z-[60] panel rounded-card bg-panel p-1 animate-fade-in shadow-xl overflow-hidden flex flex-col"
           >
-            <div className="grid max-h-[224px] grid-cols-3 gap-0.5 overflow-y-auto">
+            <div className="grid min-h-0 flex-1 grid-cols-3 gap-0.5 overflow-y-auto">
               {QUICK.map((t) => (
                 <button
                   key={t}

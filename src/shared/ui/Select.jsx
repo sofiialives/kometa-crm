@@ -117,10 +117,10 @@ export function Select({
         {open && !disabled && pos && createPortal(
           <div
             ref={panelRef}
-            style={{ position: 'fixed', top: pos.top, left: pos.left, width: pos.width }}
-            className="z-[60] panel rounded-card bg-panel p-1 animate-fade-in shadow-xl"
+            style={{ position: 'fixed', top: pos.top, left: pos.left, width: pos.width, maxHeight: pos.maxHeight }}
+            className="z-[60] panel rounded-card bg-panel p-1 animate-fade-in shadow-xl overflow-hidden flex flex-col"
           >
-            <div ref={listRef} role="listbox" className="flex max-h-[248px] flex-col overflow-y-auto">
+            <div ref={listRef} role="listbox" className="flex min-h-0 flex-1 flex-col overflow-y-auto">
               {rows.length === 0 && <p className="px-3 py-2 text-sm text-ink-3">Пусто</p>}
 
               {rows.map((o, i) => {
