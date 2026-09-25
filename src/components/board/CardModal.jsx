@@ -1,6 +1,6 @@
 import { AddAction, Badge, Button, EmptyState, Modal, Spinner } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
-import { dateLabel, money, monthLabel, servicesWord, tenure } from '../../utils/board'
+import { dateLabel, marginText, money, monthLabel, servicesWord, tenure } from '../../utils/board'
 
 /**
  * Развёрнутая карточка: услуги выбранного периода, под каждой её расходы и
@@ -58,6 +58,7 @@ export function CardModal({
                 label={`Прибыль · ${periodLabel}`}
                 value={money(card.profitCents)}
                 tone={card.profitCents < 0 ? 'text-danger' : 'text-ok'}
+                note={marginText(card.profitCents, card.revenueCents)}
               />
             </div>
           </div>
@@ -92,11 +93,12 @@ export function CardModal({
   )
 }
 
-function Figure({ label, value, tone }) {
+function Figure({ label, value, tone, note }) {
   return (
     <div className="flex flex-col gap-0.5">
       <span className="caption whitespace-nowrap">{label}</span>
       <span className={cx('font-display text-xl font-bold tabular-nums', tone)}>{value}</span>
+      {note && <span className="text-xs text-ink-3 tabular-nums">{note}</span>}
     </div>
   )
 }
@@ -131,6 +133,7 @@ function ServiceBlock({ service, onEdit, onDelete }) {
         <div className="mt-1 border-t border-line pt-2">
           <Line
             label="Прибыль"
+            note={marginText(service.profitCents, service.revenueCents)}
             value={money(service.profitCents)}
             tone={service.profitCents < 0 ? 'text-danger' : 'text-ok'}
             strong
@@ -141,11 +144,16 @@ function ServiceBlock({ service, onEdit, onDelete }) {
   )
 }
 
-function Line({ label, value, tone, muted, indent, strong }) {
+function Line({ label, value, tone, muted, indent, strong, note }) {
   return (
     <div className={cx('flex items-baseline justify-between gap-3', indent && 'pl-3')}>
-      <span className={cx('min-w-0 truncate text-sm', muted ? 'text-ink-3' : 'text-ink-2')} title={label}>
-        {label}
+      {/* Подпись и пометка про долю держим вместе слева, чтобы суммы
+          справа остались в одной колонке и читались столбиком. */}
+      <span className="flex min-w-0 items-baseline gap-2">
+        <span className={cx('min-w-0 truncate text-sm', muted ? 'text-ink-3' : 'text-ink-2')} title={label}>
+          {label}
+        </span>
+        {note && <span className="shrink-0 text-xs text-ink-3 tabular-nums">{note}</span>}
       </span>
       <span className={cx('shrink-0 tabular-nums', strong ? 'text-sm font-semibold' : 'text-sm', tone, muted && 'text-ink-3')}>
         {value}

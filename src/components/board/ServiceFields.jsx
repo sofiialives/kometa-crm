@@ -1,6 +1,6 @@
 import { AddAction, Input, MoneyInput, Select } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
-import { money, monthOptions } from '../../utils/board'
+import { marginText, money, monthOptions } from '../../utils/board'
 
 export const newExpense = () => ({ key: Math.random().toString(36).slice(2), title: '', amount: '' })
 export const newService = (month) => ({
@@ -30,6 +30,7 @@ export function ServiceFields({ value, onChange, onRemove, compact }) {
     set({ expenses: value.expenses.map((e) => (e.key === key ? { ...e, ...patch } : e)) })
 
   const profit = serviceProfit(value)
+  const margin = marginText(profit, num(value.revenue))
 
   return (
     <div className={cx('flex flex-col gap-4', compact && 'rounded-card border border-line p-4')}>
@@ -129,8 +130,13 @@ export function ServiceFields({ value, onChange, onRemove, compact }) {
           возвращает обратно — арифметика живёт в одном месте. */}
       <div className="flex items-baseline justify-between gap-3 rounded-[10px] border border-line px-4 py-2.5">
         <span className="caption">Прибыль по услуге</span>
-        <span className={cx('text-base font-semibold tabular-nums', profit < 0 ? 'text-danger' : 'text-ok')}>
-          {money(Math.round(profit * 100))}
+        <span className="flex shrink-0 flex-col items-end gap-0.5">
+          <span className={cx('text-base font-semibold tabular-nums', profit < 0 ? 'text-danger' : 'text-ok')}>
+            {money(Math.round(profit * 100))}
+          </span>
+          {/* Доля прибыли в выручке — её просил заказчик: сумма сама по себе
+              не говорит, много это или мало для такой услуги. */}
+          {margin && <span className="text-xs text-ink-3 tabular-nums">{margin}</span>}
         </span>
       </div>
     </div>

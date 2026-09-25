@@ -1,6 +1,6 @@
 import { Badge, Button, Card } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
-import { dateLabel, money, servicesWord, tenure } from '../../utils/board'
+import { dateLabel, marginText, money, servicesWord, tenure } from '../../utils/board'
 
 /**
  * Свёрнутая карточка клиента.
@@ -36,6 +36,7 @@ export function BoardCard({ card, onOpen, onLeave, onReturn, periodLabel }) {
           label={`Прибыль · ${periodLabel}`}
           value={money(card.profitCents)}
           tone={card.profitCents < 0 ? 'text-danger' : 'text-ok'}
+          note={marginText(card.profitCents, card.revenueCents)}
           muted={empty}
         />
       </div>
@@ -73,11 +74,16 @@ export function BoardCard({ card, onOpen, onLeave, onReturn, periodLabel }) {
   )
 }
 
-function Row({ label, value, tone, muted }) {
+function Row({ label, value, tone, muted, note }) {
   return (
     <div className="flex items-baseline justify-between gap-2">
       <span className="caption truncate">{label}</span>
-      <span className={cx('text-sm font-semibold tabular-nums', muted ? 'text-ink-3' : tone)}>{value}</span>
+      {/* Доля под суммой, а не рядом: на свёрнутой карточке строка узкая, и
+          рядом длинная подпись и сумма не уместились бы вдвоём. */}
+      <span className="flex shrink-0 flex-col items-end">
+        <span className={cx('text-sm font-semibold tabular-nums', muted ? 'text-ink-3' : tone)}>{value}</span>
+        {note && !muted && <span className="text-[11px] leading-tight text-ink-3 tabular-nums">{note}</span>}
+      </span>
     </div>
   )
 }
