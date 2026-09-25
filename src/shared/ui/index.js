@@ -1,6 +1,7 @@
 export { Button } from './Button'
 export { Input } from './Input'
 export { DatePicker } from './DatePicker'
+export { TimePicker } from './TimePicker'
 export { Textarea } from './Textarea'
 export { Select } from './Select'
 export { Checkbox } from './Checkbox'

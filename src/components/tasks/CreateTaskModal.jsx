@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Button, Input, Modal, Textarea, PriorityPicker } from '../../shared/ui'
+import { Button, Input, Modal, PriorityPicker, Textarea, TimePicker } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
 import {
   buildDeadlineMsk,
@@ -105,8 +105,7 @@ export function CreateTaskModal({ open, onClose, onSubmit }) {
           </div>
         </div>
 
-        <Input
-          type="time"
+        <TimePicker
           label="Время (МСК)"
           hint={hint}
           value={time}

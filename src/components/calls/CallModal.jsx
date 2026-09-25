@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Avatar, AvatarStack, Button, DatePicker, Input, Modal, Textarea } from '../../shared/ui'
+import { Avatar, AvatarStack, Button, DatePicker, Input, Modal, Textarea, TimePicker } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
 import { buildDeadlineMsk, defaultMskTimeValue, isPastMsk, mskDateValueIn, splitDeadlineMsk } from '../../utils/tasks'
 import { maxPlanKey, PLAN_DAYS_AHEAD, shortName, todayKey } from '../../utils/calls'
@@ -169,16 +169,16 @@ export function CallModal({ open, call, presetDay, canManage = true, author, dir
             value={date}
             onChange={setDate}
             today={todayKey()}
+            min={todayKey()}
             max={maxPlanKey()}
             disabled={!canManage}
             required
           />
-          <Input
+          <TimePicker
             className="col-span-2"
-            type="time"
             label="Время (МСК)"
             value={time}
-            onChange={(e) => setTime(e.target.value)}
+            onChange={setTime}
             disabled={!canManage}
             required
           />
