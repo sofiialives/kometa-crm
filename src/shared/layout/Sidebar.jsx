@@ -12,6 +12,7 @@ function useNavItems() {
   const isAdmin = useAuthStore((s) => s.user?.role === 'admin')
   return [
     ...(isAdmin ? [{ to: '/admin', label: 'Админ-панель', icon: IconShield }] : []),
+    ...(isAdmin ? [{ to: '/board', label: 'Клиенты', icon: IconBoardMoney }] : []),
     { to: '/', label: 'Иерархия', icon: IconTree },
     // У админа нет своего отдела, поэтому «Задачи» для него — это только
     // его личные задачи, не работа с чужими. Называем это явно, иначе
@@ -20,6 +21,15 @@ function useNavItems() {
     { to: '/calls', label: 'Звонки', icon: IconPhone },
     { to: '/archive', label: 'Архив', icon: IconArchive },
   ]
+}
+
+function IconBoardMoney() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M3 10h18M8 15h3" />
+    </svg>
+  )
 }
 
 function IconArchive() {
