@@ -39,7 +39,7 @@ export function DatePicker({ label, hint, error, required, disabled, value, onCh
   const id = useFieldId(propId)
   // Портал, fixed и пересчёт при прокрутке — общая механика всплывающих
   // панелей, одна на календарь и на выпадающие списки.
-  const { open, setOpen, pos, boxRef, panelRef } = useAnchoredPanel({ width: 266, height: 320 })
+  const { open, setOpen, pos, boxRef, panelRef, host } = useAnchoredPanel({ width: 266, height: 320 })
 
   const selected = parse(value)
   const [view, setView] = useState(() => selected || parse(today) || { y: 2026, m: 0, d: 1 })
@@ -78,6 +78,9 @@ export function DatePicker({ label, hint, error, required, disabled, value, onCh
         <button
           id={id}
           type="button"
+          role="combobox"
+          aria-expanded={open}
+          aria-haspopup="dialog"
           disabled={disabled}
           onClick={() => setOpen((o) => !o)}
           className={cx(
@@ -96,7 +99,7 @@ export function DatePicker({ label, hint, error, required, disabled, value, onCh
         {open && !disabled && pos && createPortal(
           <div
             ref={panelRef}
-            style={{ position: 'fixed', top: pos.top, left: pos.left, maxHeight: pos.maxHeight, overflowY: 'auto' }}
+            style={{ position: 'absolute', top: pos.top, left: pos.left, maxHeight: pos.maxHeight, overflowY: 'auto' }}
             className="z-[60] w-[266px] panel rounded-card bg-panel p-3 flex flex-col gap-2 animate-fade-in shadow-xl"
           >
             <div className="flex items-center justify-between gap-2">
@@ -151,7 +154,7 @@ export function DatePicker({ label, hint, error, required, disabled, value, onCh
               </button>
             )}
           </div>,
-          document.body,
+          host || document.body,
         )}
       </div>
     </Field>

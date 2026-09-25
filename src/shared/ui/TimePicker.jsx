@@ -37,7 +37,7 @@ function normalize(raw) {
  */
 export function TimePicker({ label, hint, error, required, disabled, value, onChange, id: propId, className }) {
   const id = useFieldId(propId)
-  const { open, setOpen, pos, boxRef, panelRef } = useAnchoredPanel({ height: 240 })
+  const { open, setOpen, pos, boxRef, panelRef, host } = useAnchoredPanel({ height: 240 })
   const [raw, setRaw] = useState(value || '')
 
   // Значение могли поменять снаружи — например, открыли карточку другого
@@ -78,6 +78,9 @@ export function TimePicker({ label, hint, error, required, disabled, value, onCh
         <button
           type="button"
           tabIndex={-1}
+          role="combobox"
+          aria-expanded={open}
+          aria-haspopup="listbox"
           disabled={disabled}
           onClick={() => setOpen((o) => !o)}
           aria-label="Выбрать время из списка"
@@ -92,7 +95,7 @@ export function TimePicker({ label, hint, error, required, disabled, value, onCh
         {open && !disabled && pos && createPortal(
           <div
             ref={panelRef}
-            style={{ position: 'fixed', top: pos.top, left: pos.left, width: pos.width, maxHeight: pos.maxHeight }}
+            style={{ position: 'absolute', top: pos.top, left: pos.left, width: pos.width, maxHeight: pos.maxHeight }}
             className="z-[60] panel rounded-card bg-panel p-1 animate-fade-in shadow-xl overflow-hidden flex flex-col"
           >
             <div className="grid min-h-0 flex-1 grid-cols-3 gap-0.5 overflow-y-auto">
@@ -113,7 +116,7 @@ export function TimePicker({ label, hint, error, required, disabled, value, onCh
               ))}
             </div>
           </div>,
-          document.body,
+          host || document.body,
         )}
       </div>
     </Field>

@@ -93,7 +93,9 @@ export function Modal({ open, onClose, title, size = 'md', closeOnOverlay = true
           )}
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">{children}</div>
+        {/* relative: всплывающие панели внутри окна укладываются в его
+            систему координат и прокручиваются вместе с содержимым. */}
+        <div className="relative min-h-0 flex-1 overflow-y-auto px-6 py-5">{children}</div>
 
         {footer && (
           <div className="flex shrink-0 items-center justify-end gap-3 px-6 pb-5 pt-1">{footer}</div>

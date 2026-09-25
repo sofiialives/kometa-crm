@@ -31,7 +31,7 @@ export function Select({
   ...rest
 }) {
   const id = useFieldId(propId)
-  const { open, setOpen, pos, boxRef, panelRef } = useAnchoredPanel({ height: PANEL_MAX })
+  const { open, setOpen, pos, boxRef, panelRef, host } = useAnchoredPanel({ height: PANEL_MAX })
   const listRef = useRef(null)
   const [active, setActive] = useState(-1)
 
@@ -117,7 +117,7 @@ export function Select({
         {open && !disabled && pos && createPortal(
           <div
             ref={panelRef}
-            style={{ position: 'fixed', top: pos.top, left: pos.left, width: pos.width, maxHeight: pos.maxHeight }}
+            style={{ position: 'absolute', top: pos.top, left: pos.left, width: pos.width, maxHeight: pos.maxHeight }}
             className="z-[60] panel rounded-card bg-panel p-1 animate-fade-in shadow-xl overflow-hidden flex flex-col"
           >
             <div ref={listRef} role="listbox" className="flex min-h-0 flex-1 flex-col overflow-y-auto">
@@ -154,7 +154,7 @@ export function Select({
               })}
             </div>
           </div>,
-          document.body,
+          host || document.body,
         )}
       </div>
     </Field>
