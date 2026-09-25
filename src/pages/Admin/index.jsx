@@ -119,8 +119,6 @@ export default function AdminPage() {
 
     const res = await updateUser(user.id, {
       departmentId,
-      // Должность главного служебная — модалка её не отдаёт, и перезаписывать
-      // «Начальник отдела» первой должностью из списка нельзя.
       ...(position ? { position } : {}),
       ...(leadOf ? { role: 'staff' } : {}),
     })
