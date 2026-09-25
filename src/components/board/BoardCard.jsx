@@ -1,6 +1,6 @@
 import { Badge, Card } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
-import { dateLabel, daysWord, money, servicesWord } from '../../utils/board'
+import { dateLabel, money, servicesWord, tenure } from '../../utils/board'
 
 /**
  * Свёрнутая карточка клиента.
@@ -41,7 +41,7 @@ export function BoardCard({ card, onOpen, periodLabel }) {
       </div>
 
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-3">
-        <span>{daysWord(card.daysWithUs)} с нами</span>
+        <span>с нами {tenure(card.daysWithUs)}</span>
         <span aria-hidden="true">·</span>
         <span>{servicesWord(card.serviceCountTotal)} за всё время</span>
       </div>

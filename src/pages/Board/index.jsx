@@ -157,6 +157,7 @@ export default function BoardPage() {
         onSubmit={(body) => run(() => addClient(body))}
         clients={allClients}
         alreadyOnBoard={onBoard}
+        defaultMonth={period.mode === 'month' ? period.month : undefined}
       />
 
       <ServiceModal

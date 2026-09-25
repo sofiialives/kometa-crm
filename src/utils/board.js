@@ -35,6 +35,33 @@ export function dateLabel(value) {
     .replace(/\s*г\.$/, '')
 }
 
+/**
+ * «115 дней», «8 месяцев», «1 год 2 месяца».
+ *
+ * В задании написано «сколько дней/месяцев клиент уже с нами». Двести
+ * пятьдесят три дня глазами не читаются — с какого-то момента месяцы
+ * понятнее, а после года понятнее годы.
+ */
+export function tenure(days) {
+  if (days < 60) return daysWord(days)
+  const months = Math.floor(days / 30.44)
+  if (months < 12) return monthsWord(months)
+  const years = Math.floor(months / 12)
+  const rest = months % 12
+  return rest ? `${yearsWord(years)} ${monthsWord(rest)}` : yearsWord(years)
+}
+
+const plural = (n, one, few, many) => {
+  const mod10 = n % 10
+  const mod100 = n % 100
+  if (mod10 === 1 && mod100 !== 11) return `${n} ${one}`
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${n} ${few}`
+  return `${n} ${many}`
+}
+
+export const monthsWord = (n) => plural(n, 'месяц', 'месяца', 'месяцев')
+export const yearsWord = (n) => plural(n, 'год', 'года', 'лет')
+
 /** «115 дней», «1 день», «22 дня» — иначе в интерфейсе появляется «1 дней». */
 export function daysWord(n) {
   const mod10 = n % 10

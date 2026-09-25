@@ -1,6 +1,6 @@
 import { AddAction, Badge, Button, EmptyState, Modal, Spinner } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
-import { dateLabel, daysWord, money, monthLabel, servicesWord } from '../../utils/board'
+import { dateLabel, money, monthLabel, servicesWord, tenure } from '../../utils/board'
 
 /**
  * Развёрнутая карточка: услуги выбранного периода, под каждой её расходы и
@@ -41,7 +41,7 @@ export function CardModal({
               <div className="flex flex-wrap items-center gap-2">
                 {left ? <Badge tone="danger">Ушёл</Badge> : <Badge tone="ok">В работе</Badge>}
                 <span className="text-xs text-ink-3">
-                  с нами {daysWord(card.daysWithUs)}, с {dateLabel(card.startedAt)}
+                  с нами {tenure(card.daysWithUs)}, с {dateLabel(card.startedAt)}
                 </span>
               </div>
               {card.contact && <p className="text-sm text-ink-2">{card.contact}</p>}
