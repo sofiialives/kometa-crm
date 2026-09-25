@@ -60,6 +60,12 @@ const plural = (n, one, few, many) => {
 }
 
 export const monthsWord = (n) => plural(n, 'месяц', 'месяца', 'месяцев')
+
+/** Подпись скользящего окна на карточках: «3 месяца», «год». */
+export function lastLabel(months) {
+  const n = Number(months) || 3
+  return n === 12 ? 'год' : monthsWord(n)
+}
 export const yearsWord = (n) => plural(n, 'год', 'года', 'лет')
 
 /** «115 дней», «1 день», «22 дня» — иначе в интерфейсе появляется «1 дней». */

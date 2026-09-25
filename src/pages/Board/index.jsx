@@ -11,7 +11,7 @@ import { CardModal } from '../../components/board/CardModal'
 import { AddClientModal } from '../../components/board/AddClientModal'
 import { ServiceModal } from '../../components/board/ServiceModal'
 import { LeaveModal } from '../../components/board/LeaveModal'
-import { monthKey, monthLabel } from '../../utils/board'
+import { lastLabel, monthKey, monthLabel } from '../../utils/board'
 
 export default function BoardPage() {
   const {
@@ -30,6 +30,7 @@ export default function BoardPage() {
   const period = useMemo(() => ({
     mode: params.get('mode') || 'month',
     month: params.get('month') || monthKey(),
+    months: params.get('months') || '',
     from: params.get('from') || '',
     to: params.get('to') || '',
   }), [params])
@@ -58,6 +59,7 @@ export default function BoardPage() {
   // месяца сервер отклонит проверкой.
   const request = useMemo(() => {
     if (period.mode === 'all') return { mode: 'all' }
+    if (period.mode === 'last') return { mode: 'last', months: period.months || '3' }
     if (period.mode === 'period') return { mode: 'period', from: period.from, to: period.to }
     return { mode: 'month', month: period.month }
   }, [period])
@@ -69,6 +71,7 @@ export default function BoardPage() {
 
   const periodLabel = useMemo(() => {
     if (period.mode === 'all') return 'всё время'
+    if (period.mode === 'last') return lastLabel(period.months)
     if (period.mode === 'period') return 'период'
     return monthLabel(period.month)
   }, [period])
