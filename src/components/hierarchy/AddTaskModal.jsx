@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Modal, Button, Input, Textarea, Checkbox, Avatar, PriorityPicker } from '../../shared/ui'
+import { Avatar, Button, Checkbox, DatePicker, Input, Modal, PriorityPicker, Textarea, TimePicker } from '../../shared/ui'
 import { displayName, membersOf } from '../../utils/admin'
 import { buildDeadlineMsk, defaultMskDateValue, defaultMskTimeValue } from '../../utils/tasks'
+import { todayKey } from '../../utils/calls'
 
 export function AddTaskModal({ work, currentUser, users, onClose, onSubmit }) {
   const [title, setTitle] = useState('')
@@ -97,19 +98,18 @@ export function AddTaskModal({ work, currentUser, users, onClose, onSubmit }) {
           />
 
           <div className="grid grid-cols-2 gap-3">
-            <Input
+            <DatePicker
               label="Срок, дата"
               required
-              type="date"
               value={date}
-              onChange={(e) => { setDate(e.target.value); setError(null) }}
+              onChange={(v) => { setDate(v); setError(null) }}
+              today={todayKey()}
             />
-            <Input
+            <TimePicker
               label="Время, по Москве"
               required
-              type="time"
               value={time}
-              onChange={(e) => { setTime(e.target.value); setError(null) }}
+              onChange={(v) => { setTime(v); setError(null) }}
             />
           </div>
 

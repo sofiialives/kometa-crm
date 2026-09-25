@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Modal, Button, Input } from '../../shared/ui'
+import { Modal, Button, DatePicker, TimePicker } from '../../shared/ui'
 import { buildDeadlineMsk, splitDeadlineMsk } from '../../utils/tasks'
+import { todayKey } from '../../utils/calls'
 
 export function ExtendDeadlineModal({ task, onClose, onSubmit }) {
   const [date, setDate] = useState('')
@@ -51,19 +52,18 @@ export function ExtendDeadlineModal({ task, onClose, onSubmit }) {
           </p>
 
           <div className="grid grid-cols-2 gap-3">
-            <Input
+            <DatePicker
               label="Дата"
               required
-              type="date"
               value={date}
-              onChange={(e) => { setDate(e.target.value); setError(null) }}
+              onChange={(v) => { setDate(v); setError(null) }}
+              today={todayKey()}
             />
-            <Input
+            <TimePicker
               label="Время, по Москве"
               required
-              type="time"
               value={time}
-              onChange={(e) => { setTime(e.target.value); setError(null) }}
+              onChange={(v) => { setTime(v); setError(null) }}
             />
           </div>
 

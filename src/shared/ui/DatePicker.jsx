@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Field, controlClasses, useFieldId } from './Field'
+import { useAnchoredPanel } from './useAnchoredPanel'
 import { cx } from '../lib/cx'
 
 const WEEK = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
@@ -27,16 +28,18 @@ function parse(value) {
  * today передаётся снаружи строкой: день считается по Москве, а браузер
  * сотрудника может стоять в другом поясе — вычислять «сегодня» внутри
  * компонента значило бы подсветить не тот день.
+ *
+ * today только подсвечивает день и даёт кнопку «Сегодня». Границы задают
+ * min и max, и это разные вещи: у даты начала работы с клиентом верхняя
+ * граница — сегодня, а нижней нет вовсе, потому что работать с ним начали
+ * полгода назад. Пока today служил заодно и нижней границей, в таких полях
+ * выбиралось ровно одно число — сегодняшнее.
  */
-export function DatePicker({ label, hint, error, required, disabled, value, onChange, today, max, id: propId, className }) {
+export function DatePicker({ label, hint, error, required, disabled, value, onChange, today, min, max, id: propId, className }) {
   const id = useFieldId(propId)
-  const [open, setOpen] = useState(false)
-  const boxRef = useRef(null)
-  const panelRef = useRef(null)
-  // Панель рисуется порталом в body: внутри Modal у тела окна стоит
-  // overflow-y:auto, и обычная absolute-всплывашка обрезалась по нижнему
-  // краю — последняя неделя месяца и кнопка «Сегодня» были не видны.
-  const [pos, setPos] = useState(null)
+  // Портал, fixed и пересчёт при прокрутке — общая механика всплывающих
+  // панелей, одна на календарь и на выпадающие списки.
+  const { open, setOpen, pos, boxRef, panelRef, host } = useAnchoredPanel({ width: 266, height: 320 })
 
   const selected = parse(value)
   const [view, setView] = useState(() => selected || parse(today) || { y: 2026, m: 0, d: 1 })
@@ -46,60 +49,6 @@ export function DatePicker({ label, hint, error, required, disabled, value, onCh
   useEffect(() => {
     if (open && selected) setView({ y: selected.y, m: selected.m, d: selected.d })
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Положение считаем от кнопки в координатах окна. Если снизу места
-  // меньше, чем нужно календарю, разворачиваем его вверх.
-  useEffect(() => {
-    if (!open) { setPos(null); return }
-    const place = () => {
-      const r = boxRef.current?.getBoundingClientRect()
-      if (!r) return
-
-      // Поле уехало с экрана целиком — держать календарь висящим над
-      // чужим содержимым незачем.
-      if (r.bottom < 0 || r.top > window.innerHeight) { setOpen(false); return }
-
-      const H = 320
-      const below = window.innerHeight - r.bottom
-      setPos({
-        left: Math.max(8, Math.min(r.left, window.innerWidth - 274)),
-        top: below >= H ? r.bottom + 6 : Math.max(8, r.top - H - 6),
-      })
-    }
-    place()
-    window.addEventListener('resize', place)
-
-    // Панель нарисована порталом поверх страницы и стоит на fixed, то есть
-    // не двигается при прокрутке. Поле при этом уезжает — и календарь
-    // отрывается от него, будто прыгает. На телефоне, где прокрутка есть
-    // почти всегда, это заметнее всего.
-    //
-    // Слушаем в фазе захвата: прокручиваться может не только окно, но и
-    // контейнер внутри страницы — например, тело модального окна, у
-    // которого свой overflow.
-    window.addEventListener('scroll', place, { capture: true, passive: true })
-
-    return () => {
-      window.removeEventListener('resize', place)
-      window.removeEventListener('scroll', place, { capture: true })
-    }
-  }, [open])
-
-  useEffect(() => {
-    if (!open) return
-    const onDown = (e) => {
-      if (boxRef.current?.contains(e.target)) return
-      if (panelRef.current?.contains(e.target)) return
-      setOpen(false)
-    }
-    const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); setOpen(false) } }
-    document.addEventListener('mousedown', onDown)
-    document.addEventListener('keydown', onKey, true)
-    return () => {
-      document.removeEventListener('mousedown', onDown)
-      document.removeEventListener('keydown', onKey, true)
-    }
-  }, [open])
 
   const cells = useMemo(() => {
     const first = new Date(Date.UTC(view.y, view.m, 1))
@@ -129,6 +78,9 @@ export function DatePicker({ label, hint, error, required, disabled, value, onCh
         <button
           id={id}
           type="button"
+          role="combobox"
+          aria-expanded={open}
+          aria-haspopup="dialog"
           disabled={disabled}
           onClick={() => setOpen((o) => !o)}
           className={cx(
@@ -147,7 +99,7 @@ export function DatePicker({ label, hint, error, required, disabled, value, onCh
         {open && !disabled && pos && createPortal(
           <div
             ref={panelRef}
-            style={{ position: 'fixed', top: pos.top, left: pos.left }}
+            style={{ position: 'absolute', top: pos.top, left: pos.left, maxHeight: pos.maxHeight, overflowY: 'auto' }}
             className="z-[60] w-[266px] panel rounded-card bg-panel p-3 flex flex-col gap-2 animate-fade-in shadow-xl"
           >
             <div className="flex items-center justify-between gap-2">
@@ -166,9 +118,9 @@ export function DatePicker({ label, hint, error, required, disabled, value, onCh
                 const k = key(view.y, view.m, d)
                 const isSelected = k === value
                 const isToday = k === today
-                // За горизонтом планирования день виден, но не кликается:
-                // спрятать его целиком значило бы порвать сетку месяца.
-                const blocked = (max && k > max) || (today && k < today)
+                // За границей день виден, но не кликается: спрятать его
+                // целиком значило бы порвать сетку месяца.
+                const blocked = (max && k > max) || (min && k < min)
                 return (
                   <button
                     key={k}
@@ -202,7 +154,7 @@ export function DatePicker({ label, hint, error, required, disabled, value, onCh
               </button>
             )}
           </div>,
-          document.body,
+          host || document.body,
         )}
       </div>
     </Field>

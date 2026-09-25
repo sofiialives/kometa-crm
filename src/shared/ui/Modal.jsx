@@ -5,31 +5,62 @@ import { Button } from './Button'
 
 const sizes = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl' }
 
+/**
+ * Прокрутку страницы под окнами держит счётчик открытых окон, а не каждое
+ * окно по отдельности.
+ *
+ * Раньше окно запоминало прежнее значение overflow при открытии и
+ * возвращало его при закрытии. Выглядело разумно, но ломалось на вложенных
+ * окнах: onClose приходит новой функцией на каждую перерисовку страницы,
+ * эффект из-за этого перезапускается, и «прежним» окно запоминало значение,
+ * которое выставило другое окно поверх него. После закрытия обоих на body
+ * оставался overflow: hidden, и страница переставала прокручиваться совсем.
+ *
+ * Со счётчиком порядок и количество перезапусков значения не имеют: первое
+ * открытие блокирует, последнее закрытие возвращает как было.
+ */
+let openModals = 0
+let savedOverflow = ''
+let savedPadding = ''
+
+function lockScroll() {
+  openModals += 1
+  if (openModals > 1) return
+
+  savedOverflow = document.body.style.overflow
+  savedPadding = document.body.style.paddingRight
+
+  // В index.css у полосы прокрутки задана ширина, поэтому Chrome рисует её
+  // занимающей место в раскладке, а не поверх содержимого. Убирая прокрутку
+  // под окном, возвращаем эти пиксели отступом — без этого вся CRM заметно
+  // прыгает вбок в момент открытия.
+  const gap = window.innerWidth - document.documentElement.clientWidth
+  document.body.style.overflow = 'hidden'
+  if (gap > 0) document.body.style.paddingRight = `${gap}px`
+}
+
+function unlockScroll() {
+  openModals = Math.max(0, openModals - 1)
+  if (openModals > 0) return
+  document.body.style.overflow = savedOverflow
+  document.body.style.paddingRight = savedPadding
+}
+
 export function Modal({ open, onClose, title, size = 'md', closeOnOverlay = true, hideClose = false, footer, children }) {
+  // Блокировка прокрутки зависит только от того, открыто окно или нет.
+  // Держать её в одном эффекте с обработчиком Escape нельзя: тот зависит
+  // от onClose, а он меняется на каждой перерисовке страницы.
   useEffect(() => {
-    if (!open) return
+    if (!open) return undefined
+    lockScroll()
+    return unlockScroll
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return undefined
     const onKey = (e) => e.key === 'Escape' && !hideClose && onClose?.()
     document.addEventListener('keydown', onKey)
-
-    // В index.css у полосы прокрутки задана ширина, поэтому Chrome рисует
-    // её занимающей место в раскладке, а не поверх содержимого. Убирая
-    // прокрутку под окном, возвращаем эти пиксели отступом — без этого
-    // страница под окном становится на ширину полосы шире, и вся CRM
-    // заметно прыгает вбок в момент открытия.
-    const gap = window.innerWidth - document.documentElement.clientWidth
-    const prevOverflow = document.body.style.overflow
-    const prevPadding = document.body.style.paddingRight
-    document.body.style.overflow = 'hidden'
-    if (gap > 0) document.body.style.paddingRight = `${gap}px`
-
-    // Возвращаем прежние значения, а не пустые: окна бывают вложенными
-    // (карточка и подтверждение поверх неё), и закрытие верхнего не
-    // должно возвращать прокрутку, пока открыто нижнее.
-    return () => {
-      document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = prevOverflow
-      document.body.style.paddingRight = prevPadding
-    }
+    return () => document.removeEventListener('keydown', onKey)
   }, [open, onClose, hideClose])
 
   if (!open) return null
@@ -62,7 +93,9 @@ export function Modal({ open, onClose, title, size = 'md', closeOnOverlay = true
           )}
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">{children}</div>
+        {/* relative: всплывающие панели внутри окна укладываются в его
+            систему координат и прокручиваются вместе с содержимым. */}
+        <div className="relative min-h-0 flex-1 overflow-y-auto px-6 py-5">{children}</div>
 
         {footer && (
           <div className="flex shrink-0 items-center justify-end gap-3 px-6 pb-5 pt-1">{footer}</div>
