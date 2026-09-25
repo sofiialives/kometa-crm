@@ -8,7 +8,9 @@
 export function money(cents) {
   const v = (cents || 0) / 100
   const fraction = Math.abs(v % 1) > 0.004 ? 2 : 0
-  return `$${v.toLocaleString('ru-RU', { minimumFractionDigits: fraction, maximumFractionDigits: 2 })}`
+  const amount = Math.abs(v).toLocaleString('ru-RU', { minimumFractionDigits: fraction, maximumFractionDigits: 2 })
+  // Минус перед знаком валюты, а не после: «$-100» читается как опечатка.
+  return `${v < 0 ? '\u2212' : ''}$${amount}`
 }
 
 /** «октябрь 2026» — подпись месяца, к которому привязана услуга. */
@@ -113,4 +115,23 @@ export function monthOptions(withData = [], selected) {
     if (m) map.set(m, { value: m, label: monthLabel(m) })
   }
   return [...map.values()].sort((a, b) => b.value.localeCompare(a.value))
+}
+
+/**
+ * Маржа: сколько процентов выручки осталось прибылью. «$220 из $800» —
+ * это 28%, и заказчик хочет видеть именно долю, а не только сумму:
+ * одинаковая прибыль с разной выручки — это разное качество работы.
+ *
+ * Единицы не важны, лишь бы обе суммы были в одних: центы к центам,
+ * доллары к долларам.
+ *
+ * Без выручки процента не существует (делить не на что), и тогда возвращаем
+ * null — вызывающий просто ничего не рисует. Показать «0%» было бы враньём:
+ * это не нулевая маржа, а её отсутствие.
+ */
+export function marginText(profit, revenue) {
+  if (!revenue || revenue <= 0) return null
+  const pct = Math.round((profit / revenue) * 100)
+  // Минус берём типографский — такой же, как в строках расходов.
+  return `${pct < 0 ? '−' : ''}${Math.abs(pct)}% от выручки`
 }
