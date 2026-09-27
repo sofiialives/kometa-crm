@@ -103,7 +103,16 @@ export function TimePicker({ label, hint, error, required, disabled, value, onCh
                 <button
                   key={t}
                   type="button"
-                  onClick={() => { setRaw(t); onChange?.(t); setOpen(false) }}
+                  onClick={() => {
+                    // Список закрываем ПЕРЕД тем, как отдать значение наружу.
+                    // Если обработчик у вызывающего упадёт, панель всё равно
+                    // закроется, а не останется висеть — именно так выглядел
+                    // баг в форме задачи, где обработчик ждал событие вместо
+                    // строки и падал молча.
+                    setOpen(false)
+                    setRaw(t)
+                    onChange?.(t)
+                  }}
                   className={cx(
                     'rounded-[8px] px-2 py-1.5 text-sm tabular-nums transition-colors cursor-pointer',
                     t === value

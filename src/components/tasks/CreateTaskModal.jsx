@@ -109,7 +109,7 @@ export function CreateTaskModal({ open, onClose, onSubmit }) {
           label="Время (МСК)"
           hint={hint}
           value={time}
-          onChange={(e) => setTime(e.target.value)}
+          onChange={setTime}
           required
         />
         <PriorityPicker value={priority} onChange={setPriority} />
