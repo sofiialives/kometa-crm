@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Field, controlClasses, useFieldId } from './Field'
 import { useAnchoredPanel } from './useAnchoredPanel'
@@ -6,10 +6,21 @@ import { cx } from '../lib/cx'
 
 const pad = (n) => String(n).padStart(2, '0')
 
-// Часы, в которые реально назначают звонки и сроки. Круглые сутки списком —
-// это девяносто шесть строк, по которым приходится долго крутить.
+// Сутки целиком, с шагом в четверть часа. Список длинный, но открывается
+// он сразу на нужном месте (см. useEffect ниже), поэтому крутить его от
+// полуночи не приходится. Урезать сутки до рабочих часов нельзя: сроки
+// ставят и на ночь, и на раннее утро.
 const QUICK = []
-for (let h = 8; h <= 21; h += 1) for (const m of [0, 15, 30, 45]) QUICK.push(`${pad(h)}:${pad(m)}`)
+for (let h = 0; h <= 23; h += 1) for (const m of [0, 15, 30, 45]) QUICK.push(`${pad(h)}:${pad(m)}`)
+
+/** Ближайшая четверть часа — на неё список и прокручивается при открытии. */
+function nearestQuarter(hhmm) {
+  const m = /^(\d{2}):(\d{2})$/.exec(String(hhmm || ''))
+  if (!m) return '09:00'
+  const total = Number(m[1]) * 60 + Number(m[2])
+  const rounded = Math.min(23 * 60 + 45, Math.round(total / 15) * 15)
+  return `${pad(Math.floor(rounded / 60))}:${pad(rounded % 60)}`
+}
 
 /** Из набранного оставляем цифры и собираем ЧЧ:ММ. */
 function format(raw) {
@@ -43,6 +54,25 @@ export function TimePicker({ label, hint, error, required, disabled, value, onCh
   // Значение могли поменять снаружи — например, открыли карточку другого
   // звонка в том же окне.
   useEffect(() => { setRaw(value || '') }, [value])
+
+  // Открытый список подкручиваем к текущему времени поля. Прокручиваем
+  // саму сетку, а не через scrollIntoView: тот утащил бы за собой и
+  // родителей, а панель живёт внутри прокручиваемой формы.
+  //
+  // Зависим и от pos: панели в DOM ещё нет, пока не посчитано её место,
+  // поэтому на первом проходе прокручивать нечего. И делаем это ровно один
+  // раз за открытие — иначе перерасчёт места (прокрутка страницы, поворот
+  // экрана) возвращал бы список на исходную позицию под пальцем.
+  const scrolled = useRef(false)
+  useEffect(() => { if (!open) scrolled.current = false }, [open])
+  useEffect(() => {
+    if (!open || scrolled.current) return
+    const grid = panelRef.current?.querySelector('[data-times]')
+    const item = grid?.querySelector(`[data-time="${nearestQuarter(raw || value)}"]`)
+    if (!grid || !item) return
+    grid.scrollTop = item.offsetTop - grid.clientHeight / 2 + item.offsetHeight / 2
+    scrolled.current = true
+  }, [open, pos])
 
   function type(next) {
     const shown = format(next)
@@ -98,10 +128,11 @@ export function TimePicker({ label, hint, error, required, disabled, value, onCh
             style={{ position: 'absolute', top: pos.top, left: pos.left, width: pos.width, maxHeight: pos.maxHeight }}
             className="z-[60] panel rounded-card bg-panel p-1 animate-fade-in shadow-xl overflow-hidden flex flex-col"
           >
-            <div className="grid min-h-0 flex-1 grid-cols-3 gap-0.5 overflow-y-auto">
+            <div data-times className="grid min-h-0 flex-1 grid-cols-3 gap-0.5 overflow-y-auto">
               {QUICK.map((t) => (
                 <button
                   key={t}
+                  data-time={t}
                   type="button"
                   onClick={() => {
                     // Список закрываем ПЕРЕД тем, как отдать значение наружу.
