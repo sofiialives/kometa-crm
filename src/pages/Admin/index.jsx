@@ -106,9 +106,6 @@ export default function AdminPage() {
     if (!res.ok) setError(res.error)
   }
 
-  // Той же модалкой правят должность внутри своего отдела, поэтому снимаем
-  // руководство только при реальном переходе — иначе главный терял бы отдел,
-  // просто поменяв себе должность.
   async function move(user, { departmentId, position }) {
     const leaving = departmentId !== user.departmentId
     const leadOf = leaving ? leadDepartmentOf(user) : null
