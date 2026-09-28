@@ -6,21 +6,8 @@ import { cx } from '../lib/cx'
 
 const pad = (n) => String(n).padStart(2, '0')
 
-// Сутки целиком, с шагом в четверть часа. Список длинный, но открывается
-// он сразу на нужном месте (см. useEffect ниже), поэтому крутить его от
-// полуночи не приходится. Урезать сутки до рабочих часов нельзя: сроки
-// ставят и на ночь, и на раннее утро.
-const QUICK = []
-for (let h = 0; h <= 23; h += 1) for (const m of [0, 15, 30, 45]) QUICK.push(`${pad(h)}:${pad(m)}`)
-
-/** Ближайшая четверть часа — на неё список и прокручивается при открытии. */
-function nearestQuarter(hhmm) {
-  const m = /^(\d{2}):(\d{2})$/.exec(String(hhmm || ''))
-  if (!m) return '09:00'
-  const total = Number(m[1]) * 60 + Number(m[2])
-  const rounded = Math.min(23 * 60 + 45, Math.round(total / 15) * 15)
-  return `${pad(Math.floor(rounded / 60))}:${pad(rounded % 60)}`
-}
+const HOURS = Array.from({ length: 24 }, (_, i) => pad(i))
+const MINUTES = Array.from({ length: 60 }, (_, i) => pad(i))
 
 /** Из набранного оставляем цифры и собираем ЧЧ:ММ. */
 function format(raw) {
@@ -38,49 +25,62 @@ function normalize(raw) {
   return `${pad(h)}:${pad(m)}`
 }
 
+/** Разбираем ЧЧ:ММ на части. Пустое поле — полночь, чтобы было с чего начать. */
+function parts(value) {
+  const m = /^(\d{2}):(\d{2})$/.exec(normalize(value) || '')
+  return m ? { h: m[1], m: m[2] } : { h: '00', m: '00' }
+}
+
 /**
  * Родной <input type="time"> открывает часы операционной системы: на
  * телефоне это колесо, на макбуке — свои стрелки и своё оформление.
  *
  * Здесь поле остаётся обычным текстовым — набрать «1845» по-прежнему самый
- * быстрый способ, и отнимать его было бы шагом назад. Рядом кнопка со
- * списком ходовых времён для тех, кому проще выбрать.
+ * быстрый способ. Рядом кнопка, которая открывает те же две прокручиваемые
+ * колонки, что и системное колесо: часы и минуты по отдельности, любая
+ * минута. Готовый список ходовых времён тут был бы удобнее ровно до
+ * первого «нужно на 18:37».
  */
 export function TimePicker({ label, hint, error, required, disabled, value, onChange, id: propId, className }) {
   const id = useFieldId(propId)
-  const { open, setOpen, pos, boxRef, panelRef, host } = useAnchoredPanel({ height: 240 })
+  const { open, setOpen, pos, boxRef, panelRef, host } = useAnchoredPanel({ height: 260 })
   const [raw, setRaw] = useState(value || '')
 
   // Значение могли поменять снаружи — например, открыли карточку другого
   // звонка в том же окне.
   useEffect(() => { setRaw(value || '') }, [value])
 
-  // Открытый список подкручиваем к текущему времени поля. Прокручиваем
-  // саму сетку, а не через scrollIntoView: тот утащил бы за собой и
-  // родителей, а панель живёт внутри прокручиваемой формы.
+  const current = parts(raw || value)
+
+  // Обе колонки подкручиваем к текущему времени поля: иначе часы открываются
+  // на полуночи, а минуты — на нуле, и до нужного значения далеко.
   //
-  // Зависим и от pos: панели в DOM ещё нет, пока не посчитано её место,
-  // поэтому на первом проходе прокручивать нечего. И делаем это ровно один
-  // раз за открытие — иначе перерасчёт места (прокрутка страницы, поворот
-  // экрана) возвращал бы список на исходную позицию под пальцем.
+  // Зависим и от pos: панели в DOM ещё нет, пока не посчитано её место.
+  // И делаем это один раз за открытие — иначе пересчёт положения при
+  // прокрутке страницы возвращал бы колонки под пальцем на исходное место.
   const scrolled = useRef(false)
   useEffect(() => { if (!open) scrolled.current = false }, [open])
   useEffect(() => {
-    if (!open || scrolled.current) return
-    const grid = panelRef.current?.querySelector('[data-times]')
-    const item = grid?.querySelector(`[data-time="${nearestQuarter(raw || value)}"]`)
-    if (!grid || !item) return
-    grid.scrollTop = item.offsetTop - grid.clientHeight / 2 + item.offsetHeight / 2
+    if (!open || scrolled.current || !panelRef.current) return
+    for (const [key, val] of [['hours', current.h], ['minutes', current.m]]) {
+      const col = panelRef.current.querySelector(`[data-col="${key}"]`)
+      const item = col?.querySelector(`[data-value="${val}"]`)
+      if (col && item) col.scrollTop = item.offsetTop - col.clientHeight / 2 + item.offsetHeight / 2
+    }
     scrolled.current = true
   }, [open, pos])
+
+  function emit(next) {
+    setRaw(next)
+    onChange?.(next)
+  }
 
   function type(next) {
     const shown = format(next)
     setRaw(shown)
     // Наружу отдаём только готовое время: полуфабрикат «18:4» сломал бы
     // сборку даты у вызывающего.
-    const done = shown.length === 5 ? normalize(shown) : ''
-    onChange?.(done)
+    onChange?.(shown.length === 5 ? normalize(shown) : '')
   }
 
   function blur() {
@@ -128,37 +128,54 @@ export function TimePicker({ label, hint, error, required, disabled, value, onCh
             style={{ position: 'absolute', top: pos.top, left: pos.left, width: pos.width, maxHeight: pos.maxHeight }}
             className="z-[60] panel rounded-card bg-panel p-1 animate-fade-in shadow-xl overflow-hidden flex flex-col"
           >
-            <div data-times className="grid min-h-0 flex-1 grid-cols-3 gap-0.5 overflow-y-auto">
-              {QUICK.map((t) => (
-                <button
-                  key={t}
-                  data-time={t}
-                  type="button"
-                  onClick={() => {
-                    // Список закрываем ПЕРЕД тем, как отдать значение наружу.
-                    // Если обработчик у вызывающего упадёт, панель всё равно
-                    // закроется, а не останется висеть — именно так выглядел
-                    // баг в форме задачи, где обработчик ждал событие вместо
-                    // строки и падал молча.
-                    setOpen(false)
-                    setRaw(t)
-                    onChange?.(t)
-                  }}
-                  className={cx(
-                    'rounded-[8px] px-2 py-1.5 text-sm tabular-nums transition-colors cursor-pointer',
-                    t === value
-                      ? 'bg-accent text-on-accent font-semibold'
-                      : 'text-ink-2 hover:bg-panel-2 hover:text-ink',
-                  )}
-                >
-                  {t}
-                </button>
-              ))}
+            <div className="flex min-h-0 flex-1 gap-1">
+              <Column
+                name="hours"
+                title="часы"
+                items={HOURS}
+                selected={current.h}
+                // Час поменяли — окно оставляем открытым: минуту ещё не выбрали.
+                onPick={(h) => emit(`${h}:${current.m}`)}
+              />
+              <Column
+                name="minutes"
+                title="минуты"
+                items={MINUTES}
+                selected={current.m}
+                // Минута — последний шаг, после неё закрываемся.
+                onPick={(m) => { setOpen(false); emit(`${current.h}:${m}`) }}
+              />
             </div>
           </div>,
           host || document.body,
         )}
       </div>
     </Field>
+  )
+}
+
+function Column({ name, title, items, selected, onPick }) {
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <p className="caption px-2 pb-1 pt-0.5">{title}</p>
+      <div data-col={name} className="min-h-0 flex-1 overflow-y-auto">
+        {items.map((v) => (
+          <button
+            key={v}
+            data-value={v}
+            type="button"
+            onClick={() => onPick(v)}
+            className={cx(
+              'block w-full rounded-[8px] px-2 py-1.5 text-sm tabular-nums transition-colors cursor-pointer',
+              v === selected
+                ? 'bg-accent text-on-accent font-semibold'
+                : 'text-ink-2 hover:bg-panel-2 hover:text-ink',
+            )}
+          >
+            {v}
+          </button>
+        ))}
+      </div>
+    </div>
   )
 }
