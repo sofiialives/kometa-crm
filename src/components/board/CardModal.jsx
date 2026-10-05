@@ -109,7 +109,12 @@ function ServiceBlock({ service, onEdit, onDelete }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-1">
           <p className="truncate font-semibold leading-snug">{service.title}</p>
-          <span className="caption">{monthLabel(service.month)}</span>
+          <span className="caption">
+            {monthLabel(service.month)}
+            {/* У услуг, заведённых до появления поля, даты нет — их строка
+                остаётся прежней. */}
+            {service.paidAt && ` · оплачено ${dateLabel(service.paidAt)}`}
+          </span>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <Button variant="ghost" size="sm" onClick={onEdit}>Изменить</Button>
