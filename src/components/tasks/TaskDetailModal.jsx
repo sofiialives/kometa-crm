@@ -1,13 +1,12 @@
 import { Avatar, Badge, Button, Modal } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
-import { COLUMNS, formatMskDate, formatMskTime } from '../../utils/tasks'
+import { COLUMNS, formatMskDate, taskTimes } from '../../utils/tasks'
 
 export function TaskDetailModal({ task, onClose, isMine, isAdminDiary, onMove, onEdit, onExtend, onDelete }) {
   if (!task) return null
   const col = COLUMNS.find((c) => c.key === task.status)
   const isDone = task.status === 'done'
-  const dateLabel = formatMskDate(task.deadline)
-  const timeLabel = formatMskTime(task.deadline)
+  const { text: times, crossDay } = taskTimes(task)
 
   return (
     <Modal open={Boolean(task)} onClose={onClose} title="Задача" size="md">
@@ -28,7 +27,7 @@ export function TaskDetailModal({ task, onClose, isMine, isAdminDiary, onMove, o
             <Avatar name={task.owner?.name} src={task.owner?.avatarUrl} color={task.owner?.avatarColor} size={26} />
             <span className="text-sm text-ink-2">{task.owner?.name || 'Без имени'}</span>
           </div>
-          <span className="caption">{dateLabel} · {timeLabel} МСК</span>
+          <span className="caption">{crossDay ? times : `${formatMskDate(task.deadline)} · ${times}`} МСК</span>
           {isDone ? (
             <Badge tone="neutral">Готово</Badge>
           ) : task.overdue ? (

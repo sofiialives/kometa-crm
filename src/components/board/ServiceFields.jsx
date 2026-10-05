@@ -1,11 +1,14 @@
-import { AddAction, Input, MoneyInput, Select } from '../../shared/ui'
+import { AddAction, DatePicker, Input, MoneyInput, Select } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
 import { marginText, money, monthOptions } from '../../utils/board'
+import { mskDateValueIn } from '../../utils/tasks'
 
 export const newExpense = () => ({ key: Math.random().toString(36).slice(2), title: '', amount: '' })
 export const newService = (month) => ({
   key: Math.random().toString(36).slice(2),
-  title: '', month, revenue: '', expenses: [],
+  // Пустая, а не «сегодня»: дату оплаты называют сами, иначе в отчёте о
+  // деньгах окажется выдуманный день.
+  title: '', month, paidAt: '', revenue: '', expenses: [],
 })
 
 export const num = (v) => (v === '' ? 0 : Number(String(v).replace(',', '.')))
@@ -17,7 +20,8 @@ export function serviceProfit(service) {
 }
 
 /**
- * Поля одной услуги: что делали, за какой месяц, выручка и строки расходов.
+ * Поля одной услуги: что делали, за какой месяц, выручка, день оплаты и
+ * строки расходов.
  *
  * Один компонент на два места — форму новой услуги и форму нового клиента,
  * где услуги заводятся сразу. Заказчик так и описывал: «нажали на кнопочку
@@ -31,6 +35,10 @@ export function ServiceFields({ value, onChange, onRemove, compact }) {
 
   const profit = serviceProfit(value)
   const margin = marginText(profit, num(value.revenue))
+  // День по Москве, а не по UTC, как у остальных дат доски: в первые три часа
+  // суток по Москве день по UTC ещё вчерашний, и оплату, пришедшую сегодня,
+  // нельзя было бы выбрать.
+  const today = mskDateValueIn()
 
   return (
     <div className={cx('flex flex-col gap-4', compact && 'rounded-card border border-line p-4')}>
@@ -58,7 +66,10 @@ export function ServiceFields({ value, onChange, onRemove, compact }) {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
+        {/* Месяц на всю ширину, а сумма и день оплаты — парой под ним: «сколько»
+            и «когда» читаются вместе, и третье поле не висит одно в углу. */}
         <Select
+          className="sm:col-span-2"
           label="За какой месяц"
           required
           value={value.month}
@@ -72,6 +83,15 @@ export function ServiceFields({ value, onChange, onRemove, compact }) {
           value={value.revenue}
           onChange={(v) => set({ revenue: v })}
           placeholder="800"
+        />
+        <DatePicker
+          label="Когда заплатил клиент"
+          required
+          value={value.paidAt}
+          onChange={(v) => set({ paidAt: v })}
+          today={today}
+          max={today}
+          hint="Выручка остаётся в месяце услуги"
         />
       </div>
 
@@ -147,6 +167,7 @@ export function ServiceFields({ value, onChange, onRemove, compact }) {
 export function validateService(s) {
   if (!s.title.trim()) return 'Укажите название услуги'
   if (s.revenue === '' || !Number.isFinite(num(s.revenue))) return `Выручка по «${s.title.trim()}» не число`
+  if (!s.paidAt) return `Укажите, когда клиент заплатил за «${s.title.trim()}»`
   for (const e of s.expenses) {
     if (!e.title.trim()) return 'У каждого расхода должно быть название — на что он'
     if (e.amount === '' || !Number.isFinite(num(e.amount))) return `Сумма расхода «${e.title}» не число`
@@ -158,6 +179,8 @@ export function validateService(s) {
 export const serviceToPayload = (s) => ({
   title: s.title.trim(),
   month: s.month,
+  // Строка ГГГГ-ММ-ДД: DatePicker отдаёт её, а не событие и не Date.
+  paidAt: s.paidAt,
   revenue: num(s.revenue),
   expenses: s.expenses.map((e) => ({ title: e.title.trim(), amount: num(e.amount) })),
 })

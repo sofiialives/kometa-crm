@@ -1,9 +1,9 @@
 import { Avatar, Badge, Button } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
-import { formatMskDate, formatMskTime, isTodayMsk, priorityMeta } from '../../utils/tasks'
+import { formatMskDate, isTodayMsk, priorityMeta, taskTimes } from '../../utils/tasks'
 
 export function TaskCard({ task, col, isMine, isAdminDiary, onMove, onOpen }) {
-  const time = formatMskTime(task.deadline)
+  const { text: times, crossDay } = taskTimes(task)
   const dateLabel = isTodayMsk(task.deadline) ? null : formatMskDate(task.deadline)
   const isDone = task.status === 'done'
   const priority = priorityMeta(task.priority)
@@ -25,15 +25,18 @@ export function TaskCard({ task, col, isMine, isAdminDiary, onMove, onOpen }) {
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-2">
+      {/* Строка переносится, а время не обрезается: «21:15 – 23:…» без срока
+          бесполезно, а длинная строка без переноса растягивала колонку и на
+          телефоне давала горизонтальную прокрутку. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5">
         <div className="flex items-center gap-2 min-w-0">
           <Avatar name={task.owner?.name} src={task.owner?.avatarUrl} color={task.owner?.avatarColor} size={22} />
-          <span className="caption truncate">
-            {dateLabel && <span className="text-accent">{dateLabel} · </span>}
-            {time}
+          <span className="caption min-w-0">
+            {dateLabel && !crossDay && <span className="text-accent">{dateLabel} · </span>}
+            {times}
           </span>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="ml-auto flex items-center gap-1.5">
           <Badge tone={priority.tone}>{priority.label}</Badge>
           {isDone ? (
             <Badge tone="neutral">Готово</Badge>
