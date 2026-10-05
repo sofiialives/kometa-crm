@@ -1,7 +1,16 @@
+import { useMemo, useState } from 'react'
 import { Card, Badge, AvatarStack, AddAction } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
 import { TaskLine } from './TaskLine'
-import { taskCount, workBadge } from '../../utils/hierarchy'
+import { GroupedTaskLine } from './GroupedTaskLine'
+import {
+  taskCount,
+  workBadge,
+  sortTasks,
+  groupTasksForDisplay,
+  applyRowOrder,
+  reorderRows,
+} from '../../utils/hierarchy'
 
 // Корешок слева повторяет статус работы: в списке из десятка карточек
 // состояние видно, не читая бейдж.
@@ -28,6 +37,29 @@ export function WorkCard({
     src: u.avatarUrl,
     color: u.avatarColor,
   }))
+
+  // Порядок строк (ручная перестановка хранится в localStorage и не
+  // триггерит ре-рендер сама по себе, поэтому дёргаем счётчик вручную
+  // после drop) + схлопывание задач, поставленных разом на нескольких
+  // исполнителей, в одну строку с несколькими аватарками.
+  const [orderTick, setOrderTick] = useState(0)
+  const rows = useMemo(
+    () => applyRowOrder(groupTasksForDisplay(sortTasks(tasks)), work.id),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [tasks, work.id, orderTick],
+  )
+
+  const [dragKey, setDragKey] = useState(null)
+  const [overKey, setOverKey] = useState(null)
+
+  function handleDrop(targetKey) {
+    if (dragKey && targetKey && dragKey !== targetKey) {
+      reorderRows(rows, work.id, dragKey, targetKey)
+      setOrderTick((v) => v + 1)
+    }
+    setDragKey(null)
+    setOverKey(null)
+  }
 
   return (
     <Card pad="md" hover className={cx('spine flex flex-col gap-4', SPINE[work.status] || 'spine--accent')}>
@@ -89,19 +121,69 @@ export function WorkCard({
 
       <div className="border-t border-line pt-3">
         <span className="caption">Задачи</span>
-        {tasks.length === 0 ? (
+        {rows.length === 0 ? (
           <p className="pt-2 text-sm text-ink-3">Задач пока нет.</p>
         ) : (
           <div className="pt-1">
-            {tasks.map((t) => (
-              <TaskLine
-                key={t.id}
-                task={t}
-                canToggle={t.ownerId === currentUser?.id}
-                busy={busyTaskId === t.id}
-                onToggle={onToggleTask}
-                onOpen={onOpenTask}
-              />
+            {rows.map((row) => (
+              <div
+                key={row.rowKey}
+                onDragOver={
+                  canManage
+                    ? (e) => {
+                        if (!dragKey) return
+                        e.preventDefault()
+                        if (overKey !== row.rowKey) setOverKey(row.rowKey)
+                      }
+                    : undefined
+                }
+                onDragLeave={canManage ? () => setOverKey((k) => (k === row.rowKey ? null : k)) : undefined}
+                onDrop={canManage ? (e) => { e.preventDefault(); handleDrop(row.rowKey) } : undefined}
+                className={cx(
+                  'flex items-center gap-1 rounded-lg transition-colors',
+                  canManage && 'group',
+                  dragKey === row.rowKey && 'opacity-40',
+                  overKey === row.rowKey && dragKey && dragKey !== row.rowKey && 'bg-accent/10',
+                )}
+              >
+                {canManage && (
+                  // draggable только на самой ручке, а не на всей строке —
+                  // иначе клик по чекбоксу/названию внутри норовит начать
+                  // перетаскивание вместо обычного клика.
+                  <span
+                    draggable
+                    onDragStart={() => setDragKey(row.rowKey)}
+                    onDragEnd={() => { setDragKey(null); setOverKey(null) }}
+                    className="shrink-0 cursor-grab text-ink-3 opacity-0 transition-opacity group-hover:opacity-60 active:cursor-grabbing"
+                    title="Перетащите, чтобы изменить порядок"
+                  >
+                    <svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor">
+                      <circle cx="3" cy="3" r="1.3" /><circle cx="9" cy="3" r="1.3" />
+                      <circle cx="3" cy="8" r="1.3" /><circle cx="9" cy="8" r="1.3" />
+                      <circle cx="3" cy="13" r="1.3" /><circle cx="9" cy="13" r="1.3" />
+                    </svg>
+                  </span>
+                )}
+                <div className="min-w-0 flex-1">
+                  {row.isGroup ? (
+                    <GroupedTaskLine
+                      tasks={row.tasks}
+                      currentUser={currentUser}
+                      busyTaskId={busyTaskId}
+                      onToggle={onToggleTask}
+                      onOpen={onOpenTask}
+                    />
+                  ) : (
+                    <TaskLine
+                      task={row.tasks[0]}
+                      canToggle={row.tasks[0].ownerId === currentUser?.id}
+                      busy={busyTaskId === row.tasks[0].id}
+                      onToggle={onToggleTask}
+                      onOpen={onOpenTask}
+                    />
+                  )}
+                </div>
+              </div>
             ))}
           </div>
         )}
