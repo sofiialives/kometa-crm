@@ -14,6 +14,10 @@ export function CreateTaskModal({ open, onClose, onSubmit }) {
   const [description, setDescription] = useState('')
   const [date, setDate] = useState(mskDateValueIn)
   const [time, setTime] = useState(defaultMskTimeValue)
+  // Пустое по умолчанию, в отличие от срока: время начала человек должен
+  // назвать сам. Подставленное «на всякий случай» дошло бы до сервера
+  // нетронутым, и в карточках оказалась бы выдумка вместо плана.
+  const [startTime, setStartTime] = useState('')
   const [priority, setPriority] = useState('medium')
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -27,19 +31,23 @@ export function CreateTaskModal({ open, onClose, onSubmit }) {
   // моргнуть пустотой у того, кто не закрывал вкладку с вечера.
   const chosen = days.find((d) => d.value === date) || days[0]
   const past = isPastMsk(chosen.value, time)
+  // Перевёрнутую пару («с 15:00 до 14:00») в подсказке не показываем: она
+  // выглядела бы как принятое значение. Что не так, скажет ошибка при отправке.
+  const startOk = startTime && (!time || startTime <= time)
   const hint = past
     ? 'Это время уже прошло — задача сразу получит пометку «срок прошёл»'
-    : `Срок: ${chosen.label.toLowerCase()}, ${chosen.full}, до ${time}`
+    : `Срок: ${chosen.label.toLowerCase()}, ${chosen.full}, ${startOk ? `с ${startTime} до` : 'до'} ${time}`
 
   useEffect(() => {
     if (open) {
       setDate(mskDateValueIn())
       setTime(defaultMskTimeValue())
+      setStartTime('')
     }
   }, [open])
 
   function reset() {
-    setTitle(''); setDescription(''); setDate(mskDateValueIn()); setTime(defaultMskTimeValue()); setPriority('medium'); setError(null)
+    setTitle(''); setDescription(''); setDate(mskDateValueIn()); setTime(defaultMskTimeValue()); setStartTime(''); setPriority('medium'); setError(null)
   }
 
   async function handleSubmit(e) {
@@ -60,8 +68,22 @@ export function CreateTaskModal({ open, onClose, onSubmit }) {
       return
     }
 
+    // Тот же день, что и у срока: переключатель «На сегодня / На завтра» один
+    // на оба времени.
+    let startAt
+    try {
+      startAt = buildDeadlineMsk(day, startTime)
+    } catch {
+      setError('Укажите, во сколько начнёте работу (часы и минуты)')
+      return
+    }
+    if (Date.parse(startAt) > Date.parse(deadline)) {
+      setError('Начало работы не может быть позже срока')
+      return
+    }
+
     setLoading(true)
-    const res = await onSubmit({ title, description, deadline, priority })
+    const res = await onSubmit({ title, description, deadline, startAt, priority })
     setLoading(false)
     if (res.ok) { reset(); onClose() } else { setError(res.error) }
   }
@@ -105,13 +127,25 @@ export function CreateTaskModal({ open, onClose, onSubmit }) {
           </div>
         </div>
 
-        <TimePicker
-          label="Время (МСК)"
-          hint={hint}
-          value={time}
-          onChange={setTime}
-          required
-        />
+        <div className="flex flex-col gap-1.5">
+          <div className="grid grid-cols-2 gap-3">
+            <TimePicker
+              label="Начать в (МСК)"
+              value={startTime}
+              onChange={(v) => { setStartTime(v); setError(null) }}
+              required
+            />
+            <TimePicker
+              label="Сделать до (МСК)"
+              value={time}
+              onChange={(v) => { setTime(v); setError(null) }}
+              required
+            />
+          </div>
+          {/* Подсказка одна на оба поля, поэтому лежит под парой, а не под
+              одним из них: в половине ширины она переносилась бы в столбик. */}
+          <p className="text-xs text-ink-3 leading-snug">{hint}</p>
+        </div>
         <PriorityPicker value={priority} onChange={setPriority} />
         {error && <p className="text-xs text-danger -mt-2">{error}</p>}
         <div className="flex items-center justify-end gap-3 pt-1">

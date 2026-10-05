@@ -35,7 +35,7 @@ export const useTasksStore = create((set, get) => ({
    * (только из Иерархии, lead/admin). Бэк создаёт отдельную задачу на
    * каждого и всегда возвращает массив, даже если исполнитель один.
    */
-  async createTask({ title, description, deadline, workId, ownerIds, priority }) {
+  async createTask({ title, description, deadline, startAt, workId, ownerIds, priority }) {
     set({ error: null })
     try {
       const created = await api.post('/tasks', {
@@ -43,6 +43,8 @@ export const useTasksStore = create((set, get) => ({
         description: description || undefined,
         deadline,
         priority,
+        // Только у «Задачи на день»: из Иерархии время начала не приходит.
+        ...(startAt ? { startAt } : {}),
         ...(workId ? { workId } : {}),
         ...(ownerIds && ownerIds.length > 0 ? { ownerIds } : {}),
       })
