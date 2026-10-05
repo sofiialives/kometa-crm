@@ -77,6 +77,27 @@ export function formatMskDate(iso) {
 }
 
 /**
+ * Время работы над задачей одной строкой. У старых задач и у пришедших из
+ * Иерархии начала нет — тогда это прежнее одно время срока, без пустых мест.
+ *
+ * crossDay: срок могли перенести на другой день, а начало осталось прежним.
+ * Тогда дата стоит у обоих концов, иначе «12:00 – 14:00» соврало бы про один
+ * день, и вызывающему не нужно приписывать к строке ещё и дату срока.
+ */
+export function taskTimes(task) {
+  const deadline = formatMskTime(task.deadline)
+  if (!task.startAt) return { text: deadline, crossDay: false }
+
+  const start = formatMskTime(task.startAt)
+  if (isSameDayMsk(task.startAt, task.deadline)) return { text: `${start} – ${deadline}`, crossDay: false }
+
+  return {
+    text: `${formatMskDate(task.startAt)}, ${start} – ${formatMskDate(task.deadline)}, ${deadline}`,
+    crossDay: true,
+  }
+}
+
+/**
  * На сколько дней вперёд разрешено ставить задачу на личной доске.
  * Ноль — сегодня, поэтому всего вариантов DAYS_AHEAD + 1. Горизонт ровно
  * в сутки: доска остаётся планом на день, а не длинным списком на неделю.
@@ -133,6 +154,15 @@ export function isTodayMsk(iso) {
  */
 export function isFutureDayMsk(iso) {
   return mskDayKey(iso) > mskDayKey(Date.now())
+}
+
+/**
+ * Один ли день у двух моментов по МСК. Срок можно перенести на другой день,
+ * а время начала при этом остаётся прежним, поэтому карточке нужно знать,
+ * когда начало надо подписывать датой.
+ */
+export function isSameDayMsk(a, b) {
+  return mskDayKey(a) === mskDayKey(b)
 }
 
 function mskDayKey(value) {
