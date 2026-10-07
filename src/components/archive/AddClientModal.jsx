@@ -1,17 +1,29 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Button, Modal, Select } from '../../shared/ui'
 
 /**
  * Занести клиента в архив. Своего списка клиентов у архива нет — берём
  * тот, что уже ведётся в CRM, ровно как просил заказчик.
+ *
+ * Архив у каждого отдела свой, поэтому отдел обязателен. Сотруднику он
+ * подставляется молча — чужого у него всё равно нет. Админ стоит на вкладке
+ * «Все отделы» и должен выбрать: без отдела запись торчала бы пустой
+ * карточкой у всех сразу.
  */
-export function AddClientModal({ open, onClose, onSubmit, clients, alreadyInArchive }) {
+export function AddClientModal({ open, onClose, onSubmit, clients, alreadyInArchive, departments, departmentId }) {
   const [clientId, setClientId] = useState('')
+  const [dept, setDept] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
 
-  // Тех, кто уже в архиве, не предлагаем: повторное занесение всё равно
-  // отклонится, а выбирать из списка с заведомо нерабочими строками неудобно.
+  // Отдел вкладки мог смениться, пока окно было закрыто.
+  useEffect(() => { if (open) { setDept(departmentId || ''); setError(null) } }, [open, departmentId])
+
+  const needDept = !departmentId
+
+  // Тех, кто уже в архиве ЭТОГО отдела, не предлагаем: повторное занесение
+  // вернёт ту же карточку, а выбирать из строк, которые ничего не меняют,
+  // неудобно. Клиент из чужого отдела в списке остаётся — его занести можно.
   const available = useMemo(
     () => clients.filter((c) => !alreadyInArchive.has(c.id)),
     [clients, alreadyInArchive],
@@ -19,9 +31,10 @@ export function AddClientModal({ open, onClose, onSubmit, clients, alreadyInArch
 
   async function submit() {
     if (!clientId) return setError('Выберите клиента')
+    if (needDept && !dept) return setError('Выберите отдел — архив у каждого свой')
     setBusy(true)
     setError(null)
-    const res = await onSubmit(clientId)
+    const res = await onSubmit(clientId, dept || departmentId)
     setBusy(false)
     if (!res.ok) return setError(res.error)
     setClientId('')
@@ -43,18 +56,33 @@ export function AddClientModal({ open, onClose, onSubmit, clients, alreadyInArch
     >
       {available.length === 0 ? (
         <p className="text-sm text-ink-2 leading-relaxed">
-          Все клиенты из базы уже в архиве. Новый появится здесь, как только его заведут в CRM.
+          Все клиенты из базы уже в архиве этого отдела. Новый появится здесь, как только его заведут в CRM.
         </p>
       ) : (
-        <Select
-          label="Клиент"
-          required
-          placeholder="Выберите из базы клиентов"
-          value={clientId}
-          onChange={(e) => { setClientId(e.target.value); setError(null) }}
-          error={error}
-          options={available.map((c) => ({ value: c.id, label: c.name }))}
-        />
+        <div className="flex flex-col gap-4">
+          <Select
+            label="Клиент"
+            required
+            placeholder="Выберите из базы клиентов"
+            value={clientId}
+            onChange={(e) => { setClientId(e.target.value); setError(null) }}
+            error={needDept ? null : error}
+            options={available.map((c) => ({ value: c.id, label: c.name }))}
+          />
+
+          {needDept && (
+            <Select
+              label="В какой отдел"
+              required
+              placeholder="Выберите отдел"
+              value={dept}
+              onChange={(e) => { setDept(e.target.value); setError(null) }}
+              error={error}
+              hint="Архив у каждого отдела свой — клиент попадёт только в выбранный"
+              options={(departments || []).map((d) => ({ value: d.id, label: d.name }))}
+            />
+          )}
+        </div>
       )}
     </Modal>
   )

@@ -280,9 +280,11 @@ export default function ArchivePage() {
       <AddClientModal
         open={addOpen}
         onClose={() => setAddOpen(false)}
-        onSubmit={(clientId) => run(() => addClient(clientId))}
+        onSubmit={(clientId, dept) => run(() => addClient(clientId, dept))}
         clients={allClients}
         alreadyInArchive={inArchive}
+        departments={tabs}
+        departmentId={departmentId || (isAdmin ? '' : user?.departmentId || '')}
       />
 
       <ServiceModal
