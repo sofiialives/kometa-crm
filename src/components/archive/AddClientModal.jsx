@@ -21,11 +21,17 @@ export function AddClientModal({ open, onClose, onSubmit, clients, alreadyInArch
 
   const needDept = !departmentId
 
-  // Тех, кто уже в архиве ЭТОГО отдела, не предлагаем: повторное занесение
-  // вернёт ту же карточку, а выбирать из строк, которые ничего не меняют,
-  // неудобно. Клиент из чужого отдела в списке остаётся — его занести можно.
+  // Показываем всех до единого — так попросил заказчик. Он листал список,
+  // не находил знакомого клиента (тот был скрыт как уже занесённый) и решал,
+  // что база не подтягивается. Лучше пометка, чем пропажа.
+  //
+  // Выбрать уже занесённого не возбраняется: сервер вернёт ту же карточку,
+  // второй записи не появится.
   const available = useMemo(
-    () => clients.filter((c) => !alreadyInArchive.has(c.id)),
+    () => clients.map((c) => ({
+      value: c.id,
+      label: alreadyInArchive.has(c.id) ? `${c.name} — уже в архиве` : c.name,
+    })),
     [clients, alreadyInArchive],
   )
 
@@ -56,7 +62,7 @@ export function AddClientModal({ open, onClose, onSubmit, clients, alreadyInArch
     >
       {available.length === 0 ? (
         <p className="text-sm text-ink-2 leading-relaxed">
-          Все клиенты из базы уже в архиве этого отдела. Новый появится здесь, как только его заведут в CRM.
+          В базе пока нет клиентов. Заведите клиента в CRM — и он появится здесь.
         </p>
       ) : (
         <div className="flex flex-col gap-4">
@@ -67,7 +73,8 @@ export function AddClientModal({ open, onClose, onSubmit, clients, alreadyInArch
             value={clientId}
             onChange={(e) => { setClientId(e.target.value); setError(null) }}
             error={needDept ? null : error}
-            options={available.map((c) => ({ value: c.id, label: c.name }))}
+            hint="Помеченные уже лежат в архиве этого отдела — такого можно выбрать, откроется та же карточка"
+            options={available}
           />
 
           {needDept && (
