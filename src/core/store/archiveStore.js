@@ -59,9 +59,12 @@ export const useArchiveStore = create((set, get) => ({
 
   closeClient: () => set({ openClient: null }),
 
-  async addClient(clientId) {
+  // Отдел — та вкладка, на которой стоит человек: архив у каждого отдела
+  // свой, и клиент заносится именно в него. Без отдела (админ на «Все
+  // отделы») выйдет заготовка, которую заберёт первый отдел с услугой.
+  async addClient(clientId, departmentId) {
     try {
-      await api.post('/archive/clients', { clientId })
+      await api.post('/archive/clients', { clientId, ...(departmentId ? { departmentId } : {}) })
       return { ok: true }
     } catch (e) {
       return { ok: false, error: e.message }
