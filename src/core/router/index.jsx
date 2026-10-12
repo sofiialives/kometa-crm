@@ -7,6 +7,7 @@ import TasksPage from '../../pages/Tasks'
 import CallsPage from '../../pages/Calls'
 import ArchivePage from '../../pages/Archive'
 import BoardPage from '../../pages/Board'
+import MotivationPage from '../../pages/Motivation'
 import AdminPage from '../../pages/Admin'
 import SettingsPage from '../../pages/Settings'
 
@@ -35,6 +36,9 @@ export const router = createBrowserRouter([
           { path: '/tasks', element: <TasksPage /> },
           { path: '/calls', element: <CallsPage /> },
           { path: '/archive', element: <ArchivePage /> },
+          // Мотивация открыта всем: сотрудник видит себя, руководитель — свой
+          // отдел, админ — всех и настройки. Кто что видит, решает сервер.
+          { path: '/motivation', element: <MotivationPage /> },
           { path: '/settings', element: <SettingsPage /> },
           {
             element: <AdminOnly />,
