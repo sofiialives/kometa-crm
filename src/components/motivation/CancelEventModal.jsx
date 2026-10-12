@@ -15,6 +15,7 @@ export function CancelEventModal({ event, onClose, onSubmit }) {
   useEffect(() => { setReason(''); setError(null) }, [event])
 
   async function submit() {
+    if (busy) return
     if (!reason.trim()) { setError('Напишите, почему отменяете'); return }
     setBusy(true)
     const res = await onSubmit(event.id, reason.trim())

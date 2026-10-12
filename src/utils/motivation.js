@@ -156,3 +156,18 @@ export function workLevelErrors(levels) {
   })
   return errors
 }
+
+/**
+ * Ключ формы против повторной отправки. Придумывается при каждом открытии
+ * формы и уходит вместе с данными: сервер не даст тому же ключу положить
+ * деньги или начислить баллы второй раз — ни двойным нажатием, ни повтором
+ * после обрыва связи.
+ */
+export function newRequestKey() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID()
+  // Запасной вариант для старых браузеров: тот же формат UUID v4.
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16)
+  })
+}

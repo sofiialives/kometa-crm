@@ -25,6 +25,7 @@ export function WriteOffModal({ open, onClose, employee, bankCents, onSubmit }) 
   }, [open])
 
   async function submit() {
+    if (busy) return
     const next = {}
     const cents = Math.round(Number(amount) * 100)
     if (!(cents > 0)) next.amount = 'Укажите сумму больше нуля'

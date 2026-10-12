@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Button, Modal, MoneyInput, Select, Textarea } from '../../shared/ui'
 import { EmployeePicker } from './EmployeePicker'
-import { BANK_REASONS, money } from '../../utils/motivation'
+import { BANK_REASONS, money, newRequestKey } from '../../utils/motivation'
 
 /**
  * «Пополнить банк»: сотрудник (можно нескольких), сумма, причина, клиент
@@ -21,6 +21,7 @@ export function TopUpModal({ open, onClose, employees, clients, preselected = []
   const clear = (key) => setErrors((e) => (e[key] ? { ...e, [key]: undefined } : e))
   const [busy, setBusy] = useState(false)
   const [serverError, setServerError] = useState(null)
+  const [requestKey, setRequestKey] = useState(null)
 
   useEffect(() => {
     if (!open) return
@@ -31,12 +32,15 @@ export function TopUpModal({ open, onClose, employees, clients, preselected = []
     setComment('')
     setErrors({})
     setServerError(null)
+    setRequestKey(newRequestKey())
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const clientOptions = useMemo(() => clients.map((c) => ({ value: c.id, label: c.name })), [clients])
   const total = Number(amount || 0) * 100 * userIds.length
 
   async function submit() {
+    // Второе нажатие, пока первое ещё в пути, ничего не делает.
+    if (busy) return
     const next = {}
     if (userIds.length === 0) next.userIds = 'Выберите хотя бы одного сотрудника'
     if (!(Number(amount) > 0)) next.amount = 'Укажите сумму больше нуля'
@@ -52,6 +56,7 @@ export function TopUpModal({ open, onClose, employees, clients, preselected = []
       reason,
       clientId: reason === 'new_client' ? clientId : clientId || undefined,
       comment: comment.trim() || undefined,
+      requestKey,
     })
     setBusy(false)
     if (res?.ok) onClose()
