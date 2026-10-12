@@ -72,6 +72,7 @@ export function GeneralPanel({ general, onSave }) {
       </div>
       <AutoTasks
         value={form.autoTasksFrom || null}
+        dirty={(form.autoTasksFrom || null) !== (general.autoTasksFrom || null)}
         onChange={(autoTasksFrom) => { setMessage(null); setForm((f) => ({ ...f, autoTasksFrom })) }}
       />
       <div className="flex flex-col gap-2">
@@ -87,7 +88,7 @@ export function GeneralPanel({ general, onSave }) {
   )
 }
 
-function AutoTasks({ value, onChange }) {
+function AutoTasks({ value, dirty, onChange }) {
   const today = todayKey()
   const on = Boolean(value)
   const status = !on
@@ -114,7 +115,10 @@ function AutoTasks({ value, onChange }) {
           required
         />
       )}
-      <p className="text-xs text-ink-3 leading-relaxed">{status}</p>
+      <p className="text-xs text-ink-3 leading-relaxed">
+        {status}
+        {dirty && <span className="text-warn"> Не сохранено — нажмите «Сохранить».</span>}
+      </p>
     </div>
   )
 }

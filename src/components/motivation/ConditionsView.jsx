@@ -122,15 +122,17 @@ function EventsTable({ title, events, empty, rules }) {
       )}
       {rules && events.some((e) => e.autoRule === 'task_on_time' || e.autoRule === 'personal_task_on_time') && (
         <p className="text-xs text-ink-3 leading-relaxed">
-          {events.some((e) => e.autoRule === 'personal_task_on_time') && `За личные задачи — ${atMostPoints(rules.personalTaskDailyCap)} в день. `}
+          {events.some((e) => e.autoRule === 'personal_task_on_time') && (rules.personalTaskDailyCap > 0
+            ? `За личные задачи — ${atMostPoints(rules.personalTaskDailyCap)} в день. `
+            : 'За личные задачи баллы сейчас не начисляются. ')}
           Если задачу вернули из «Готово», баллы за неё снимаются, а закрыли снова в срок — начисляются снова.
         </p>
       )}
       {rules && events.some((e) => e.autoRule === 'task_overdue' || e.autoRule === 'personal_task_overdue') && (
         <p className="text-xs text-ink-3 leading-relaxed">
-          Просрочка задачи из Иерархии штрафуется каждую ночь в 00:00 по Москве, пока задачу не закроют, но не больше
-          чем на {pointsWord(rules.overduePenaltyCap)} за одну задачу. Личная просроченная задача штрафуется один раз — в ту же ночь
-          её убирает из задачника уборка. Если срок перенесли до того, как он наступил, штрафа нет.
+          {events.some((e) => e.autoRule === 'task_overdue') && `Просрочка задачи из Иерархии штрафуется каждую ночь в 00:00 по Москве, пока задачу не закроют, но не больше чем на ${pointsWord(rules.overduePenaltyCap)} за одну задачу. `}
+          {events.some((e) => e.autoRule === 'personal_task_overdue') && 'Личная просроченная задача штрафуется один раз — в ту же ночь её убирает из задачника уборка. '}
+          Если срок перенесли до того, как он наступил, штрафа нет.
         </p>
       )}
     </Card>
