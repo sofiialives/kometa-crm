@@ -89,7 +89,8 @@ function MySection({ month, onMonthChange }) {
   const { mine, mineLoading, mineError, fetchMine, markSeen } = useMotivationStore()
   const marked = useRef(false)
 
-  useEffect(() => { fetchMine(month || undefined) }, [fetchMine, month])
+  // Другой месяц — другие записи: «новое» в нём отмечается заново.
+  useEffect(() => { marked.current = false; fetchMine(month || undefined) }, [fetchMine, month])
 
   const hasNew = Boolean(mine?.unseen && (mine.unseen.bankCents > 0 || mine.unseen.events > 0))
 

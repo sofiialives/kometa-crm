@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Button, Modal, MoneyInput, Select, Textarea } from '../../shared/ui'
 import { EmployeePicker } from './EmployeePicker'
-import { BANK_REASONS, money } from '../../utils/motivation'
+import { BANK_REASONS, MAX_DOLLARS, money } from '../../utils/motivation'
 import { useRequestKey } from './useRequestKey'
 
 /**
@@ -46,6 +46,7 @@ export function TopUpModal({ open, onClose, employees, clients, preselected = []
     if (!(Number(amount) > 0)) next.amount = 'Укажите сумму больше нуля'
     // Суммы банка — целые доллары: в задании всё округляется до доллара.
     else if (!Number.isInteger(Number(amount))) next.amount = 'Целое число долларов, без центов'
+    else if (Number(amount) > MAX_DOLLARS) next.amount = 'Не больше 1 000 000 $ за раз'
     if (reason === 'new_client' && !clientId) next.clientId = 'Выберите клиента'
     setErrors(next)
     if (Object.keys(next).length) return

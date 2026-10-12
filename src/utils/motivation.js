@@ -54,6 +54,9 @@ export function dayMonth(value) {
   return new Date(value).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', timeZone: 'Europe/Moscow' })
 }
 
+// Потолок суммы одной операции — тот же, что проверяет сервер.
+export const MAX_DOLLARS = 1_000_000
+
 export const BANK_REASONS = [
   { value: 'new_client', label: 'Новый клиент' },
   { value: 'free_budget', label: 'Свободный бюджет' },

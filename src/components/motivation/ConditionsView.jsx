@@ -12,7 +12,7 @@ import { dayMonth, dollars, eventPoints, modeLabel, money, pointsTone, pointsUni
  * четыре, и в узкий экран они не влезают.
  *
  * Те же условия открываются из карточки сотрудника у владельца и
- * руководителя — там `self` выключен, и «Мой профиль» становится «Профиль».
+ * руководителя — там `self` выключен, и заголовки «Мой…», «Мои…» теряют «мой».
  */
 export function ConditionsView({ data, self = true }) {
   if (!data.profile) {
@@ -41,7 +41,7 @@ export function ConditionsView({ data, self = true }) {
 
       <Card className="flex flex-col gap-4">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <p className="caption">Мои уровни премии</p>
+          <p className="caption">{self ? 'Мои уровни премии' : 'Уровни премии'}</p>
           <p className="text-xs text-ink-3">
             {data.scale === 'custom' ? 'Своя шкала профиля' : 'Общая шкала агентства'} · в банке сейчас {dollars(data.bankCents)}
           </p>
@@ -61,7 +61,7 @@ export function ConditionsView({ data, self = true }) {
       </Card>
 
       <Card className="flex flex-col gap-4">
-        <p className="caption">Мои уровни работы</p>
+        <p className="caption">{self ? 'Мои уровни работы' : 'Уровни работы'}</p>
         <ul className="grid gap-2">
           {data.workLevels.map((l) => (
             <li key={l.position} className="flex flex-col gap-1 rounded-lg border border-line px-3 py-2.5">
@@ -85,13 +85,13 @@ export function ConditionsView({ data, self = true }) {
           </li>
           <li>
             Баллы открывают долю банка: чем выше уровень, тем больше доля. Премия считается ступенями и не
-            суммируется — на третьем уровне вы получаете сумму третьего уровня, а не всех трёх вместе.
+            суммируется — на третьем уровне к выплате идёт сумма третьего уровня, а не всех трёх вместе.
           </li>
           <li>
-            Когда банк растёт, деньги добавляются к уровням, до которых вы ещё не дошли. Уровень, на котором вы уже
-            стоите, фиксирует свою сумму — дальше выгоднее подниматься, а не ждать.
+            Когда банк растёт, деньги добавляются к уровням, которые ещё впереди. Пройденный уровень фиксирует свою
+            сумму — дальше выгоднее подниматься, а не ждать.
           </li>
-          <li>Первого числа баллы и банк обнуляются. К выплате идёт сумма уровня, на котором вы закончили месяц.</li>
+          <li>Первого числа баллы и банк обнуляются. К выплате идёт сумма уровня, на котором закончился месяц.</li>
         </ul>
       </Card>
     </div>

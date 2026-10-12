@@ -3,7 +3,7 @@ import { Badge, Button, Checkbox, ConfirmModal, Input, Modal, MoneyInput, Textar
 import { cx } from '../../../shared/lib/cx'
 import { ScaleEditor } from './ScaleEditor'
 import { EventTypeModal } from './EventTypeModal'
-import { autoRuleLabel, eventPoints, lowerFirst, pointsTone } from '../../../utils/motivation'
+import { MAX_DOLLARS, autoRuleLabel, eventPoints, lowerFirst, pointsTone } from '../../../utils/motivation'
 
 /**
  * Профиль должности целиком: название, стартовая сумма банка, события,
@@ -77,6 +77,10 @@ export function ProfileEditor({ profile, globalScale, workLevels, onClose, actio
                     setMessage({ tone: 'danger', text: 'Стартовая сумма — целое число долларов' })
                     return
                   }
+                  if (Number(startBank || 0) > MAX_DOLLARS) {
+                    setMessage({ tone: 'danger', text: 'Стартовая сумма — не больше 1 000 000 $' })
+                    return
+                  }
                   run('bank', () => actions.updateProfile(profile.id, { startBank: Number(startBank || 0) }), 'Стартовая сумма сохранена')
                 }}
               >
@@ -86,7 +90,7 @@ export function ProfileEditor({ profile, globalScale, workLevels, onClose, actio
             {/* Подсказка отдельной строкой, а не под полем: под полем она
                 опускала одно поле ниже соседнего. */}
             <p className="text-xs text-ink-3 sm:col-span-2">
-              Стартовая сумма кладётся в банк первого числа каждого месяца. Пусто — ноль.
+              Стартовая сумма кладётся в банк первого числа каждого месяца. Если поменять её в середине месяца, сразу она ляжет только тем, кому в этом месяце ещё ничего не пополняли, остальным — с 1 числа. Пусто — ноль.
             </p>
           </section>
 
