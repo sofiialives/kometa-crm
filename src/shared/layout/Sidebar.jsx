@@ -20,6 +20,7 @@ function useNavItems() {
     { to: '/tasks', label: 'Задачи', icon: IconBoard },
     { to: '/calls', label: 'Звонки', icon: IconPhone },
     { to: '/archive', label: 'Архив', icon: IconArchive },
+    { to: '/motivation', label: 'Мотивация', icon: IconTrophy },
   ]
 }
 
@@ -160,6 +161,9 @@ function IconBoard() {
 }
 function IconPhone() {
   return (<svg {...ic}><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/><path d="M9.5 14.2c.6 1.3 1.6 2.3 2.9 2.9l.9-.9c.2-.2.5-.3.8-.2l1.6.5c.3.1.5.4.5.7v1.3c0 .4-.4.8-.8.7-3.4-.3-6.1-3-6.4-6.4 0-.4.3-.8.7-.8h1.3c.3 0 .6.2.7.5l.5 1.6c.1.3 0 .6-.2.8z"/></svg>)
+}
+function IconTrophy() {
+  return (<svg {...ic}><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>)
 }
 function IconShield() {
   return (<svg {...ic}><path d="M12 2l8 3v6c0 5-3.5 9.4-8 11-4.5-1.6-8-6-8-11V5z"/><path d="M9 12l2 2 4-4"/></svg>)
