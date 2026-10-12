@@ -56,7 +56,7 @@ export function PrizeScale({ prize, highlight }) {
                   l.reached ? 'text-ink' : 'text-ink-2',
                   highlight && !l.fixed && 'text-ok',
                 )}
-                title={l.fixed ? 'Сумма зафиксирована, когда вы вышли на этот уровень' : undefined}
+                title={l.fixed ? 'Сумма зафиксирована при выходе на этот уровень' : undefined}
               >
                 {dollars(l.amountCents)}
               </span>
@@ -94,8 +94,8 @@ export function PrizeScale({ prize, highlight }) {
 
       {prize.levels.some((l) => l.fixed) && (
         <p className="text-xs text-ink-3 leading-relaxed">
-          Суммы пройденных уровней зафиксированы в момент, когда вы на них вышли. Новые пополнения банка поднимают
-          уровни, до которых вы ещё не дошли.
+          Сумма пройденного уровня фиксируется в момент выхода на него. Новые пополнения банка поднимают только
+          уровни, которые ещё впереди.
         </p>
       )}
     </Card>

@@ -115,7 +115,7 @@ export const useMotivationStore = create((set) => ({
     return res
   },
 
-  // Карточка сотрудника у руководителя — в сторе не держим: она живёт,
+  // Карточка сотрудника у руководителя и владельца — в сторе не держим: она живёт,
   // пока открыто окно, и у каждого окна своя.
   fetchEmployee: (id, month) => call(() => api.get(`/motivation/users/${id}${query({ month })}`)),
   fetchEmployeeConditions: (id) => call(() => api.get(`/motivation/users/${id}/conditions`)),

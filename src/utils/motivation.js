@@ -89,14 +89,14 @@ export function lowerFirst(text) {
 
 /** Как фиксируется событие — словами для «Моих условий». */
 export function modeLabel(type) {
-  return type.mode === 'auto' ? 'Автоматически по задачам' : 'Отмечает руководитель'
+  return type.mode === 'auto' ? 'Автоматически по задачам' : 'Отмечает владелец'
 }
 
 /** Чем является запись истории — короткая метка рядом с названием. */
 export function entryKindLabel(entry) {
   if (entry.kind === 'adjustment') return 'Корректировка'
   if (entry.kind === 'product') return 'Продажа'
-  return entry.mode === 'auto' ? 'Автоматически' : 'Руководитель'
+  return entry.mode === 'auto' ? 'Автоматически' : 'Вручную'
 }
 
 /**

@@ -20,7 +20,7 @@ export function EarnedCard({ prize, bankCents, isCurrent }) {
       {isCurrent && (
         <p className="text-sm text-ink-2 leading-relaxed">
           {atTop
-            ? 'Вы на последнем уровне и забираете весь банк.'
+            ? 'Последний уровень: к выплате весь банк.'
             : prize.next && (
               <>
                 До {prize.currentLevel === 0 ? 'первого' : 'следующего'} уровня осталось{' '}

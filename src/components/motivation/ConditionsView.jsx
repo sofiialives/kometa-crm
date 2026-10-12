@@ -10,14 +10,17 @@ import { dayMonth, dollars, eventPoints, modeLabel, money, pointsTone, pointsUni
  * Только чтение. Всё берётся из профиля, поэтому после его правки панель
  * обновляется сама. Таблицы на телефоне превращаются в карточки: колонок
  * четыре, и в узкий экран они не влезают.
+ *
+ * Те же условия открываются из карточки сотрудника у владельца и
+ * руководителя — там `self` выключен, и «Мой профиль» становится «Профиль».
  */
-export function ConditionsView({ data }) {
+export function ConditionsView({ data, self = true }) {
   if (!data.profile) {
     return (
       <Card>
         <EmptyState
           label="Профиль не назначен"
-          text="Условия появятся, когда админ назначит профиль должности. До этого банк и ручные баллы работают как обычно."
+          text="Условия появятся, когда владелец назначит профиль должности. До этого банк и ручные баллы работают как обычно."
         />
       </Card>
     )
@@ -27,7 +30,7 @@ export function ConditionsView({ data }) {
     <div className="flex flex-col gap-4">
       <Card className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <p className="caption">Мой профиль</p>
+          <p className="caption">{self ? 'Мой профиль' : 'Профиль'}</p>
           <p className="font-display text-xl font-bold tracking-tight">{data.profile.title}</p>
         </div>
         <p className="text-sm text-ink-3">Условия обновлены {dayMonth(data.profile.conditionsUpdatedAt)}</p>

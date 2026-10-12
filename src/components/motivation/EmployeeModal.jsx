@@ -9,10 +9,10 @@ import { WriteOffModal } from './WriteOffModal'
 import { useMotivationStore } from '../../core/store/motivationStore'
 
 /**
- * Сотрудник глазами руководителя: его «Моя мотивация» и «Мои условия» в
- * режиме просмотра, как в задании. Отсюда же — быстрые действия по этому
- * человеку: пополнить банк, добавить баллы, отменить событие, а админу ещё
- * и списать из банка.
+ * Человек глазами руководителя или владельца: его «Моя мотивация» и «Мои
+ * условия» в режиме просмотра, как в задании. Владелец отсюда же
+ * пополняет банк, ставит баллы, отменяет события и списывает из банка.
+ * Руководитель только смотрит — кнопок у него нет.
  */
 export function EmployeeModal({ employeeId, month, refreshKey, onClose, onTopUp, onAddPoints, onChanged }) {
   const fetchEmployee = useMotivationStore((s) => s.fetchEmployee)
@@ -113,7 +113,7 @@ export function EmployeeModal({ employeeId, month, refreshKey, onClose, onTopUp,
             {tab === 'motivation' ? (
               <MotivationView data={data} onCancelEvent={data.permissions.canCancel ? setCancelling : undefined} />
             ) : conditions ? (
-              <ConditionsView data={conditions} />
+              <ConditionsView data={conditions} self={false} />
             ) : (
               <div className="grid place-items-center py-10"><Spinner /></div>
             )}

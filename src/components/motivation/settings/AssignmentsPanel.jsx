@@ -26,7 +26,7 @@ export function AssignmentsPanel({ employees, profiles, onAssign }) {
     <Card className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
         <p className="caption">Назначение профилей</p>
-        <p className="text-sm text-ink-3">Банк и баллы есть только у сотрудников — руководители и админ сюда не входят.</p>
+        <p className="text-sm text-ink-3">Банк и баллы есть у сотрудников и руководителей. У владельца их нет — он начисляет другим.</p>
       </div>
       {error && <p className="text-sm text-danger">{error}</p>}
       <ul className="flex flex-col divide-y divide-line">
@@ -35,7 +35,10 @@ export function AssignmentsPanel({ employees, profiles, onAssign }) {
             <div className="flex min-w-0 items-center gap-3">
               <Avatar name={e.name} email={e.email} src={e.avatarUrl} color={e.avatarColor} size={30} />
               <div className="flex min-w-0 flex-col">
-                <span className="truncate text-sm font-medium">{e.name}</span>
+                <span className="truncate text-sm font-medium">
+                  {e.name}
+                  {e.role === 'lead' && <span className="ml-2 rounded-md bg-accent-soft px-1.5 py-0.5 text-xs font-semibold text-accent">руководитель</span>}
+                </span>
                 <span className="truncate text-xs text-ink-3">
                   {[e.position, e.department?.name].filter(Boolean).join(' · ') || 'Без должности и отдела'}
                   {e.assignedAt ? ` · с ${dayMonth(e.assignedAt)}` : ''}

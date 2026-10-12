@@ -12,9 +12,10 @@ import { EmployeeModal } from './EmployeeModal'
 import { employeesWord } from '../../utils/motivation'
 
 /**
- * Раздел «Команда» для руководителя и админа: таблица отдела, итоги и три
- * кнопки из задания — «Пополнить банк», «Добавить баллы вручную» и «Клиент
- * купил новый продукт». Клик по человеку открывает его экраны.
+ * Раздел «Команда». Руководитель видит сотрудников своего отдела и только
+ * смотрит. Владелец видит всех, у кого есть банк, и начисляет: три кнопки
+ * из задания — «Пополнить банк», «Добавить баллы вручную» и «Клиент купил
+ * новый продукт». Клик по человеку открывает его экраны.
  */
 export function TeamSection({ month, onMonthChange }) {
   const isAdmin = useAuthStore((s) => s.user?.role === 'admin')
@@ -33,7 +34,12 @@ export function TeamSection({ month, onMonthChange }) {
 
   const reload = useCallback(() => fetchTeam({ month, departmentId }), [fetchTeam, month, departmentId])
 
-  useEffect(() => { fetchTeamMonths(); fetchEmployees(); fetchClients() }, [fetchTeamMonths, fetchEmployees, fetchClients])
+  useEffect(() => {
+    fetchTeamMonths()
+    // Формы начисления есть только у владельца — руководителю списки для
+    // них не нужны, сервер их ему и не отдаст.
+    if (isAdmin) { fetchEmployees(); fetchClients() }
+  }, [fetchTeamMonths, fetchEmployees, fetchClients, isAdmin])
   useEffect(() => { reload() }, [reload])
 
   // Действие в любой форме — перезапрос таблицы и открытой карточки.
@@ -67,7 +73,7 @@ export function TeamSection({ month, onMonthChange }) {
           )}
         </div>
 
-        {isCurrent && (
+        {isAdmin && isCurrent && (
           <div className="flex flex-wrap gap-2">
             <Button size="sm" onClick={() => setModal({ kind: 'topUp', preselected: [] })}>Пополнить банк</Button>
             <Button size="sm" variant="secondary" onClick={() => setModal({ kind: 'manual' })}>Добавить баллы вручную</Button>
@@ -79,7 +85,7 @@ export function TeamSection({ month, onMonthChange }) {
       {team && team.withoutProfile > 0 && (
         <p className="text-sm text-warn">
           {employeesWord(team.withoutProfile)} без профиля должности: условия получения баллов для них не заданы.
-          {isAdmin ? ' Назначить профиль можно в «Настройках».' : ' Профиль назначает админ.'}
+          {isAdmin ? ' Назначить профиль можно в «Настройках».' : ' Профиль назначает владелец.'}
         </p>
       )}
 

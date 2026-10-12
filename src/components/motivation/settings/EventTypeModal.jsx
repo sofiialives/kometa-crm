@@ -3,7 +3,7 @@ import { Button, Checkbox, Input, Modal, Select, Textarea } from '../../../share
 import { AUTO_RULES } from '../../../utils/motivation'
 
 const MODES = [
-  { value: 'manual', label: 'Вручную, отмечает руководитель' },
+  { value: 'manual', label: 'Вручную, отмечает владелец' },
   { value: 'auto', label: 'Автоматически по задачам CRM' },
 ]
 
@@ -11,7 +11,7 @@ const MODES = [
  * Событие профиля: название, пример, баллы в премию и в уровень, как
  * фиксируется, включено ли. По умолчанию баллы одинаковые в обе шкалы —
  * отдельное поле для уровня открывается галочкой, как в задании: «если
- * админ хочет, чтобы событие влияло на шкалы по-разному, он меняет только
+ * владелец хочет, чтобы событие влияло на шкалы по-разному, он меняет только
  * одно поле».
  */
 // Окно монтируется заново на каждое открытие (родитель задаёт key), поэтому
@@ -101,7 +101,7 @@ export function EventTypeModal({ open, event, onClose, onSubmit }) {
           value={mode}
           disabled={isProduct}
           onChange={(e) => setMode(e.target.value)}
-          hint={isProduct ? 'Покупку продукта всегда отмечает руководитель' : undefined}
+          hint={isProduct ? 'Покупку продукта всегда отмечает владелец' : undefined}
         />
         {mode === 'auto' && (
           <Select

@@ -81,7 +81,10 @@ export function TeamTable({ rows, totals, isCurrent = true, onOpen }) {
                 <div className="flex items-center gap-3">
                   <Avatar name={r.employee.name} email={r.employee.email} src={r.employee.avatarUrl} color={r.employee.avatarColor} size={30} />
                   <div className="flex min-w-0 flex-col">
-                    <span className="truncate font-medium">{r.employee.name}</span>
+                    <span className="truncate font-medium">
+                      {r.employee.name}
+                      {r.employee.role === 'lead' && <LeadMark />}
+                    </span>
                     <span className="truncate text-xs text-ink-3">
                       {r.employee.department?.name || 'Без отдела'}
                       {!r.employee.active && ' · отключён'}
@@ -107,7 +110,10 @@ export function TeamTable({ rows, totals, isCurrent = true, onOpen }) {
               <div className="flex items-center gap-3">
                 <Avatar name={r.employee.name} email={r.employee.email} src={r.employee.avatarUrl} color={r.employee.avatarColor} size={32} />
                 <div className="flex min-w-0 flex-1 flex-col">
-                  <span className="truncate font-medium">{r.employee.name}</span>
+                  <span className="flex min-w-0 items-center font-medium">
+                    <span className="truncate">{r.employee.name}</span>
+                    {r.employee.role === 'lead' && <LeadMark />}
+                  </span>
                   <span className="truncate text-xs text-ink-3">{r.profile?.title || 'Профиль не назначен'}</span>
                 </div>
                 <span className="font-semibold tabular-nums">{dollars(r.earnedCents)}</span>
@@ -144,4 +150,9 @@ function Stat({ label, value }) {
       <dd className="font-semibold tabular-nums text-ink">{value}</dd>
     </div>
   )
+}
+
+/** Руководитель в таблице владельца: банк есть и у него, но он не рядовой сотрудник. */
+function LeadMark() {
+  return <span className="ml-2 shrink-0 rounded-md bg-accent-soft px-1.5 py-0.5 text-xs font-semibold text-accent">руководитель</span>
 }

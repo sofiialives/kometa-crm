@@ -101,7 +101,7 @@ export function ProfileEditor({ profile, globalScale, workLevels, onClose, actio
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <p className="text-sm font-medium leading-snug">{e.title}</p>
                     <p className="text-xs text-ink-3">
-                      {e.mode === 'auto' ? `Автоматически: ${lowerFirst(autoRuleLabel(e.autoRule))}` : 'Вручную, руководитель'}
+                      {e.mode === 'auto' ? `Автоматически: ${lowerFirst(autoRuleLabel(e.autoRule))}` : 'Вручную, владелец'}
                     </p>
                   </div>
                   {!e.enabled && <Badge>выключено</Badge>}
