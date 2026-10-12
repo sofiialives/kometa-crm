@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Button, Input, Modal, Select, Textarea } from '../../shared/ui'
 import { EmployeePicker } from './EmployeePicker'
-import { newRequestKey } from '../../utils/motivation'
+import { useRequestKey } from './useRequestKey'
 
 /**
  * «Клиент купил новый продукт». Владелец выбирает специалистов, чья
@@ -22,7 +22,7 @@ export function ProductModal({ open, onClose, employees, clients, preselected = 
   const clear = (key) => setErrors((e) => (e[key] ? { ...e, [key]: undefined } : e))
   const [busy, setBusy] = useState(false)
   const [serverError, setServerError] = useState(null)
-  const [requestKey, setRequestKey] = useState(null)
+  const keyFor = useRequestKey(open)
 
   useEffect(() => {
     if (!open) return
@@ -32,7 +32,6 @@ export function ProductModal({ open, onClose, employees, clients, preselected = 
     setComment('')
     setErrors({})
     setServerError(null)
-    setRequestKey(newRequestKey())
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const clientOptions = useMemo(() => clients.map((c) => ({ value: c.id, label: c.name })), [clients])
@@ -47,13 +46,13 @@ export function ProductModal({ open, onClose, employees, clients, preselected = 
 
     setBusy(true)
     setServerError(null)
-    const res = await onSubmit({
+    const body = {
       userIds,
       clientId: clientId || undefined,
       product: product.trim(),
       comment: comment.trim() || undefined,
-      requestKey,
-    })
+    }
+    const res = await onSubmit({ ...body, requestKey: keyFor(body) })
     setBusy(false)
     if (res?.ok) onClose()
     else setServerError(res?.error || 'Не удалось отметить покупку')

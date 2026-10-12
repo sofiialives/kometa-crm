@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Button, Modal, MoneyInput, Textarea } from '../../shared/ui'
 import { money } from '../../utils/motivation'
+import { useRequestKey } from './useRequestKey'
 
 /**
  * Списание из банка — только владелец, например при ошибочном пополнении.
@@ -15,6 +16,7 @@ export function WriteOffModal({ open, onClose, employee, bankCents, onSubmit }) 
   const clear = (key) => setErrors((e) => (e[key] ? { ...e, [key]: undefined } : e))
   const [busy, setBusy] = useState(false)
   const [serverError, setServerError] = useState(null)
+  const keyFor = useRequestKey(open)
 
   useEffect(() => {
     if (!open) return
@@ -36,7 +38,9 @@ export function WriteOffModal({ open, onClose, employee, bankCents, onSubmit }) 
     if (Object.keys(next).length) return
 
     setBusy(true)
-    const res = await onSubmit({ userId: employee.id, amount: Number(amount), comment: comment.trim() })
+    setServerError(null)
+    const body = { userId: employee.id, amount: Number(amount), comment: comment.trim() }
+    const res = await onSubmit({ ...body, requestKey: keyFor(body) })
     setBusy(false)
     if (res?.ok) onClose()
     else setServerError(res?.error || 'Не удалось списать')

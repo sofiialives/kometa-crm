@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Button, Checkbox, Input, Modal, Select, Spinner, Textarea } from '../../shared/ui'
-import { eventPoints, newRequestKey } from '../../utils/motivation'
+import { eventPoints } from '../../utils/motivation'
+import { useRequestKey } from './useRequestKey'
 
 const ADJUSTMENT = '__adjustment'
 
@@ -26,7 +27,7 @@ export function ManualPointsModal({ open, onClose, employees, preselected, loadO
   const clear = (key) => setErrors((e) => (e[key] ? { ...e, [key]: undefined } : e))
   const [busy, setBusy] = useState(false)
   const [serverError, setServerError] = useState(null)
-  const [requestKey, setRequestKey] = useState(null)
+  const keyFor = useRequestKey(open)
 
   useEffect(() => {
     if (!open) return
@@ -39,7 +40,6 @@ export function ManualPointsModal({ open, onClose, employees, preselected, loadO
     setComment('')
     setErrors({})
     setServerError(null)
-    setRequestKey(newRequestKey())
   }, [open, preselected])
 
   useEffect(() => {
@@ -84,9 +84,9 @@ export function ManualPointsModal({ open, onClose, employees, preselected, loadO
     setBusy(true)
     setServerError(null)
     const body = isAdjustment
-      ? { userId, prizePoints: Number(prize), levelPoints: split ? Number(level) : Number(prize), comment: comment.trim(), requestKey }
-      : { userId, eventTypeId, comment: comment.trim(), requestKey }
-    const res = await onSubmit(body)
+      ? { userId, prizePoints: Number(prize), levelPoints: split ? Number(level) : Number(prize), comment: comment.trim() }
+      : { userId, eventTypeId, comment: comment.trim() }
+    const res = await onSubmit({ ...body, requestKey: keyFor(body) })
     setBusy(false)
     if (res?.ok) onClose()
     else setServerError(res?.error || 'Не удалось добавить баллы')

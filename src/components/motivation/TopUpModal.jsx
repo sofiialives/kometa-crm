@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Button, Modal, MoneyInput, Select, Textarea } from '../../shared/ui'
 import { EmployeePicker } from './EmployeePicker'
-import { BANK_REASONS, money, newRequestKey } from '../../utils/motivation'
+import { BANK_REASONS, money } from '../../utils/motivation'
+import { useRequestKey } from './useRequestKey'
 
 /**
  * «Пополнить банк»: сотрудник (можно нескольких), сумма, причина, клиент
@@ -21,7 +22,7 @@ export function TopUpModal({ open, onClose, employees, clients, preselected = []
   const clear = (key) => setErrors((e) => (e[key] ? { ...e, [key]: undefined } : e))
   const [busy, setBusy] = useState(false)
   const [serverError, setServerError] = useState(null)
-  const [requestKey, setRequestKey] = useState(null)
+  const keyFor = useRequestKey(open)
 
   useEffect(() => {
     if (!open) return
@@ -32,7 +33,6 @@ export function TopUpModal({ open, onClose, employees, clients, preselected = []
     setComment('')
     setErrors({})
     setServerError(null)
-    setRequestKey(newRequestKey())
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const clientOptions = useMemo(() => clients.map((c) => ({ value: c.id, label: c.name })), [clients])
@@ -52,14 +52,14 @@ export function TopUpModal({ open, onClose, employees, clients, preselected = []
 
     setBusy(true)
     setServerError(null)
-    const res = await onSubmit({
+    const body = {
       userIds,
       amount: Number(amount),
       reason,
       clientId: reason === 'new_client' ? clientId : clientId || undefined,
       comment: comment.trim() || undefined,
-      requestKey,
-    })
+    }
+    const res = await onSubmit({ ...body, requestKey: keyFor(body) })
     setBusy(false)
     if (res?.ok) onClose()
     else setServerError(res?.error || 'Не удалось пополнить банк')
