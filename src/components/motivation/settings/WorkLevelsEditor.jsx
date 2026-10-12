@@ -12,10 +12,14 @@ export function WorkLevelsEditor({ levels, onSave }) {
   const [busy, setBusy] = useState(false)
   const [saved, setSaved] = useState(false)
 
+  // Как и в шкале: сбрасываем ввод, только если пришло другое содержимое.
+  // У каждой строки помним, каким по счёту уровень был на сервере, — чтобы
+  // подсказки профилей переехали вместе с ним.
+  const serverKey = JSON.stringify(levels)
   useEffect(() => {
-    setRows(levels.map((l) => ({ title: l.title, minPoints: String(l.minPoints), hint: l.hint || '' })))
+    setRows(levels.map((l) => ({ title: l.title, minPoints: String(l.minPoints), hint: l.hint || '', from: l.position })))
     setError(null)
-  }, [levels])
+  }, [serverKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const update = (i, key, value) => {
     setSaved(false)
@@ -26,11 +30,11 @@ export function WorkLevelsEditor({ levels, onSave }) {
     setSaved(false)
     const last = rows[rows.length - 1]
     const min = Math.min(100, (Number(last?.minPoints) || 0) + 10)
-    setRows((rs) => [...rs, { title: '', minPoints: String(min), hint: '' }])
+    setRows((rs) => [...rs, { title: '', minPoints: String(min), hint: '', from: null }])
   }
 
   async function save() {
-    const payload = rows.map((r, i) => ({ title: r.title, minPoints: i === 0 ? 0 : Number(r.minPoints), hint: r.hint }))
+    const payload = rows.map((r, i) => ({ title: r.title, minPoints: i === 0 ? 0 : Number(r.minPoints), hint: r.hint, from: r.from ?? null }))
     const local = workLevelErrors(payload)
     if (local.length) { setError(local[0]); setSaved(false); return }
     setBusy(true)

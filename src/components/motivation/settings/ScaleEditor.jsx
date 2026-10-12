@@ -21,10 +21,14 @@ export function ScaleEditor({ levels, onSave, saveLabel = 'Сохранить ш
   const [busy, setBusy] = useState(false)
   const [saved, setSaved] = useState(false)
 
+  // Сбрасываем ввод, только если с сервера пришла другая шкала. Сохранение
+  // в соседнем блоке перезапрашивает все настройки, и по ссылке массив
+  // всегда новый — набранное, но не сохранённое пропадало бы.
+  const serverKey = JSON.stringify(levels.map((l) => [l.threshold, l.percent]))
   useEffect(() => {
     setRows(levels.map((l) => ({ threshold: String(l.threshold), percent: String(l.percent) })))
     setErrors([])
-  }, [levels])
+  }, [serverKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const update = (i, key, value) => {
     setSaved(false)

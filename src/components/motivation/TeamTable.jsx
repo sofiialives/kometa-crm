@@ -23,7 +23,7 @@ const COLUMNS = [
   { id: 'work', label: 'Уровень работы', get: (r) => r.work?.position ?? 0, numeric: true },
 ]
 
-export function TeamTable({ rows, totals, onOpen }) {
+export function TeamTable({ rows, totals, isCurrent = true, onOpen }) {
   const [sort, setSort] = useState({ id: 'name', dir: 'asc' })
 
   const sorted = useMemo(() => {
@@ -129,7 +129,7 @@ export function TeamTable({ rows, totals, onOpen }) {
           <span className="font-semibold tabular-nums">{dollars(totals.bankCents)}</span>
         </p>
         <p className="flex justify-between gap-3 sm:block">
-          <span className="text-ink-3">К выплате сейчас </span>
+          <span className="text-ink-3">{isCurrent ? 'К выплате сейчас ' : 'К выплате '}</span>
           <span className="font-semibold tabular-nums text-accent">{dollars(totals.payoutCents)}</span>
         </p>
       </div>

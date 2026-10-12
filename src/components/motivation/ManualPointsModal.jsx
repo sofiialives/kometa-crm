@@ -43,16 +43,16 @@ export function ManualPointsModal({ open, onClose, employees, preselected, loadO
   }, [open, preselected])
 
   useEffect(() => {
-    if (!open || !userId) { setOptions(null); return }
+    if (!open || !userId) { setOptions(null); setLoading(false); return undefined }
     let alive = true
     setLoading(true)
     loadOptions(userId).then((res) => {
       if (!alive) return
-      setLoading(false)
       setOptions(res.ok ? res.data : { events: [], error: res.error })
       setEventTypeId('')
-    })
-    return () => { alive = false }
+    }).finally(() => { if (alive) setLoading(false) })
+    // Окно закрыли или выбрали другого — индикатор не должен зависнуть.
+    return () => { alive = false; setLoading(false) }
   }, [open, userId, loadOptions])
 
   const eventOptions = useMemo(() => [
@@ -68,11 +68,12 @@ export function ManualPointsModal({ open, onClose, employees, preselected, loadO
     if (!userId) next.userId = 'Выберите сотрудника'
     if (!eventTypeId) next.eventTypeId = 'Выберите событие или корректировку'
     if (isAdjustment) {
+      // Пустое поле — не ноль: Number('') даёт 0 и молча прошло бы проверку.
       const p = Number(prize)
-      if (!Number.isInteger(p) || p < -100 || p > 100) next.prize = 'Целое число от −100 до 100'
+      if (!prize.trim() || !Number.isInteger(p) || p < -100 || p > 100) next.prize = 'Целое число от −100 до 100'
       if (split) {
         const l = Number(level)
-        if (!Number.isInteger(l) || l < -100 || l > 100) next.level = 'Целое число от −100 до 100'
+        if (!level.trim() || !Number.isInteger(l) || l < -100 || l > 100) next.level = 'Целое число от −100 до 100'
       }
       if (p === 0 && (!split || Number(level) === 0)) next.prize = 'Ноль баллов ничего не меняет'
     }
@@ -116,7 +117,11 @@ export function ManualPointsModal({ open, onClose, employees, preselected, loadO
 
         {loading && <div className="grid place-items-center py-2"><Spinner /></div>}
 
-        {userId && !loading && options && (
+        {userId && !loading && options?.error && (
+          <p className="text-sm text-danger">Не удалось загрузить события сотрудника: {options.error}</p>
+        )}
+
+        {userId && !loading && options && !options.error && (
           <>
             {!options.profile && (
               <p className="text-sm text-warn">

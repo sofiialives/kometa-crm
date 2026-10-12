@@ -44,6 +44,8 @@ export function TopUpModal({ open, onClose, employees, clients, preselected = []
     const next = {}
     if (userIds.length === 0) next.userIds = 'Выберите хотя бы одного сотрудника'
     if (!(Number(amount) > 0)) next.amount = 'Укажите сумму больше нуля'
+    // Суммы банка — целые доллары: в задании всё округляется до доллара.
+    else if (!Number.isInteger(Number(amount))) next.amount = 'Целое число долларов, без центов'
     if (reason === 'new_client' && !clientId) next.clientId = 'Выберите клиента'
     setErrors(next)
     if (Object.keys(next).length) return

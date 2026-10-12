@@ -53,7 +53,7 @@ export function TeamSection({ month, onMonthChange }) {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-wrap items-end gap-3">
-          <MonthSelect months={months} value={month || team?.month} onChange={onMonthChange} className="w-60" />
+          <MonthSelect months={months} current={team?.currentMonth} value={month || team?.month} onChange={onMonthChange} className="w-60" />
           {isAdmin && team && (
             <Select
               size="sm"
@@ -83,15 +83,17 @@ export function TeamSection({ month, onMonthChange }) {
         </p>
       )}
 
+      {/* Ошибка видна и поверх таблицы прошлого запроса. */}
       {teamError && <p className="text-sm text-danger">{teamError}</p>}
 
       {teamLoading && !team ? (
         <div className="grid place-items-center py-14"><Spinner /></div>
       ) : team ? (
-        <TeamTable rows={team.rows} totals={team.totals} onOpen={(r) => setOpenId(r.employee.id)} />
+        <TeamTable rows={team.rows} totals={team.totals} isCurrent={team.isCurrent} onOpen={(r) => setOpenId(r.employee.id)} />
       ) : null}
 
       <EmployeeModal
+        key={openId || 'closed'}
         employeeId={openId}
         month={team?.month}
         refreshKey={version}

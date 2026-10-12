@@ -39,10 +39,12 @@ export function EventTypeModal({ open, event, onClose, onSubmit }) {
   async function submit() {
     const next = {}
     if (!title.trim()) next.title = 'Укажите название'
+    // Пустое поле — не ноль: Number('') даёт 0 и молча сохранило бы событие
+    // без баллов.
     const p = Number(prize)
-    if (!Number.isInteger(p) || p < -100 || p > 100) next.prize = 'Целое число от −100 до 100'
+    if (!prize.trim() || !Number.isInteger(p) || p < -100 || p > 100) next.prize = 'Целое число от −100 до 100'
     const l = split ? Number(level) : p
-    if (split && (!Number.isInteger(l) || l < -100 || l > 100)) next.level = 'Целое число от −100 до 100'
+    if (split && (!level.trim() || !Number.isInteger(l) || l < -100 || l > 100)) next.level = 'Целое число от −100 до 100'
     if (mode === 'auto' && !autoRule) next.autoRule = 'Выберите, по какому правилу событие начисляется'
     setErrors(next)
     if (Object.keys(next).length) return

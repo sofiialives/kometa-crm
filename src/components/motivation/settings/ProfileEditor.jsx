@@ -22,13 +22,15 @@ export function ProfileEditor({ profile, globalScale, workLevels, onClose, actio
   const [message, setMessage] = useState(null)
   const [busy, setBusy] = useState(null)
 
+  // Каждое поле сбрасывается, только когда на сервере поменялось именно оно.
+  // Сохранение названия или галочки шкалы перезапрашивает профиль целиком, и
+  // раньше вместе с ним пропадали набранные, но не сохранённые подсказки.
+  useEffect(() => { if (profile) setTitle(profile.title) }, [profile?.title]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (!profile) return
-    setTitle(profile.title)
-    setStartBank(profile.startBankCents ? String(profile.startBankCents / 100) : '')
-    setHints(profile.workHints || {})
-    setMessage(null)
-  }, [profile])
+    if (profile) setStartBank(profile.startBankCents ? String(profile.startBankCents / 100) : '')
+  }, [profile?.startBankCents]) // eslint-disable-line react-hooks/exhaustive-deps
+  const hintsKey = JSON.stringify(profile?.workHints || {})
+  useEffect(() => { if (profile) setHints(profile.workHints || {}) }, [hintsKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!profile) return null
 
@@ -70,7 +72,13 @@ export function ProfileEditor({ profile, globalScale, workLevels, onClose, actio
               <Button
                 variant="secondary"
                 loading={busy === 'bank'}
-                onClick={() => run('bank', () => actions.updateProfile(profile.id, { startBank: Number(startBank || 0) }), 'Стартовая сумма сохранена')}
+                onClick={() => {
+                  if (!Number.isInteger(Number(startBank || 0))) {
+                    setMessage({ tone: 'danger', text: 'Стартовая сумма — целое число долларов' })
+                    return
+                  }
+                  run('bank', () => actions.updateProfile(profile.id, { startBank: Number(startBank || 0) }), 'Стартовая сумма сохранена')
+                }}
               >
                 Сохранить
               </Button>

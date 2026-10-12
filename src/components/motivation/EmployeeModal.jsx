@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Avatar, Button, Modal, Spinner } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
 import { MotivationView } from './MotivationView'
@@ -20,6 +20,8 @@ export function EmployeeModal({ employeeId, month, refreshKey, onClose, onTopUp,
   const cancelEvent = useMotivationStore((s) => s.cancelEvent)
   const writeOff = useMotivationStore((s) => s.writeOff)
 
+  // Окно монтируется заново на каждого сотрудника (родитель задаёт key),
+  // поэтому месяц берётся сразу из таблицы, без второго запроса.
   const [tab, setTab] = useState('motivation')
   const [viewMonth, setViewMonth] = useState(month)
   const [data, setData] = useState(null)
@@ -30,18 +32,20 @@ export function EmployeeModal({ employeeId, month, refreshKey, onClose, onTopUp,
 
   const open = Boolean(employeeId)
 
+  // Номер последнего запроса: ответ, пришедший после закрытия окна или
+  // после переключения месяца, не должен затереть свежие данные.
+  const latest = useRef(0)
+  useEffect(() => () => { latest.current += 1 }, [])
+
   const load = useCallback(async () => {
     if (!employeeId) return
+    const n = ++latest.current
     setError(null)
     const [m, c] = await Promise.all([fetchEmployee(employeeId, viewMonth), fetchEmployeeConditions(employeeId)])
+    if (n !== latest.current) return
     if (m.ok) setData(m.data); else setError(m.error)
     if (c.ok) setConditions(c.data)
   }, [employeeId, viewMonth, fetchEmployee, fetchEmployeeConditions])
-
-  useEffect(() => {
-    if (!open) { setData(null); setConditions(null); setTab('motivation'); return }
-    setViewMonth(month)
-  }, [open, employeeId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // refreshKey меняет страница после действий в своих окнах (пополнение,
   // баллы): карточка поверх таблицы должна показать новые цифры сразу.
@@ -72,7 +76,9 @@ export function EmployeeModal({ employeeId, month, refreshKey, onClose, onTopUp,
                   {employee.department ? ` · ${employee.department.name}` : ''}
                 </span>
               </div>
-              {canManage && data.isCurrent && (
+              {/* Отключённому сотруднику пополнять и ставить баллы нельзя —
+                  сервер всё равно откажет, так что и кнопок нет. */}
+              {canManage && data.isCurrent && employee.active && (
                 <div className="flex flex-wrap gap-2">
                   <Button size="sm" variant="secondary" onClick={() => onTopUp(employee.id)}>Пополнить банк</Button>
                   <Button size="sm" variant="secondary" onClick={() => onAddPoints(employee.id)}>Добавить баллы</Button>
@@ -100,12 +106,12 @@ export function EmployeeModal({ employeeId, month, refreshKey, onClose, onTopUp,
                 ))}
               </div>
               {tab === 'motivation' && (
-                <MonthSelect months={data.months} value={data.month} onChange={setViewMonth} className="w-56" />
+                <MonthSelect months={data.months} current={data.currentMonth} value={data.month} onChange={setViewMonth} className="w-56" />
               )}
             </div>
 
             {tab === 'motivation' ? (
-              <MotivationView data={data} onCancelEvent={canManage ? setCancelling : undefined} />
+              <MotivationView data={data} onCancelEvent={data.permissions.canCancel ? setCancelling : undefined} />
             ) : conditions ? (
               <ConditionsView data={conditions} />
             ) : (

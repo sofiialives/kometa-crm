@@ -29,6 +29,7 @@ export function WriteOffModal({ open, onClose, employee, bankCents, onSubmit }) 
     const next = {}
     const cents = Math.round(Number(amount) * 100)
     if (!(cents > 0)) next.amount = 'Укажите сумму больше нуля'
+    else if (!Number.isInteger(Number(amount))) next.amount = 'Целое число долларов, без центов'
     else if (cents > bankCents) next.amount = `В банке ${money(bankCents)}, больше списать нельзя`
     if (!comment.trim()) next.comment = 'Напишите причину — она останется в истории банка'
     setErrors(next)

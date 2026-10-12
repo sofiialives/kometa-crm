@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { api } from '../api/client'
+import { useAuthStore } from './authStore'
 
 /**
  * Вкладка «Мотивация». Свой стор: данные — деньги и оценки сотрудников, и
@@ -30,6 +31,18 @@ async function call(fn) {
   }
 }
 
+// Номер последнего запроса каждого вида. Ответ, который пришёл позже
+// более свежего (быстро переключили месяц или отдел), просто выбрасывается:
+// иначе медленный старый ответ затирал бы данные нового выбора.
+const latest = { mine: 0, conditions: 0, team: 0, settings: 0 }
+
+const EMPTY = {
+  mine: null, mineLoading: false, mineError: null,
+  conditions: null, conditionsLoading: false, conditionsError: null,
+  team: null, teamMonths: [], teamLoading: false, teamError: null, employees: [],
+  settings: null, settingsLoading: false, settingsError: null,
+}
+
 export const useMotivationStore = create((set) => ({
   // Экран сотрудника про себя.
   mine: null,
@@ -53,26 +66,39 @@ export const useMotivationStore = create((set) => ({
   settingsLoading: false,
   settingsError: null,
 
+  /** Всё забыть — при выходе и смене пользователя. */
+  reset: () => {
+    for (const k of Object.keys(latest)) latest[k] += 1
+    set({ ...EMPTY })
+  },
+
   async fetchMine(month) {
+    const n = ++latest.mine
     set({ mineLoading: true, mineError: null })
     const res = await call(() => api.get(`/motivation/me${query({ month })}`))
+    if (n !== latest.mine) return res
     set(res.ok ? { mine: res.data, mineLoading: false } : { mineError: res.error, mineLoading: false })
     return res
   },
 
   async fetchConditions(userId) {
+    const n = ++latest.conditions
     set({ conditionsLoading: true, conditionsError: null })
     const path = userId ? `/motivation/users/${userId}/conditions` : '/motivation/me/conditions'
     const res = await call(() => api.get(path))
+    if (n !== latest.conditions) return res
     set(res.ok ? { conditions: res.data, conditionsLoading: false } : { conditionsError: res.error, conditionsLoading: false })
     return res
   },
 
-  markSeen: () => call(() => api.post('/motivation/me/seen')),
+  // Что человек видел: время самых свежих записей из ответа на экране.
+  markSeen: (until) => call(() => api.post('/motivation/me/seen', until || {})),
 
   async fetchTeam(params) {
+    const n = ++latest.team
     set({ teamLoading: true, teamError: null })
     const res = await call(() => api.get(`/motivation/team${query(params)}`))
+    if (n !== latest.team) return res
     set(res.ok ? { team: res.data, teamLoading: false } : { teamError: res.error, teamLoading: false })
     return res
   },
@@ -102,8 +128,10 @@ export const useMotivationStore = create((set) => ({
   cancelEvent: (id, reason) => call(() => api.post(`/motivation/events/${id}/cancel`, { reason })),
 
   async fetchSettings() {
+    const n = ++latest.settings
     set({ settingsLoading: true, settingsError: null })
     const res = await call(() => api.get('/motivation/settings'))
+    if (n !== latest.settings) return res
     set(res.ok ? { settings: res.data, settingsLoading: false } : { settingsError: res.error, settingsLoading: false })
     return res
   },
@@ -120,3 +148,10 @@ export const useMotivationStore = create((set) => ({
   deleteEventType: (id) => call(() => api.del(`/motivation/event-types/${id}`)),
   assignProfile: (userId, profileId) => call(() => api.put(`/motivation/assignments/${userId}`, { profileId })),
 }))
+
+// Сменился пользователь (вышел один, вошёл другой без перезагрузки) — чужие
+// банк и баллы не должны мелькнуть ни на кадр. Подписка здесь, а не в
+// authStore: авторизации незачем знать про мотивацию.
+useAuthStore.subscribe((state, prev) => {
+  if (state.user?.id !== prev.user?.id) useMotivationStore.getState().reset()
+})

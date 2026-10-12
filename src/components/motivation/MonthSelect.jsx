@@ -5,10 +5,12 @@ import { monthHeading } from '../../utils/motivation'
  * Переключатель месяца. Для прошлых месяцев экран показывает итог: баллы,
  * банк, сумму премии и уровень работы на конец месяца.
  */
-export function MonthSelect({ months = [], value, onChange, currentLabel = 'текущий', className }) {
-  const options = months.map((m, i) => ({
+export function MonthSelect({ months = [], current, value, onChange, className }) {
+  // «Текущий» — по месяцу, который назвал сервер, а не по первому в списке:
+  // в список может попасть и прошлый месяц, если его открыли по ссылке.
+  const options = months.map((m) => ({
     value: m,
-    label: i === 0 ? `${monthHeading(m)} — ${currentLabel}` : monthHeading(m),
+    label: m === current ? `${monthHeading(m)} — текущий` : monthHeading(m),
   }))
   return (
     <Select

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { PageSection } from '../../widgets'
 import { Spinner } from '../../shared/ui'
@@ -84,10 +84,14 @@ function MySection({ month, onMonthChange }) {
   const hasNew = Boolean(mine?.unseen && (mine.unseen.bankCents > 0 || mine.unseen.events > 0))
 
   useEffect(() => {
-    if (!hasNew || marked.current) return undefined
-    const t = setTimeout(() => { marked.current = true; markSeen() }, 2500)
+    if (!hasNew || marked.current || !mine) return undefined
+    // Отмечаем просмотренным ровно то, что было на экране: время самой
+    // свежей записи из этого ответа, а не «сейчас».
+    const newest = (list) => list.reduce((max, e) => (!max || e.createdAt > max ? e.createdAt : max), null)
+    const until = { bankUntil: newest(mine.bank.history), eventsUntil: newest(mine.history) }
+    const t = setTimeout(() => { marked.current = true; markSeen(until) }, 2500)
     return () => clearTimeout(t)
-  }, [hasNew, markSeen])
+  }, [hasNew, markSeen, mine])
 
   if (mineLoading && !mine) return <div className="grid place-items-center py-14"><Spinner /></div>
   if (mineError && !mine) return <p className="text-sm text-danger">{mineError}</p>
@@ -95,7 +99,10 @@ function MySection({ month, onMonthChange }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <MonthSelect months={mine.months} value={mine.month} onChange={onMonthChange} className="w-60" />
+      {/* Ошибка видна и поверх старых данных: иначе неудачный запрос
+          оставлял бы на экране прошлый месяц как ни в чём не бывало. */}
+      {mineError && <p className="text-sm text-danger">{mineError}</p>}
+      <MonthSelect months={mine.months} current={mine.currentMonth} value={mine.month} onChange={onMonthChange} className="w-60" />
       <MotivationView data={mine} highlight={hasNew && mine.unseen.bankCents > 0} />
     </div>
   )
@@ -105,9 +112,13 @@ function MyConditions() {
   const { conditions, conditionsLoading, conditionsError, fetchConditions } = useMotivationStore()
   useEffect(() => { fetchConditions() }, [fetchConditions])
 
-  const data = useMemo(() => conditions, [conditions])
-  if (conditionsLoading && !data) return <div className="grid place-items-center py-14"><Spinner /></div>
-  if (conditionsError && !data) return <p className="text-sm text-danger">{conditionsError}</p>
-  if (!data) return null
-  return <ConditionsView data={data} />
+  if (conditionsLoading && !conditions) return <div className="grid place-items-center py-14"><Spinner /></div>
+  if (conditionsError && !conditions) return <p className="text-sm text-danger">{conditionsError}</p>
+  if (!conditions) return null
+  return (
+    <div className="flex flex-col gap-4">
+      {conditionsError && <p className="text-sm text-danger">{conditionsError}</p>}
+      <ConditionsView data={conditions} />
+    </div>
+  )
 }

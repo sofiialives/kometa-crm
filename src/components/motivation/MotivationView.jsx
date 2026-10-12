@@ -48,7 +48,7 @@ export function MotivationView({ data, highlight, onCancelEvent }) {
       <WorkLevelBar work={data.work} />
       <PointsHistory
         history={data.history}
-        canCancel={Boolean(onCancelEvent) && data.permissions?.canManage}
+        canCancel={Boolean(onCancelEvent) && Boolean(data.permissions?.canCancel)}
         onCancel={onCancelEvent}
       />
 

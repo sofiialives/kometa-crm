@@ -10,11 +10,23 @@ export function GeneralPanel({ general, onSave }) {
   const [message, setMessage] = useState(null)
   const [busy, setBusy] = useState(false)
 
-  useEffect(() => { setForm(general) }, [general])
+  // Сбрасываем ввод, только если с сервера пришло другое содержимое. Иначе
+  // любое сохранение в соседнем блоке (оно перезапрашивает все настройки)
+  // стирало бы то, что здесь набрано, но ещё не сохранено.
+  const serverKey = JSON.stringify(general)
+  useEffect(() => { setForm(general) }, [serverKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const num = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value.replace(/\D/g, '').slice(0, 3) }))
 
   async function save() {
+    // Пустое поле — не ноль: иначе стёртый лимит молча отключил бы штрафы.
+    for (const [key, label] of [['overduePenaltyCap', 'Лимит штрафа'], ['personalTaskDailyCap', 'Потолок за личные задачи']]) {
+      const raw = String(form[key] ?? '').trim()
+      if (!raw || Number(raw) > 100) {
+        setMessage({ ok: false, text: `${label}: целое число от 0 до 100` })
+        return
+      }
+    }
     setBusy(true)
     const res = await onSave({
       overduePenaltyCap: Number(form.overduePenaltyCap || 0),
