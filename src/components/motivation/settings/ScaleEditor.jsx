@@ -10,7 +10,8 @@ const SAMPLE_BANK_CENTS = 20000
  *
  * Доля последнего уровня всегда 100%: он и есть весь банк. Поле не
  * редактируется, чтобы шкалу нельзя было сохранить в виде, который сервер
- * всё равно отклонит.
+ * всё равно отклонит. Убрать можно любой уровень, и последний тоже — тогда
+ * последним становится предыдущий и забирает весь банк уже он.
  *
  * Рядом — сколько уровень стоит при банке 200 $, как в таблице из задания:
  * по одним процентам трудно почувствовать, нравится ли шкала.
@@ -90,10 +91,10 @@ export function ScaleEditor({ levels, onSave, saveLabel = 'Сохранить ш
               <button
                 type="button"
                 onClick={() => remove(i)}
-                disabled={rows.length <= 1 || isLast}
+                disabled={rows.length <= 1}
                 className="grid h-8 w-8 place-items-center rounded-lg text-ink-3 hover:bg-danger/10 hover:text-danger disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
                 aria-label={`Убрать уровень ${i + 1}`}
-                title={isLast ? 'Последний уровень убрать нельзя' : 'Убрать уровень'}
+                title={rows.length <= 1 ? 'В шкале должен остаться хотя бы один уровень' : 'Убрать уровень'}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
               </button>
@@ -110,8 +111,10 @@ export function ScaleEditor({ levels, onSave, saveLabel = 'Сохранить ш
         {saved && <span className="text-sm text-ok">Сохранено</span>}
       </div>
       <p className="text-xs text-ink-3 leading-relaxed">
-        Пороги и доли должны расти от уровня к уровню. Изменения действуют сразу на текущий месяц, начисленные баллы
-        не пересчитываются.
+        Пороги и доли должны расти от уровня к уровню. Последний уровень всегда забирает весь банк — его доля 100%,
+        поэтому поле не меняется; убрать можно любой уровень, и тогда весь банк забирает новый последний. Новый
+        уровень встаёт перед последним. Изменения действуют сразу на текущий месяц, начисленные баллы не
+        пересчитываются.
       </p>
     </div>
   )
