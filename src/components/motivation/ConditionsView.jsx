@@ -1,6 +1,6 @@
 import { Card, EmptyState } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
-import { dayMonth, dollars, eventPoints, modeLabel, money, pointsTone, pointsUnit, pointsWord } from '../../utils/motivation'
+import { atMostPoints, autoStatusLabel, dayMonth, dollars, eventPoints, modeLabel, money, pointsTone, pointsUnit, pointsWord } from '../../utils/motivation'
 
 /**
  * «Мои условия»: правила игры для своей должности, заранее. Человек должен
@@ -36,7 +36,7 @@ export function ConditionsView({ data, self = true }) {
         <p className="text-sm text-ink-3">Условия обновлены {dayMonth(data.profile.conditionsUpdatedAt)}</p>
       </Card>
 
-      <EventsTable title="Как заработать баллы" events={data.earn} empty="В профиле пока нет событий, за которые добавляются баллы." />
+      <EventsTable title="Как заработать баллы" events={data.earn} empty="В профиле пока нет событий, за которые добавляются баллы." rules={data.rules} />
       <EventsTable title="За что снимаются баллы" events={data.penalties} empty="В профиле нет штрафов." rules={data.rules} />
 
       <Card className="flex flex-col gap-4">
@@ -111,7 +111,7 @@ function EventsTable({ title, events, empty, rules }) {
               <div className="flex flex-col gap-1">
                 <p className="text-sm font-medium leading-snug">{e.title}</p>
                 {e.example && <p className="text-xs text-ink-3 leading-relaxed">Например: {e.example}</p>}
-                <p className="text-xs text-ink-2">{modeLabel(e)}</p>
+                <p className="text-xs text-ink-2">{e.mode === 'auto' ? autoStatusLabel(rules) : modeLabel(e)}</p>
               </div>
               <p className={cx('text-sm font-semibold tabular-nums sm:text-right', pointsTone(e.prizePoints || e.levelPoints))}>
                 {eventPoints(e)}
@@ -120,10 +120,17 @@ function EventsTable({ title, events, empty, rules }) {
           ))}
         </ul>
       )}
-      {rules && events.some((e) => e.autoRule === 'task_overdue') && (
+      {rules && events.some((e) => e.autoRule === 'task_on_time' || e.autoRule === 'personal_task_on_time') && (
         <p className="text-xs text-ink-3 leading-relaxed">
-          Штраф за просрочку одной задачи не больше {pointsWord(rules.overduePenaltyCap)}, сколько бы дней она ни висела.
-          Если дедлайн перенесли до того, как он наступил, штрафа нет.
+          {events.some((e) => e.autoRule === 'personal_task_on_time') && `За личные задачи — ${atMostPoints(rules.personalTaskDailyCap)} в день. `}
+          Если задачу вернули из «Готово», баллы за неё снимаются, а закрыли снова в срок — начисляются снова.
+        </p>
+      )}
+      {rules && events.some((e) => e.autoRule === 'task_overdue' || e.autoRule === 'personal_task_overdue') && (
+        <p className="text-xs text-ink-3 leading-relaxed">
+          Просрочка задачи из Иерархии штрафуется каждую ночь в 00:00 по Москве, пока задачу не закроют, но не больше
+          чем на {pointsWord(rules.overduePenaltyCap)} за одну задачу. Личная просроченная задача штрафуется один раз — в ту же ночь
+          её убирает из задачника уборка. Если срок перенесли до того, как он наступил, штрафа нет.
         </p>
       )}
     </Card>

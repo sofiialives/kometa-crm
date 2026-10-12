@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react'
-import { Button, Card, Checkbox, Input } from '../../../shared/ui'
+import { Button, Card, Checkbox, DatePicker, Input } from '../../../shared/ui'
+import { todayKey } from '../../../utils/calls'
+import { dayMonth, nextMonthStartKey } from '../../../utils/motivation'
 
 /**
  * Общие параметры: лимит штрафа за просрочку на одну задачу, потолок
- * баллов за личные задачи в день и уведомления о пополнении банка и баллах.
+ * баллов за личные задачи в день, уведомления о пополнении банка и баллах
+ * и включение автобаллов за задачи.
+ *
+ * Автобаллы включаются с даты, а не сразу: запуск договорились делать с
+ * первого числа, и задачи, просроченные до этой даты, не штрафуются.
  */
 export function GeneralPanel({ general, onSave }) {
   const [form, setForm] = useState(general)
@@ -27,12 +33,19 @@ export function GeneralPanel({ general, onSave }) {
         return
       }
     }
+    // Задним числом не включаем: иначе по уже прошедшим ночам разом легли
+    // бы штрафы. Уже сохранённую дату не трогаем — она могла давно пройти.
+    if (form.autoTasksFrom && form.autoTasksFrom !== general.autoTasksFrom && form.autoTasksFrom < todayKey()) {
+      setMessage({ ok: false, text: 'Автобаллы включаются не раньше сегодняшнего дня' })
+      return
+    }
     setBusy(true)
     const res = await onSave({
       overduePenaltyCap: Number(form.overduePenaltyCap || 0),
       personalTaskDailyCap: Number(form.personalTaskDailyCap || 0),
       notifyBank: Boolean(form.notifyBank),
       notifyPoints: Boolean(form.notifyPoints),
+      autoTasksFrom: form.autoTasksFrom || null,
     })
     setBusy(false)
     setMessage(res.ok ? { ok: true, text: 'Сохранено' } : { ok: false, text: res.error })
@@ -57,6 +70,10 @@ export function GeneralPanel({ general, onSave }) {
           hint="Личные задачи человек ставит себе сам — без потолка ими можно было бы набрать всю шкалу"
         />
       </div>
+      <AutoTasks
+        value={form.autoTasksFrom || null}
+        onChange={(autoTasksFrom) => { setMessage(null); setForm((f) => ({ ...f, autoTasksFrom })) }}
+      />
       <div className="flex flex-col gap-2">
         <Checkbox label="Сообщать сотруднику о пополнении банка" checked={Boolean(form.notifyBank)} onChange={(e) => setForm((f) => ({ ...f, notifyBank: e.target.checked }))} />
         <Checkbox label="Сообщать сотруднику о начислении и списании баллов" checked={Boolean(form.notifyPoints)} onChange={(e) => setForm((f) => ({ ...f, notifyPoints: e.target.checked }))} />
@@ -67,5 +84,37 @@ export function GeneralPanel({ general, onSave }) {
         {message && <span className={message.ok ? 'text-sm text-ok' : 'text-sm text-danger'}>{message.text}</span>}
       </div>
     </Card>
+  )
+}
+
+function AutoTasks({ value, onChange }) {
+  const today = todayKey()
+  const on = Boolean(value)
+  const status = !on
+    ? 'Выключены: за задачи баллы не начисляются и просрочки не штрафуются.'
+    : value <= today
+      ? `Работают с ${dayMonth(value)}. Задачи, просроченные раньше, не штрафуются.`
+      : `Начнут работать ${dayMonth(value)}. Задачи, просроченные раньше, не штрафуются.`
+
+  return (
+    <div className="flex flex-col gap-3 rounded-lg border border-line p-3">
+      <Checkbox
+        label="Автобаллы за задачи: в срок — плюс, просрочка — минус"
+        checked={on}
+        onChange={(e) => onChange(e.target.checked ? nextMonthStartKey(today) : null)}
+      />
+      {on && (
+        <DatePicker
+          className="sm:max-w-xs"
+          label="С какого дня"
+          value={value}
+          onChange={onChange}
+          today={today}
+          min={today}
+          required
+        />
+      )}
+      <p className="text-xs text-ink-3 leading-relaxed">{status}</p>
+    </div>
   )
 }

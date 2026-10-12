@@ -7,6 +7,7 @@
  */
 import { money } from './board'
 import { plural, withPlural } from '../shared/lib/plural'
+import { todayKey } from './calls'
 
 export { money }
 
@@ -23,6 +24,8 @@ export function signedPoints(n) {
 
 export const pointsWord = (n) => withPlural(n, 'балл', 'балла', 'баллов')
 export const pointsUnit = (n) => plural(n, 'балл', 'балла', 'баллов')
+/** «не больше 2 баллов», «не больше 1 балла»: после «больше» — родительный падеж. */
+export const atMostPoints = (n) => `не больше ${n} ${n % 10 === 1 && n % 100 !== 11 ? 'балла' : 'баллов'}`
 export const employeesWord = (n) => withPlural(n, 'сотрудник', 'сотрудника', 'сотрудников')
 
 /** «ноябрь 2026» из «2026-11». */
@@ -52,6 +55,22 @@ export function dateTime(value) {
 export function dayMonth(value) {
   if (!value) return ''
   return new Date(value).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', timeZone: 'Europe/Moscow' })
+}
+
+/** Первое число следующего месяца по Москве, «ГГГГ-ММ-ДД»: так запускаются автобаллы по умолчанию. */
+export function nextMonthStartKey(today = todayKey()) {
+  const [y, m] = today.split('-').map(Number)
+  return m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`
+}
+
+/**
+ * Подпись автособытия в условиях: работает ли оно уже. Без неё «+2 за
+ * задачу в срок» читалось бы как обещание, которое пока не выполняется.
+ */
+export function autoStatusLabel(rules) {
+  if (rules?.autoTasksOn) return 'Автоматически по задачам'
+  if (rules?.autoTasksFrom) return `Автоматически по задачам, начнёт работать ${dayMonth(rules.autoTasksFrom)}`
+  return 'Автоматически по задачам, пока не включено'
 }
 
 // Потолок суммы одной операции — тот же, что проверяет сервер.
