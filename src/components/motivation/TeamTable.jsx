@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Avatar, Card, EmptyState } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
-import { dollars } from '../../utils/motivation'
+import { dateTime, dollars } from '../../utils/motivation'
 
 /**
  * Таблица команды: имя, должность (профиль), банк, баллы, уровень премии,
@@ -84,6 +84,7 @@ export function TeamTable({ rows, totals, isCurrent = true, onOpen }) {
                     <span className="truncate font-medium">
                       {r.employee.name}
                       {r.employee.role === 'lead' && <LeadMark />}
+                      {r.away && <AwayMark away={r.away} />}
                     </span>
                     <span className="truncate text-xs text-ink-3">
                       {r.employee.department?.name || 'Без отдела'}
@@ -113,6 +114,7 @@ export function TeamTable({ rows, totals, isCurrent = true, onOpen }) {
                   <span className="flex min-w-0 items-center font-medium">
                     <span className="truncate">{r.employee.name}</span>
                     {r.employee.role === 'lead' && <LeadMark />}
+                    {r.away && <AwayMark away={r.away} />}
                   </span>
                   <span className="truncate text-xs text-ink-3">{r.profile?.title || 'Профиль не назначен'}</span>
                 </div>
@@ -149,6 +151,15 @@ function Stat({ label, value }) {
       <dt className="text-ink-3">{label}</dt>
       <dd className="font-semibold tabular-nums text-ink">{value}</dd>
     </div>
+  )
+}
+
+/** Метка «форс-мажор до …»: человек предупредил, что его не будет. */
+function AwayMark({ away }) {
+  return (
+    <span className="ml-2 shrink-0 rounded-md bg-warn-soft px-1.5 py-0.5 text-xs font-semibold text-warn" title={away.reason || undefined}>
+      форс-мажор до {dateTime(away.until)}
+    </span>
   )
 }
 

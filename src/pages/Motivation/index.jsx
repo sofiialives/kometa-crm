@@ -10,6 +10,8 @@ import { ConditionsView } from '../../components/motivation/ConditionsView'
 import { MonthSelect } from '../../components/motivation/MonthSelect'
 import { TeamSection } from '../../components/motivation/TeamSection'
 import { SettingsSection } from '../../components/motivation/settings/SettingsSection'
+import { ReviewSection } from '../../components/motivation/ReviewSection'
+import { CallJournalSection } from '../../components/motivation/CallJournalSection'
 
 /**
  * Вкладка «Мотивация».
@@ -35,6 +37,8 @@ const SECTIONS = {
   ],
   admin: [
     { id: 'team', label: 'Команда' },
+    { id: 'review', label: 'На проверке' },
+    { id: 'calls', label: 'Журнал звонка' },
     { id: 'settings', label: 'Настройки' },
   ],
 }
@@ -44,12 +48,19 @@ const SUBTITLES = {
   conditions: 'За что вы получаете и теряете баллы — правила для вашей должности.',
   team: 'Банки, баллы и уровни сотрудников и руководителей. Здесь же пополняется банк и ставятся баллы.',
   teamLead: 'Премии и уровни сотрудников вашего отдела. Начисляет и списывает владелец.',
+  review: 'Задачи, закрытые в срок и просроченные. CRM подсказывает баллы, начисляете вы.',
+  calls: 'Кто был на вечернем звонке. «Был» и «не был» сразу ложатся баллами из профиля, форс-мажор — без баллов.',
   settings: 'Профили должностей, шкалы, уровни и назначение профилей. Меняется без разработчика.',
 }
 
 export default function MotivationPage() {
   const role = useAuthStore((s) => s.user?.role) || 'staff'
-  const sections = SECTIONS[role] || SECTIONS.staff
+  const reviewsPending = useMotivationStore((s) => s.reviewsPending)
+  const fetchReviewsCount = useMotivationStore((s) => s.fetchReviewsCount)
+  // Счётчик заявок — на вкладке «На проверке», чтобы владелец видел их из
+  // любого раздела.
+  useEffect(() => { if (role === 'admin') fetchReviewsCount() }, [role, fetchReviewsCount])
+  const sections = (SECTIONS[role] || SECTIONS.staff).map((s) => (s.id === 'review' ? { ...s, badge: reviewsPending } : s))
 
   const [params, setParams] = useSearchParams()
   const requested = params.get('section')
@@ -75,6 +86,8 @@ export default function MotivationPage() {
       {section === 'my' && <MySection month={month} onMonthChange={(m) => setParam('month', m)} />}
       {section === 'conditions' && <MyConditions />}
       {section === 'team' && <TeamSection month={month} onMonthChange={(m) => setParam('month', m)} />}
+      {section === 'review' && <ReviewSection />}
+      {section === 'calls' && <CallJournalSection />}
       {section === 'settings' && <SettingsSection />}
     </PageSection>
   )

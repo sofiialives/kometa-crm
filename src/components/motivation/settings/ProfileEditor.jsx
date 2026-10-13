@@ -105,14 +105,14 @@ export function ProfileEditor({ profile, globalScale, workLevels, onClose, actio
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <p className="text-sm font-medium leading-snug">{e.title}</p>
                     <p className="text-xs text-ink-3">
-                      {e.mode === 'auto' ? `Автоматически: ${lowerFirst(autoRuleLabel(e.autoRule))}` : 'Вручную, владелец'}
+                      {e.mode === 'auto' ? `Автоматически: ${lowerFirst(autoRuleLabel(e.autoRule))}` : e.systemKey === 'call_attended' || e.systemKey === 'call_missed' ? 'Журнал звонка, владелец' : 'Вручную, владелец'}
                     </p>
                   </div>
                   {!e.enabled && <Badge>выключено</Badge>}
                   <span className={cx('text-sm font-semibold tabular-nums', pointsTone(e.prizePoints || e.levelPoints))}>{eventPoints(e)}</span>
                   <div className="flex gap-1">
                     <Button size="sm" variant="ghost" onClick={() => setEventModal({ event: e })}>Изменить</Button>
-                    {e.systemKey !== 'client_product' && (
+                    {!['client_product', 'call_attended', 'call_missed'].includes(e.systemKey) && (
                       <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(e)}>Удалить</Button>
                     )}
                   </div>

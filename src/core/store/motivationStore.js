@@ -34,13 +34,14 @@ async function call(fn) {
 // Номер последнего запроса каждого вида. Ответ, который пришёл позже
 // более свежего (быстро переключили месяц или отдел), просто выбрасывается:
 // иначе медленный старый ответ затирал бы данные нового выбора.
-const latest = { mine: 0, conditions: 0, team: 0, settings: 0 }
+const latest = { mine: 0, conditions: 0, team: 0, settings: 0, reviews: 0 }
 
 const EMPTY = {
   mine: null, mineLoading: false, mineError: null,
   conditions: null, conditionsLoading: false, conditionsError: null,
   team: null, teamMonths: [], teamLoading: false, teamError: null, employees: [],
   settings: null, settingsLoading: false, settingsError: null,
+  reviews: null, reviewsLoading: false, reviewsError: null, reviewsPending: 0,
 }
 
 export const useMotivationStore = create((set) => ({
@@ -65,6 +66,11 @@ export const useMotivationStore = create((set) => ({
   settings: null,
   settingsLoading: false,
   settingsError: null,
+
+  reviews: null,
+  reviewsLoading: false,
+  reviewsError: null,
+  reviewsPending: 0,
 
   /** Всё забыть — при выходе и смене пользователя. */
   reset: () => {
@@ -135,6 +141,45 @@ export const useMotivationStore = create((set) => ({
     set(res.ok ? { settings: res.data, settingsLoading: false } : { settingsError: res.error, settingsLoading: false })
     return res
   },
+
+  // Очередь «На проверке»: CRM подсказывает баллы за задачи, начисляет
+  // владелец. Счётчик живёт отдельно — он нужен на вкладке раздела, даже
+  // когда сама очередь не открыта.
+  async fetchReviews(status = 'pending') {
+    const n = ++latest.reviews
+    set({ reviewsLoading: true, reviewsError: null })
+    const res = await call(() => api.get(`/motivation/reviews${query({ status })}`))
+    if (n !== latest.reviews) return res
+    set(res.ok
+      ? { reviews: res.data, reviewsPending: res.data.pending, reviewsLoading: false }
+      : { reviewsError: res.error, reviewsLoading: false })
+    return res
+  },
+
+  async fetchReviewsCount() {
+    const res = await call(() => api.get('/motivation/reviews/count'))
+    if (res.ok) set({ reviewsPending: res.data.pending })
+    return res
+  },
+
+  async approveReview(id, body) {
+    const res = await call(() => api.post(`/motivation/reviews/${id}/approve`, body || {}))
+    if (res.ok) set((s) => ({ reviewsPending: Math.max(0, s.reviewsPending - 1) }))
+    return res
+  },
+
+  async rejectReview(id, body) {
+    const res = await call(() => api.post(`/motivation/reviews/${id}/reject`, body || {}))
+    if (res.ok) set((s) => ({ reviewsPending: Math.max(0, s.reviewsPending - 1) }))
+    return res
+  },
+
+  // Журнал вечернего звонка и метка «форс-мажор». Журнал живёт в самом
+  // разделе: он нужен только там и только за выбранный день.
+  fetchCallJournal: (day) => call(() => api.get(`/motivation/calls/${day}`)),
+  setCallMark: (day, userId, status) => call(() => api.put(`/motivation/calls/${day}/${userId}`, { status })),
+  setAway: (body) => call(() => api.post('/motivation/away', body)),
+  endAway: (id) => call(() => api.post(`/motivation/away/${id}/end`, {})),
 
   updateGeneral: (body) => call(() => api.patch('/motivation/settings', body)),
   saveGlobalScale: (levels) => call(() => api.put('/motivation/scale', { levels })),

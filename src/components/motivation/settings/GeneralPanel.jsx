@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Button, Card, Checkbox, DatePicker, Input } from '../../../shared/ui'
+import { Button, Card, Checkbox, DatePicker, Input, Select } from '../../../shared/ui'
 import { todayKey } from '../../../utils/calls'
 import { dayMonth, nextMonthStartKey } from '../../../utils/motivation'
 
@@ -33,6 +33,11 @@ export function GeneralPanel({ general, onSave }) {
         return
       }
     }
+    const limit = Number(String(form.personalTaskDailyLimit ?? '').trim())
+    if (!Number.isInteger(limit) || limit < 1 || limit > 50) {
+      setMessage({ ok: false, text: 'Личных задач в день: целое число от 1 до 50' })
+      return
+    }
     // Задним числом не включаем: иначе по уже прошедшим ночам разом легли
     // бы штрафы. Уже сохранённую дату не трогаем — она могла давно пройти.
     if (form.autoTasksFrom && form.autoTasksFrom !== general.autoTasksFrom && form.autoTasksFrom < todayKey()) {
@@ -46,6 +51,8 @@ export function GeneralPanel({ general, onSave }) {
       notifyBank: Boolean(form.notifyBank),
       notifyPoints: Boolean(form.notifyPoints),
       autoTasksFrom: form.autoTasksFrom || null,
+      taskPointsMode: form.taskPointsMode || 'review',
+      personalTaskDailyLimit: limit,
     })
     setBusy(false)
     setMessage(res.ok ? { ok: true, text: 'Сохранено' } : { ok: false, text: res.error })
@@ -69,10 +76,19 @@ export function GeneralPanel({ general, onSave }) {
           onChange={num('personalTaskDailyCap')}
           hint="Личные задачи человек ставит себе сам — без потолка ими можно было бы набрать всю шкалу"
         />
+        <Input
+          label="Личных задач в день, не больше"
+          inputMode="numeric"
+          value={String(form.personalTaskDailyLimit ?? '')}
+          onChange={num('personalTaskDailyLimit')}
+          hint="Больше задач в «Задачах» на день поставить нельзя: десяток задач по одному слову не пройдёт"
+        />
       </div>
       <AutoTasks
         value={form.autoTasksFrom || null}
-        dirty={(form.autoTasksFrom || null) !== (general.autoTasksFrom || null)}
+        mode={form.taskPointsMode || 'review'}
+        onModeChange={(taskPointsMode) => { setMessage(null); setForm((f) => ({ ...f, taskPointsMode })) }}
+        dirty={(form.autoTasksFrom || null) !== (general.autoTasksFrom || null) || (form.taskPointsMode || 'review') !== (general.taskPointsMode || 'review')}
         onChange={(autoTasksFrom) => { setMessage(null); setForm((f) => ({ ...f, autoTasksFrom })) }}
       />
       <div className="flex flex-col gap-2">
@@ -88,32 +104,45 @@ export function GeneralPanel({ general, onSave }) {
   )
 }
 
-function AutoTasks({ value, dirty, onChange }) {
+const MODES = [
+  { value: 'review', label: 'На проверку мне — раздел «На проверке»' },
+  { value: 'auto', label: 'Начислять автоматически' },
+]
+
+function AutoTasks({ value, mode, onModeChange, dirty, onChange }) {
   const today = todayKey()
   const on = Boolean(value)
+  const when = value <= today ? `С ${dayMonth(value)}` : `Начиная с ${dayMonth(value)}`
   const status = !on
-    ? 'Выключены: за задачи баллы не начисляются и просрочки не штрафуются.'
-    : value <= today
-      ? `Работают с ${dayMonth(value)}. Задачи, просроченные раньше, не штрафуются.`
-      : `Начнут работать ${dayMonth(value)}. Задачи, просроченные раньше, не штрафуются.`
+    ? 'Выключены: закрытые и просроченные задачи на баллы не влияют.'
+    : mode === 'auto'
+      ? `${when} баллы начисляются сами: в срок — плюс, просрочка — минус. Задачи, просроченные раньше, не штрафуются.`
+      : `${when} закрытые в срок и просроченные задачи попадают в «На проверке» с подсказанными баллами, начисляете вы.`
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-line p-3">
       <Checkbox
-        label="Автобаллы за задачи: в срок — плюс, просрочка — минус"
+        label="Баллы за задачи: в срок — плюс, просрочка — минус"
         checked={on}
         onChange={(e) => onChange(e.target.checked ? nextMonthStartKey(today) : null)}
       />
       {on && (
-        <DatePicker
-          className="sm:max-w-xs"
-          label="С какого дня"
-          value={value}
-          onChange={onChange}
-          today={today}
-          min={today}
-          required
-        />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <DatePicker
+            label="С какого дня"
+            value={value}
+            onChange={onChange}
+            today={today}
+            min={today}
+            required
+          />
+          <Select
+            label="Как начислять"
+            options={MODES}
+            value={mode}
+            onChange={(e) => onModeChange(e.target.value)}
+          />
+        </div>
       )}
       <p className="text-xs text-ink-3 leading-relaxed">
         {status}
