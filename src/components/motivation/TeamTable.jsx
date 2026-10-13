@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Avatar, Card, EmptyState } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
-import { dateTime, dollars } from '../../utils/motivation'
+import { awayLabel, dateTime, dollars } from '../../utils/motivation'
 
 /**
  * Таблица команды: имя, должность (профиль), банк, баллы, уровень премии,
@@ -154,11 +154,12 @@ function Stat({ label, value }) {
   )
 }
 
-/** Метка «форс-мажор до …»: человек предупредил, что его не будет. */
+/** Метка «форс-мажор до …» или «отошёл до …»: человек предупредил, что его не будет. */
 function AwayMark({ away }) {
+  const tone = away.kind === 'break' ? 'bg-accent-soft text-accent' : 'bg-warn-soft text-warn'
   return (
-    <span className="ml-2 shrink-0 rounded-md bg-warn-soft px-1.5 py-0.5 text-xs font-semibold text-warn" title={away.reason || undefined}>
-      форс-мажор до {dateTime(away.until)}
+    <span className={`ml-2 shrink-0 rounded-md px-1.5 py-0.5 text-xs font-semibold ${tone}`} title={away.reason || undefined}>
+      {awayLabel(away)} {dateTime(away.until)}
     </span>
   )
 }

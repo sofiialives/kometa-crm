@@ -34,6 +34,7 @@ export function EventTypeModal({ open, event, onClose, onSubmit }) {
 
   const isProduct = event?.systemKey === 'client_product'
   const isCall = event?.systemKey === 'call_attended' || event?.systemKey === 'call_missed'
+  const isCheckin = event?.systemKey === 'checkin_missed'
 
   const cleanNumber = (v) => v.replace(/[^\d-−]/g, '').replace('−', '-')
 
@@ -100,9 +101,9 @@ export function EventTypeModal({ open, event, onClose, onSubmit }) {
           label="Как фиксируется"
           options={MODES}
           value={mode}
-          disabled={isProduct || isCall}
+          disabled={isProduct || isCall || isCheckin}
           onChange={(e) => setMode(e.target.value)}
-          hint={isProduct ? 'Покупку продукта всегда отмечает владелец' : isCall ? 'Звонок отмечают в журнале звонка' : undefined}
+          hint={isProduct ? 'Покупку продукта всегда отмечает владелец' : isCall ? 'Звонок отмечают в журнале звонка' : isCheckin ? 'Снимает бот на внезапном чек-ине' : undefined}
         />
         {mode === 'auto' && (
           <Select
