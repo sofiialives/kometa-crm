@@ -111,9 +111,18 @@ export function lowerFirst(text) {
   return text ? text[0].toLowerCase() + text.slice(1) : text
 }
 
+/**
+ * Метка отлучки: «отошёл до 16:30» — человек сам написал боту, «форс-мажор
+ * до …» — поставил владелец или подтвердил по заявке из бота.
+ */
+export function awayLabel(away) {
+  return away?.kind === 'break' ? 'отошёл до' : 'форс-мажор до'
+}
+
 /** Как фиксируется событие — словами для «Моих условий». */
 export function modeLabel(type) {
   if (type.systemKey === 'call_attended' || type.systemKey === 'call_missed') return 'Отмечает владелец в журнале звонка'
+  if (type.systemKey === 'checkin_missed') return 'Снимает бот, если не ответить на внезапный чек-ин за 45 минут'
   return type.mode === 'auto' ? 'Автоматически по задачам' : 'Отмечает владелец'
 }
 

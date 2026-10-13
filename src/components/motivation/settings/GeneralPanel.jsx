@@ -44,6 +44,10 @@ export function GeneralPanel({ general, onSave }) {
       setMessage({ ok: false, text: 'Автобаллы включаются не раньше сегодняшнего дня' })
       return
     }
+    if (form.checkinFrom && form.checkinFrom !== general.checkinFrom && form.checkinFrom < todayKey()) {
+      setMessage({ ok: false, text: 'Чек-ины включаются не раньше сегодняшнего дня' })
+      return
+    }
     setBusy(true)
     const res = await onSave({
       overduePenaltyCap: Number(form.overduePenaltyCap || 0),
@@ -51,6 +55,7 @@ export function GeneralPanel({ general, onSave }) {
       notifyBank: Boolean(form.notifyBank),
       notifyPoints: Boolean(form.notifyPoints),
       autoTasksFrom: form.autoTasksFrom || null,
+      checkinFrom: form.checkinFrom || null,
       taskPointsMode: form.taskPointsMode || 'review',
       personalTaskDailyLimit: limit,
     })
@@ -91,16 +96,52 @@ export function GeneralPanel({ general, onSave }) {
         dirty={(form.autoTasksFrom || null) !== (general.autoTasksFrom || null) || (form.taskPointsMode || 'review') !== (general.taskPointsMode || 'review')}
         onChange={(autoTasksFrom) => { setMessage(null); setForm((f) => ({ ...f, autoTasksFrom })) }}
       />
+      <Checkins
+        value={form.checkinFrom || null}
+        dirty={(form.checkinFrom || null) !== (general.checkinFrom || null)}
+        onChange={(checkinFrom) => { setMessage(null); setForm((f) => ({ ...f, checkinFrom })) }}
+      />
       <div className="flex flex-col gap-2">
         <Checkbox label="Сообщать сотруднику о пополнении банка" checked={Boolean(form.notifyBank)} onChange={(e) => setForm((f) => ({ ...f, notifyBank: e.target.checked }))} />
         <Checkbox label="Сообщать сотруднику о начислении и списании баллов" checked={Boolean(form.notifyPoints)} onChange={(e) => setForm((f) => ({ ...f, notifyPoints: e.target.checked }))} />
-        <p className="text-xs text-ink-3">Сообщения в телеграм будет отправлять агент. Пока новое подсвечивается во вкладке.</p>
+        <p className="text-xs text-ink-3">Сообщения приходят от бота в телеграм с 9:00 до 21:00 — ночные копятся до утра. Во вкладке новое тоже подсвечивается.</p>
       </div>
       <div className="flex items-center gap-3">
         <Button size="sm" loading={busy} onClick={save}>Сохранить</Button>
         {message && <span className={message.ok ? 'text-sm text-ok' : 'text-sm text-danger'}>{message.text}</span>}
       </div>
     </Card>
+  )
+}
+
+/**
+ * Внезапные чек-ины бота: каждый третий рабочий день в случайное время с
+ * 11:00 до 18:15 бот спрашивает всех «чем занят?», молчунам — −3. Включаются
+ * с даты, как и автобаллы, чтобы штрафы не пошли сразу после выкладки.
+ */
+function Checkins({ value, dirty, onChange }) {
+  const today = todayKey()
+  const on = Boolean(value)
+  const when = value <= today ? `С ${dayMonth(value)}` : `Начиная с ${dayMonth(value)}`
+  return (
+    <div className="flex flex-col gap-3 rounded-lg border border-line p-3">
+      <Checkbox
+        label="Внезапные чек-ины в телеграме"
+        checked={on}
+        onChange={(e) => onChange(e.target.checked ? nextMonthStartKey(today) : null)}
+      />
+      {on && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <DatePicker label="С какого дня" value={value} onChange={onChange} today={today} min={today} required />
+        </div>
+      )}
+      <p className="text-xs text-ink-3 leading-relaxed">
+        {on
+          ? `${when} каждый третий рабочий день в случайное время с 11:00 до 18:15 бот спрашивает всех, чем они заняты. 45 минут на ответ; кто промолчал и не предупредил, что отошёл, — событие «Не ответил на внезапный чек-ин» из профиля. Вам — отчёт, кто чем занят.`
+          : 'Выключены: бот не спрашивает и не штрафует.'}
+        {dirty && <span className="text-warn"> Не сохранено — нажмите «Сохранить».</span>}
+      </p>
+    </div>
   )
 }
 

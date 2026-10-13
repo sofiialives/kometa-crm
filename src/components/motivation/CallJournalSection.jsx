@@ -229,8 +229,9 @@ function JournalRow({ row, busy, error, onMark, onAway, onDropAway }) {
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pl-11 text-xs">
         {row.away ? (
           <>
-            <span className="rounded-md bg-warn-soft px-1.5 py-0.5 font-semibold text-warn">
-              Форс-мажор до {dateTime(row.away.until)}
+            <span className={`rounded-md px-1.5 py-0.5 font-semibold ${row.away.kind === 'break' ? 'bg-accent-soft text-accent' : 'bg-warn-soft text-warn'}`}>
+              {row.away.kind === 'break' ? 'Отошёл до' : 'Форс-мажор до'} {dateTime(row.away.until)}
+              {row.away.source === 'bot' && ' · через бота'}
             </span>
             {row.away.reason && <span className="text-ink-3">{row.away.reason}</span>}
             <button type="button" className="text-accent hover:underline cursor-pointer" onClick={onDropAway}>Снять метку</button>
