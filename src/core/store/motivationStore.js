@@ -127,6 +127,10 @@ export const useMotivationStore = create((set) => ({
   fetchEmployeeConditions: (id) => call(() => api.get(`/motivation/users/${id}/conditions`)),
   fetchManualOptions: (id) => call(() => api.get(`/motivation/users/${id}/options`)),
 
+  // «Журнал бота» — в сторе не держим: живёт, пока открыт раздел.
+  fetchBotJournalPeople: () => call(() => api.get('/motivation/bot-journal/people')),
+  fetchBotJournal: (userId, month) => call(() => api.get(`/motivation/bot-journal${query({ userId, month })}`)),
+
   topUp: (body) => call(() => api.post('/motivation/bank/top-up', body)),
   writeOff: (body) => call(() => api.post('/motivation/bank/write-off', body)),
   addManual: (body) => call(() => api.post('/motivation/events', body)),

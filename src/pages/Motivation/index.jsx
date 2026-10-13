@@ -12,6 +12,7 @@ import { TeamSection } from '../../components/motivation/TeamSection'
 import { SettingsSection } from '../../components/motivation/settings/SettingsSection'
 import { ReviewSection } from '../../components/motivation/ReviewSection'
 import { CallJournalSection } from '../../components/motivation/CallJournalSection'
+import { BotJournalSection } from '../../components/motivation/BotJournalSection'
 
 /**
  * Вкладка «Мотивация».
@@ -34,11 +35,13 @@ const SECTIONS = {
     { id: 'my', label: 'Моя мотивация' },
     { id: 'conditions', label: 'Мои условия' },
     { id: 'team', label: 'Команда' },
+    { id: 'bot', label: 'Журнал бота' },
   ],
   admin: [
     { id: 'team', label: 'Команда' },
     { id: 'review', label: 'На проверке' },
     { id: 'calls', label: 'Журнал звонка' },
+    { id: 'bot', label: 'Журнал бота' },
     { id: 'settings', label: 'Настройки' },
   ],
 }
@@ -51,6 +54,8 @@ const SUBTITLES = {
   review: 'Задачи, закрытые в срок и просроченные. CRM подсказывает баллы, начисляете вы.',
   calls: 'Кто был на вечернем звонке. «Был» и «не был» сразу ложатся баллами из профиля, форс-мажор — без баллов.',
   settings: 'Профили должностей, шкалы, уровни и назначение профилей. Меняется без разработчика.',
+  bot: 'Что было с человеком в телеграме: отлучки и сколько его не было, опоздания, форс-мажоры, чек-ины. Сверху — итоги месяца.',
+  botLead: 'Отлучки, опоздания, форс-мажоры и чек-ины людей вашего отдела. Переписку и причины видит только владелец.',
 }
 
 export default function MotivationPage() {
@@ -79,7 +84,7 @@ export default function MotivationPage() {
     <PageSection
       pill="Мотивация сотрудников"
       title="Мотивация"
-      subtitle={section === 'team' && role === 'lead' ? SUBTITLES.teamLead : SUBTITLES[section]}
+      subtitle={role === 'lead' && (section === 'team' || section === 'bot') ? SUBTITLES[`${section}Lead`] : SUBTITLES[section]}
     >
       <SectionTabs sections={sections} value={section} onChange={(id) => setParam('section', id)} />
 
@@ -88,6 +93,14 @@ export default function MotivationPage() {
       {section === 'team' && <TeamSection month={month} onMonthChange={(m) => setParam('month', m)} />}
       {section === 'review' && <ReviewSection />}
       {section === 'calls' && <CallJournalSection />}
+      {section === 'bot' && (
+        <BotJournalSection
+          person={params.get('person') || ''}
+          onPersonChange={(id) => setParam('person', id)}
+          month={month}
+          onMonthChange={(m) => setParam('month', m)}
+        />
+      )}
       {section === 'settings' && <SettingsSection />}
     </PageSection>
   )
