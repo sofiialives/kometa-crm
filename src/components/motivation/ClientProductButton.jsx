@@ -30,7 +30,7 @@ export function ClientProductButton({ client, className }) {
 
   return (
     <>
-      <Button variant="secondary" className={className} onClick={start}>Клиент купил продукт</Button>
+      <Button variant="secondary" className={className} onClick={start}>Клиент купил новый продукт</Button>
       {error && <span className="text-xs text-danger">{error}</span>}
       {done && <span className="whitespace-nowrap text-xs text-ok">{done}</span>}
       <ProductModal

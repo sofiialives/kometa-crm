@@ -40,8 +40,11 @@ export function HintsBlock() {
   async function submitTopUp(body) {
     const res = await topUp(body)
     if (res.ok && topUpFor) {
-      await markHintDone(topUpFor.id)
-      setHints((list) => list.filter((h) => h.id !== topUpFor.id))
+      // Банк пополнен в любом случае; подсказку убираем, только если сервер
+      // её закрыл, — иначе она вернулась бы после обновления страницы.
+      const done = await markHintDone(topUpFor.id)
+      if (done.ok) setHints((list) => list.filter((h) => h.id !== topUpFor.id))
+      else setError(`Банк пополнен, но подсказку закрыть не удалось: ${done.error}`)
     }
     return res
   }
@@ -62,11 +65,11 @@ export function HintsBlock() {
               </p>
               {h.assignees.length > 0 ? (
                 <div className="flex items-center gap-2 pt-0.5">
-                  <AvatarStack users={h.assignees} size={24} />
+                  <AvatarStack users={h.assignees.map((a) => ({ id: a.id, name: a.name, email: a.email, src: a.avatarUrl, color: a.avatarColor }))} size={24} />
                   <span className="text-xs text-ink-2">{h.assignees.map((a) => a.name).join(', ')}</span>
                 </div>
               ) : (
-                <p className="text-xs text-ink-3">Исполнители с банком не назначены — выберете в форме</p>
+                <p className="text-xs text-ink-3">Исполнители с банком не назначены — выберите в форме</p>
               )}
             </div>
             <div className="flex gap-2">
