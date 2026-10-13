@@ -1,6 +1,7 @@
 import { AddAction, Badge, Button, EmptyState, Modal, Spinner } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
 import { dateLabel, marginText, money, monthLabel, servicesWord, tenure } from '../../utils/board'
+import { ClientProductButton } from '../motivation/ClientProductButton'
 
 /**
  * Развёрнутая карточка: услуги выбранного периода, под каждой её расходы и
@@ -26,6 +27,8 @@ export function CardModal({
           <Button variant="ghost" className="!text-danger mr-auto" onClick={onRemove}>
             Убрать с доски
           </Button>
+          {/* Мотивация: продукт купили — баллы тем, кто работает с клиентом. */}
+          {card.client?.id && <ClientProductButton client={card.client} />}
           {left
             ? <Button variant="secondary" onClick={onReturn}>Вернуть в работу</Button>
             : <Button variant="danger" onClick={onLeave}>Клиент ушёл</Button>}

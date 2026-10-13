@@ -30,6 +30,7 @@ export function MotivationView({ data, highlight, onCancelEvent }) {
       {!data.isCurrent && (
         <p className="text-sm text-ink-2">
           Итоги за {monthHeading(data.month).toLowerCase()}: банк, баллы и премия на конец месяца.
+          {data.closedAt && ' Месяц закрыт — итоги зафиксированы.'}
         </p>
       )}
 

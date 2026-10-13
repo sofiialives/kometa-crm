@@ -151,14 +151,15 @@ export const useMotivationStore = create((set) => ({
     const res = await call(() => api.get(`/motivation/reviews${query({ status })}`))
     if (n !== latest.reviews) return res
     set(res.ok
-      ? { reviews: res.data, reviewsPending: res.data.pending, reviewsLoading: false }
+      ? { reviews: res.data, reviewsLoading: false }
       : { reviewsError: res.error, reviewsLoading: false })
     return res
   },
 
   async fetchReviewsCount() {
     const res = await call(() => api.get('/motivation/reviews/count'))
-    if (res.ok) set({ reviewsPending: res.data.pending })
+    // На вкладке — и заявки, и подсказки о новых работах.
+    if (res.ok) set({ reviewsPending: res.data.pending + (res.data.hints ?? 0) })
     return res
   },
 
@@ -173,6 +174,38 @@ export const useMotivationStore = create((set) => ({
     if (res.ok) set((s) => ({ reviewsPending: Math.max(0, s.reviewsPending - 1) }))
     return res
   },
+
+  // Подсказки «Пополнить банк?» о новых работах в Иерархии.
+  fetchHints: () => call(() => api.get('/motivation/hints')),
+  async markHintDone(id) {
+    const res = await call(() => api.post(`/motivation/hints/${id}/done`, {}))
+    if (res.ok) set((s) => ({ reviewsPending: Math.max(0, s.reviewsPending - 1) }))
+    return res
+  },
+  async dismissHint(id) {
+    const res = await call(() => api.post(`/motivation/hints/${id}/dismiss`, {}))
+    if (res.ok) set((s) => ({ reviewsPending: Math.max(0, s.reviewsPending - 1) }))
+    return res
+  },
+
+  // Кто работает с клиентом — для «Клиент купил продукт» из карточки клиента.
+  fetchClientPeople: (clientId) => call(() => api.get(`/motivation/clients/${clientId}/people`)),
+
+  // Выгрузка итогов месяца: сервер отдаёт файл, браузер его сохраняет.
+  downloadExport: (month, format) => call(async () => {
+    const res = await api.getRaw(`/motivation/export${query({ month, format })}`)
+    const blob = await res.blob()
+    const name = /filename="([^"]+)"/.exec(res.headers.get('Content-Disposition') || '')?.[1] || `motivatsiya-${month}.${format}`
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = name
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+    return { name }
+  }),
 
   // Журнал вечернего звонка и метка «форс-мажор». Журнал живёт в самом
   // разделе: он нужен только там и только за выбранный день.
