@@ -12,7 +12,7 @@ import { useRequestKey } from './useRequestKey'
  * клиент захотел ещё и заказал motion-дизайн — значит, дизайнер на это
  * повлиял, и это нужно поощрять.
  */
-export function ProductModal({ open, onClose, employees, clients, preselected = [], onSubmit }) {
+export function ProductModal({ open, onClose, employees, clients, preselected = [], presetClientId = '', onSubmit }) {
   const [userIds, setUserIds] = useState([])
   const [clientId, setClientId] = useState('')
   const [product, setProduct] = useState('')
@@ -27,7 +27,8 @@ export function ProductModal({ open, onClose, employees, clients, preselected = 
   useEffect(() => {
     if (!open) return
     setUserIds(preselected)
-    setClientId('')
+    // Из карточки клиента форма открывается уже с ним.
+    setClientId(presetClientId || '')
     setProduct('')
     setComment('')
     setErrors({})

@@ -11,7 +11,7 @@ import { useRequestKey } from './useRequestKey'
  * Каждый выбранный получает полную сумму. Это стоит сказать прямо в форме:
  * «50 $ троим» легко прочитать как «50 $ на троих».
  */
-export function TopUpModal({ open, onClose, employees, clients, preselected = [], onSubmit }) {
+export function TopUpModal({ open, onClose, employees, clients, preselected = [], presetClientId = '', onSubmit }) {
   const [userIds, setUserIds] = useState([])
   const [amount, setAmount] = useState('')
   const [reason, setReason] = useState('new_client')
@@ -29,7 +29,8 @@ export function TopUpModal({ open, onClose, employees, clients, preselected = []
     setUserIds(preselected)
     setAmount('')
     setReason('new_client')
-    setClientId('')
+    // Из подсказки о новой работе форма открывается уже с её клиентом.
+    setClientId(presetClientId || '')
     setComment('')
     setErrors({})
     setServerError(null)

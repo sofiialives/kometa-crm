@@ -4,6 +4,7 @@ import { cx } from '../../shared/lib/cx'
 import { useMotivationStore } from '../../core/store/motivationStore'
 import { dateTime, dayMonth, pointsTone, pointsWord, signedPoints } from '../../utils/motivation'
 import { plural } from '../../shared/lib/plural'
+import { HintsBlock } from './HintsBlock'
 
 /**
  * «На проверке» — очередь владельца. CRM заметила, что задачу закрыли в
@@ -36,10 +37,13 @@ export function ReviewSection() {
   const [view, setView] = useState('pending')
   const [done, setDone] = useState(() => new Set())
 
+  const fetchReviewsCount = useMotivationStore((s) => s.fetchReviewsCount)
   useEffect(() => {
     setDone(new Set())
     fetchReviews(view)
-  }, [fetchReviews, view])
+    // Счётчик на вкладке мог устареть: ночью пришли заявки, днём — работы.
+    fetchReviewsCount()
+  }, [fetchReviews, fetchReviewsCount, view])
 
   const items = (reviews?.items ?? []).filter((r) => !done.has(r.id))
   const markDone = (id) => setDone((s) => new Set(s).add(id))
@@ -67,6 +71,8 @@ export function ReviewSection() {
         {reviews?.taskPoints && <TaskPointsNote taskPoints={reviews.taskPoints} />}
       </div>
 
+      {view === 'pending' && <HintsBlock />}
+
       {reviewsLoading && !reviews ? (
         <div className="grid place-items-center py-14"><Spinner /></div>
       ) : reviewsError && !reviews ? (
@@ -74,7 +80,7 @@ export function ReviewSection() {
       ) : items.length === 0 ? (
         <Card>
           <EmptyState
-            label={view === 'pending' ? 'Очередь пуста' : 'Решений пока нет'}
+            label={view === 'pending' ? 'Заявок нет' : 'Решений пока нет'}
             text={view === 'pending'
               ? 'Когда кто-то закроет задачу в срок или просрочит её, она появится здесь с подсказанными баллами.'
               : 'Здесь будут последние начисленные, отклонённые и снятые заявки.'}

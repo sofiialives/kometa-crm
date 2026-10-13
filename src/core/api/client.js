@@ -87,6 +87,8 @@ async function request(path, { method = 'GET', body, headers = {}, raw = false }
 
 export const api = {
   get: (path) => request(path),
+  // Ответ целиком — для файлов: выгрузка отдаётся не JSON, а документом.
+  getRaw: (path) => request(path, { raw: true }),
   post: (path, body) => request(path, { method: 'POST', body }),
   patch: (path, body) => request(path, { method: 'PATCH', body }),
   // Замена целиком: шкала премии и уровни работы сохраняются всем списком.

@@ -8,6 +8,7 @@ import { MonthSelect } from './MonthSelect'
 import { TopUpModal } from './TopUpModal'
 import { ManualPointsModal } from './ManualPointsModal'
 import { ProductModal } from './ProductModal'
+import { ExportBar } from './ExportBar'
 import { EmployeeModal } from './EmployeeModal'
 import { employeesWord } from '../../utils/motivation'
 
@@ -81,6 +82,11 @@ export function TeamSection({ month, onMonthChange }) {
           </div>
         )}
       </div>
+
+      {isAdmin && team && <ExportBar month={team.month} closedAt={team.closedAt} isCurrent={team.isCurrent} />}
+      {!isAdmin && team?.closedAt && (
+        <p className="text-xs text-ok">Месяц закрыт: итоги зафиксированы</p>
+      )}
 
       {team && team.withoutProfile > 0 && (
         <p className="text-sm text-warn">
