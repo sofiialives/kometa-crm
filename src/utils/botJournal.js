@@ -18,6 +18,11 @@ export function dayHeading(dayKey) {
   return t[0].toUpperCase() + t.slice(1)
 }
 
+/** «31.10 23:50» — начало, которое было в прошлом месяце. */
+function dateHm(value) {
+  return new Date(value).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', ...MSK }).replace(',', '')
+}
+
 /** «5 мин», «1 ч», «1 ч 20 мин», «меньше минуты». */
 export function duration(minutes) {
   const m = Math.max(0, Math.round(minutes || 0))
@@ -46,7 +51,8 @@ export function describe(item) {
   switch (item.kind) {
     case 'break': {
       const end = item.returnedAt ? hm(item.returnedAt) : item.ongoing ? 'сейчас' : hm(item.until)
-      const parts = [`Отлучка ${hm(item.at)}–${end}, ${duration(item.minutes)}`]
+      const start = item.startedBefore ? `с ${dateHm(item.startedBefore)}` : hm(item.at)
+      const parts = [`Отлучка ${start}–${end}, ${duration(item.minutes)}${item.startedBefore ? ' в этом месяце' : ''}`]
       if (item.lateMinutes) parts.push(`опоздание ${duration(item.lateMinutes)}`)
       if (item.extensions) parts.push(`продлевал(а) ${item.extensions} ${times(item.extensions)}`)
       if (item.ongoing) parts.push(`ждём к ${hm(item.until)}`)
@@ -59,13 +65,16 @@ export function describe(item) {
     }
     case 'force_majeure':
       return {
-        title: `Форс-мажор до ${hm(item.until)}${item.source === 'bot' ? ' · заявка из бота' : ' · поставлен в CRM'}${item.by ? `, ${item.by}` : ''}`,
+        title: `Форс-мажор${item.startedBefore ? ` с ${dateHm(item.startedBefore)}` : ''} до ${dateHm(item.until)}${item.source === 'bot' ? ' · заявка из бота' : ' · поставлен в CRM'}${item.by ? `, ${item.by}` : ''}`,
         detail: quote(item.reason),
         tone: 'warn',
       }
     case 'checkin':
       if (item.status === 'answered') return { title: `Чек-ин ${hm(item.at)} · ответил(а) в ${hm(item.answeredAt)}`, detail: quote(item.answer), tone: 'ok' }
-      if (item.status === 'penalized') return { title: `Чек-ин ${hm(item.at)} · не ответил(а)${item.points ? ` · ${signedPoints(item.points)}` : ''}`, detail: '', tone: 'danger' }
+      if (item.status === 'penalized') {
+        const fine = item.penaltyCancelled ? ' · штраф отменён' : item.points ? ` · ${signedPoints(item.points)}` : ' · в профиле нет штрафа'
+        return { title: `Чек-ин ${hm(item.at)} · не ответил(а)${fine}`, detail: '', tone: item.penaltyCancelled ? 'muted' : 'danger' }
+      }
       if (item.status === 'asked') return { title: `Чек-ин ${hm(item.at)} · ждём ответа`, detail: '', tone: 'muted' }
       return { title: `Чек-ин ${hm(item.at)} · не спрашивал`, detail: item.answer || '', tone: 'muted' }
     case 'late':

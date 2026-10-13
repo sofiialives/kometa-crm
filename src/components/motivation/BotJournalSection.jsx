@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { Card, EmptyState, Select, Spinner } from '../../shared/ui'
+import { Button, Card, EmptyState, Select, Spinner } from '../../shared/ui'
+import { useAuthStore } from '../../core/store/authStore'
 import { cx } from '../../shared/lib/cx'
 import { useMotivationStore } from '../../core/store/motivationStore'
 import { MonthSelect } from './MonthSelect'
@@ -16,7 +17,8 @@ import { dayHeading, describe, duration, hm, times } from '../../utils/botJourna
  */
 export function BotJournalSection({ person, onPersonChange, month, onMonthChange }) {
   const { fetchBotJournalPeople, fetchBotJournal } = useMotivationStore()
-  const [people, setPeople] = useState([])
+  const meId = useAuthStore((s) => s.user?.id)
+  const [people, setPeople] = useState(null)
   const [journal, setJournal] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -29,24 +31,28 @@ export function BotJournalSection({ person, onPersonChange, month, onMonthChange
     })
   }, [fetchBotJournalPeople])
 
-  // Никого не выбрали — первый по алфавиту.
-  const selected = person && people.some((p) => p.id === person) ? person : people[0]?.id
+  // Никого не выбрали — первый по алфавиту; руководителю — не он сам.
+  const list = people ?? []
+  const selected = person && list.some((p) => p.id === person) ? person : (list.find((p) => p.id !== meId) ?? list[0])?.id
 
   useEffect(() => {
     if (!selected) return
     const n = ++request.current
     setLoading(true)
     setError(null)
+    // Другой человек — прежний журнал не показываем ни секунды.
+    setJournal((j) => (j && j.employee.id !== selected ? null : j))
     fetchBotJournal(selected, month || undefined).then((res) => {
       // Быстро переключили человека — старый ответ не затирает новый.
       if (n !== request.current) return
       setLoading(false)
       if (res.ok) setJournal(res.data)
-      else setError(res.error)
+      else { setJournal(null); setError(res.error) }
     })
   }, [fetchBotJournal, selected, month])
 
-  if (!people.length && !error) return <div className="grid place-items-center py-14"><Spinner /></div>
+  if (people === null && !error) return <div className="grid place-items-center py-14"><Spinner /></div>
+  if (people && !people.length) return <Card><EmptyState label="Пусто" text="Здесь пока некого показать: нет сотрудников с банком." /></Card>
 
   return (
     <div className="flex flex-col gap-4">
@@ -55,7 +61,7 @@ export function BotJournalSection({ person, onPersonChange, month, onMonthChange
           className="w-72"
           size="sm"
           aria-label="Сотрудник"
-          options={people.map((p) => ({ value: p.id, label: p.department ? `${p.name} · ${p.department.name}` : p.name }))}
+          options={list.map((p) => ({ value: p.id, label: p.department ? `${p.name} · ${p.department.name}` : p.name }))}
           value={selected || ''}
           onChange={(e) => onPersonChange(e.target.value)}
         />
@@ -65,7 +71,13 @@ export function BotJournalSection({ person, onPersonChange, month, onMonthChange
         {loading && <Spinner size={16} />}
       </div>
 
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && (
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="text-sm text-danger">{error}</p>
+          {/* Месяц из старой ссылки мог уйти за пределы года — вернуть текущий. */}
+          {month && <Button size="sm" variant="ghost" onClick={() => onMonthChange('')}>Открыть текущий месяц</Button>}
+        </div>
+      )}
       {journal && !journal.telegram && (
         <p className="text-sm text-warn">Телеграм не подключён — бот этому человеку не пишет и чек-ин его не спрашивает.</p>
       )}
@@ -73,7 +85,8 @@ export function BotJournalSection({ person, onPersonChange, month, onMonthChange
       {journal && journal.days.length === 0 && (
         <Card><EmptyState label="Пусто" text="За этот месяц в боте ничего не было. Отлучки, чек-ины и сообщения появятся здесь, как только человек начнёт пользоваться ботом." /></Card>
       )}
-      {journal?.days.map((d) => <Day key={d.day} day={d} full={journal.full} />)}
+      {journal?.messagesTruncated && <p className="text-xs text-ink-3">Сообщений за месяц очень много — переписка показана за последние дни.</p>}
+      {journal?.days.map((d) => <Day key={`${journal.employee.id}-${d.day}`} day={d} full={journal.full} />)}
     </div>
   )
 }
