@@ -1,6 +1,9 @@
 import { cx } from '../../shared/lib/cx'
 
-/** Разделы вкладки — те же круглые переключатели, что над доской клиентов. */
+/**
+ * Разделы вкладки — те же круглые переключатели, что над доской клиентов.
+ * badge — число рядом с названием («На проверке · 3»), ноль не показываем.
+ */
 export function SectionTabs({ sections, value, onChange }) {
   if (sections.length < 2) return null
   return (
@@ -18,6 +21,11 @@ export function SectionTabs({ sections, value, onChange }) {
           )}
         >
           {s.label}
+          {s.badge > 0 && (
+            <span className={cx('ml-2 rounded-full px-1.5 text-xs tabular-nums', value === s.id ? 'bg-white/25' : 'bg-accent-soft text-accent')}>
+              {s.badge}
+            </span>
+          )}
         </button>
       ))}
     </div>

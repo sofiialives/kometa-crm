@@ -68,9 +68,11 @@ export function nextMonthStartKey(today = todayKey()) {
  * задачу в срок» читалось бы как обещание, которое пока не выполняется.
  */
 export function autoStatusLabel(rules) {
-  if (rules?.autoTasksOn) return 'Автоматически по задачам'
-  if (rules?.autoTasksFrom) return `Автоматически по задачам, начнёт работать ${dayMonth(rules.autoTasksFrom)}`
-  return 'Автоматически по задачам, пока не включено'
+  const review = rules?.taskPointsMode !== 'auto'
+  const base = review ? 'По задачам, начисляет владелец после проверки' : 'Автоматически по задачам'
+  if (rules?.autoTasksOn) return base
+  if (rules?.autoTasksFrom) return `${base}, начнёт работать ${dayMonth(rules.autoTasksFrom)}`
+  return `${base}, пока не включено`
 }
 
 // Потолок суммы одной операции — тот же, что проверяет сервер.
