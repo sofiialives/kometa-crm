@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Avatar, Button, Card, DatePicker, EmptyState, Spinner } from '../../shared/ui'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Avatar, Button, Card, ConfirmModal, DatePicker, EmptyState, Spinner } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
 import { useMotivationStore } from '../../core/store/motivationStore'
 import { todayKey } from '../../utils/calls'
@@ -37,11 +37,17 @@ export function CallJournalSection() {
   const [rowError, setRowError] = useState({})
   const [awayFor, setAwayFor] = useState(null)
   const [bulkConfirm, setBulkConfirm] = useState(false)
+  const [absentConfirm, setAbsentConfirm] = useState(null)
+  // Быстро переключили день — ответ за прежний день может прийти позже и
+  // не должен перезаписать новый.
+  const latest = useRef(0)
 
   const load = useCallback(async (d) => {
+    const n = ++latest.current
     setLoading(true)
     setError(null)
     const res = await fetchCallJournal(d)
+    if (n !== latest.current) return
     setLoading(false)
     if (res.ok) setJournal(res.data)
     else setError(res.error)
@@ -55,10 +61,17 @@ export function CallJournalSection() {
     return next
   })
 
-  async function mark(row, status) {
+  async function mark(row, status, confirmed = false) {
     const id = row.employee.id
-    if (busy.has(id)) return
+    // Пока грузится другой день, строки на экране — от прежнего: не отмечаем.
+    if (busy.has(id) || loading || journal?.day !== day) return
     const next = row.status === status ? null : status
+    // У человека метка форс-мажора — «не был» со штрафом ставим только
+    // после подтверждения: он предупреждал.
+    if (next === 'absent' && row.away && !confirmed) {
+      setAbsentConfirm(row)
+      return
+    }
     setBusyFor(id, true)
     setRowError((e) => ({ ...e, [id]: null }))
     const res = await setCallMark(day, id, next)
@@ -144,7 +157,7 @@ export function CallJournalSection() {
                 <JournalRow
                   key={row.employee.id}
                   row={row}
-                  busy={busy.has(row.employee.id)}
+                  busy={busy.has(row.employee.id) || loading}
                   error={rowError[row.employee.id]}
                   onMark={(status) => mark(row, status)}
                   onAway={() => setAwayFor(row.employee)}
@@ -155,6 +168,16 @@ export function CallJournalSection() {
           </Card>
         ))
       )}
+
+      <ConfirmModal
+        open={Boolean(absentConfirm)}
+        onClose={() => setAbsentConfirm(null)}
+        onConfirm={() => { const row = absentConfirm; setAbsentConfirm(null); mark(row, 'absent', true) }}
+        title="У человека форс-мажор"
+        text={absentConfirm ? `${absentConfirm.employee.name} предупредил, что его не будет (метка до ${dateTime(absentConfirm.away.until)}). Всё равно отметить «не был» со штрафом?` : ''}
+        confirmText="Отметить «не был»"
+        danger
+      />
 
       <AwayModal
         open={Boolean(awayFor)}
@@ -215,7 +238,9 @@ function JournalRow({ row, busy, error, onMark, onAway, onDropAway }) {
         ) : (
           <button type="button" className="text-ink-3 hover:text-accent cursor-pointer" onClick={onAway}>Поставить форс-мажор…</button>
         )}
-        {row.status && row.awarded !== null && <span className="text-ink-3">начислено {signedPoints(row.awarded)}</span>}
+        {row.status && row.awarded !== null && (
+          <span className="text-ink-3">{row.awarded >= 0 ? `начислено ${signedPoints(row.awarded)}` : `списано ${Math.abs(row.awarded)}`}</span>
+        )}
       </div>
       {error && <p className="pl-11 text-xs text-danger">{error}</p>}
     </li>

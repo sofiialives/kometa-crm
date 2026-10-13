@@ -112,7 +112,7 @@ export function ProfileEditor({ profile, globalScale, workLevels, onClose, actio
                   <span className={cx('text-sm font-semibold tabular-nums', pointsTone(e.prizePoints || e.levelPoints))}>{eventPoints(e)}</span>
                   <div className="flex gap-1">
                     <Button size="sm" variant="ghost" onClick={() => setEventModal({ event: e })}>Изменить</Button>
-                    {e.systemKey !== 'client_product' && (
+                    {!['client_product', 'call_attended', 'call_missed'].includes(e.systemKey) && (
                       <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(e)}>Удалить</Button>
                     )}
                   </div>

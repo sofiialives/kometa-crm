@@ -84,7 +84,7 @@ export function TeamTable({ rows, totals, isCurrent = true, onOpen }) {
                     <span className="truncate font-medium">
                       {r.employee.name}
                       {r.employee.role === 'lead' && <LeadMark />}
-                    {r.away && <AwayMark away={r.away} />}
+                      {r.away && <AwayMark away={r.away} />}
                     </span>
                     <span className="truncate text-xs text-ink-3">
                       {r.employee.department?.name || 'Без отдела'}
@@ -154,7 +154,6 @@ function Stat({ label, value }) {
   )
 }
 
-/** Руководитель в таблице владельца: банк есть и у него, но он не рядовой сотрудник. */
 /** Метка «форс-мажор до …»: человек предупредил, что его не будет. */
 function AwayMark({ away }) {
   return (
@@ -164,6 +163,7 @@ function AwayMark({ away }) {
   )
 }
 
+/** Руководитель в таблице владельца: банк есть и у него, но он не рядовой сотрудник. */
 function LeadMark() {
   return <span className="ml-2 shrink-0 rounded-md bg-accent-soft px-1.5 py-0.5 text-xs font-semibold text-accent">руководитель</span>
 }

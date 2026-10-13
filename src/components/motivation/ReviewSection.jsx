@@ -3,6 +3,7 @@ import { Avatar, Button, Card, EmptyState, Input, Spinner } from '../../shared/u
 import { cx } from '../../shared/lib/cx'
 import { useMotivationStore } from '../../core/store/motivationStore'
 import { dateTime, dayMonth, pointsTone, pointsWord, signedPoints } from '../../utils/motivation'
+import { plural } from '../../shared/lib/plural'
 
 /**
  * «На проверке» — очередь владельца. CRM заметила, что задачу закрыли в
@@ -29,6 +30,9 @@ const COMPLEXITY = {
 
 export function ReviewSection() {
   const { reviews, reviewsLoading, reviewsError, fetchReviews, approveReview, rejectReview } = useMotivationStore()
+  // Заявка обновилась, пока на неё смотрели (ночь добавила штраф) — сервер
+  // ответит 409, и очередь перечитывается, чтобы владелец увидел новое число.
+  const refresh = () => { setDone(new Set()); fetchReviews(view) }
   const [view, setView] = useState('pending')
   const [done, setDone] = useState(() => new Set())
 
@@ -84,7 +88,11 @@ export function ReviewSection() {
                 key={r.id}
                 review={r}
                 dailyCap={reviews.personalTaskDailyCap}
-                onApprove={(body) => approveReview(r.id, body).then((res) => { if (res.ok) markDone(r.id); return res })}
+                onApprove={(body) => approveReview(r.id, body).then((res) => {
+                  if (res.ok) markDone(r.id)
+                  else if (/обновилась/.test(res.error || '')) refresh()
+                  return res
+                })}
                 onReject={() => rejectReview(r.id).then((res) => { if (res.ok) markDone(r.id); return res })}
               />
             )
@@ -121,8 +129,9 @@ function PendingItem({ review, dailyCap, onApprove, onReject }) {
   const [points, setPoints] = useState(String(review.prizePoints))
   const [busy, setBusy] = useState(null)
   const [error, setError] = useState(null)
-  const complexity = review.complexity && COMPLEXITY[review.complexity]
   const overdue = review.rule === 'task_overdue' || review.rule === 'personal_task_overdue'
+  // Сложность нужна, чтобы решить, сколько дать за сделанное, — у штрафа её не показываем.
+  const complexity = !overdue && review.complexity && COMPLEXITY[review.complexity]
 
   async function run(kind) {
     if (busy) return
@@ -138,7 +147,11 @@ function PendingItem({ review, dailyCap, onApprove, onReject }) {
         setError('Ноль баллов начислять незачем — нажмите «Не начислять»')
         return
       }
-      body = n === review.prizePoints ? {} : { prizePoints: n }
+      if (Math.sign(n) !== Math.sign(review.prizePoints)) {
+        setError(review.prizePoints < 0 ? 'Это штраф — баллы со знаком минус' : 'Это начисление — баллы без минуса')
+        return
+      }
+      body = { prizePoints: n, seenPrizePoints: review.prizePoints }
     }
     setBusy(kind)
     const res = kind === 'approve' ? await onApprove(body) : await onReject()
@@ -157,7 +170,7 @@ function PendingItem({ review, dailyCap, onApprove, onReject }) {
         <div className="flex flex-col gap-1">
           <p className="text-xs font-medium text-ink-2">
             {RULE_LABEL[review.rule]}
-            {review.rule === 'task_overdue' && review.nights > 0 && ` · ${review.nights} ${review.nights === 1 ? 'ночь' : review.nights < 5 ? 'ночи' : 'ночей'}`}
+            {review.rule === 'task_overdue' && review.nights > 0 && ` · ${review.nights} ${plural(review.nights, 'ночь', 'ночи', 'ночей')}`}
           </p>
           {review.task && <p className="text-sm font-semibold leading-snug">{review.task.title}</p>}
           {review.task?.description && <p className="line-clamp-3 text-sm text-ink-2 leading-relaxed">{review.task.description}</p>}
@@ -195,6 +208,9 @@ function PendingItem({ review, dailyCap, onApprove, onReject }) {
             <Button size="sm" loading={busy === 'approve'} onClick={() => run('approve')}>Начислить</Button>
           </div>
         </div>
+        {review.previousMonth && (
+          <p className="text-xs text-warn">Заявка прошлого месяца: он уже закрыт, поэтому баллы лягут в текущий месяц.</p>
+        )}
         {error && <p className="text-sm text-danger">{error}</p>}
       </Card>
     </li>

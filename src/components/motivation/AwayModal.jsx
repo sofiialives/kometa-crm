@@ -71,7 +71,7 @@ export function AwayModal({ open, employee, onClose, onSaved }) {
     >
       <div className="flex flex-col gap-4">
         <p className="text-sm text-ink-2 leading-relaxed">
-          {employee?.name}: пока метка действует, звонок и чек-ин на баллы не влияют, а бот не беспокоит.
+          {employee?.name}: метка видна в журнале звонка и в таблице команды. Когда появится бот, он не будет беспокоить человека до этого времени.
         </p>
         <div className="grid grid-cols-5 gap-3">
           <DatePicker className="col-span-3" label="До какого дня" value={day} onChange={(v) => { setError(null); setDay(v) }} today={todayKey()} min={todayKey()} required />
