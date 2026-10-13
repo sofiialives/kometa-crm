@@ -174,6 +174,13 @@ export const useMotivationStore = create((set) => ({
     return res
   },
 
+  // Журнал вечернего звонка и метка «форс-мажор». Журнал живёт в самом
+  // разделе: он нужен только там и только за выбранный день.
+  fetchCallJournal: (day) => call(() => api.get(`/motivation/calls/${day}`)),
+  setCallMark: (day, userId, status) => call(() => api.put(`/motivation/calls/${day}/${userId}`, { status })),
+  setAway: (body) => call(() => api.post('/motivation/away', body)),
+  endAway: (id) => call(() => api.post(`/motivation/away/${id}/end`, {})),
+
   updateGeneral: (body) => call(() => api.patch('/motivation/settings', body)),
   saveGlobalScale: (levels) => call(() => api.put('/motivation/scale', { levels })),
   saveWorkLevels: (levels) => call(() => api.put('/motivation/work-levels', { levels })),

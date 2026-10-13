@@ -11,6 +11,7 @@ import { MonthSelect } from '../../components/motivation/MonthSelect'
 import { TeamSection } from '../../components/motivation/TeamSection'
 import { SettingsSection } from '../../components/motivation/settings/SettingsSection'
 import { ReviewSection } from '../../components/motivation/ReviewSection'
+import { CallJournalSection } from '../../components/motivation/CallJournalSection'
 
 /**
  * Вкладка «Мотивация».
@@ -37,6 +38,7 @@ const SECTIONS = {
   admin: [
     { id: 'team', label: 'Команда' },
     { id: 'review', label: 'На проверке' },
+    { id: 'calls', label: 'Журнал звонка' },
     { id: 'settings', label: 'Настройки' },
   ],
 }
@@ -47,6 +49,7 @@ const SUBTITLES = {
   team: 'Банки, баллы и уровни сотрудников и руководителей. Здесь же пополняется банк и ставятся баллы.',
   teamLead: 'Премии и уровни сотрудников вашего отдела. Начисляет и списывает владелец.',
   review: 'Задачи, закрытые в срок и просроченные. CRM подсказывает баллы, начисляете вы.',
+  calls: 'Кто был на вечернем звонке. «Был» и «не был» сразу ложатся баллами из профиля, форс-мажор — без баллов.',
   settings: 'Профили должностей, шкалы, уровни и назначение профилей. Меняется без разработчика.',
 }
 
@@ -84,6 +87,7 @@ export default function MotivationPage() {
       {section === 'conditions' && <MyConditions />}
       {section === 'team' && <TeamSection month={month} onMonthChange={(m) => setParam('month', m)} />}
       {section === 'review' && <ReviewSection />}
+      {section === 'calls' && <CallJournalSection />}
       {section === 'settings' && <SettingsSection />}
     </PageSection>
   )

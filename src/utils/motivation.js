@@ -113,6 +113,7 @@ export function lowerFirst(text) {
 
 /** Как фиксируется событие — словами для «Моих условий». */
 export function modeLabel(type) {
+  if (type.systemKey === 'call_attended' || type.systemKey === 'call_missed') return 'Отмечает владелец в журнале звонка'
   return type.mode === 'auto' ? 'Автоматически по задачам' : 'Отмечает владелец'
 }
 
