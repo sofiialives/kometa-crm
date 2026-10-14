@@ -115,7 +115,10 @@ function Summary({ summary: s }) {
         <Stat label="Чек-ины: ответил" value={`${c.answered} из ${c.asked}`} note={c.skipped ? `не спрашивал ${c.skipped} ${times(c.skipped)}` : null} />
         <Stat label="Чек-ины: промолчал" value={c.penalized} tone={c.penalized ? 'danger' : null} />
         <Stat label="«Задерживаюсь», «не успеваю»" value={s.lateReports} tone={s.lateReports ? 'warn' : null} />
-        <Stat label="Взял в работу из бота" value={s.tasksTaken} />
+        <Stat label="Закрыл задач" value={s.tasksDone ?? 0} note={s.tasksDoneLate ? `позже срока ${s.tasksDoneLate}` : null} />
+        <Stat label="Просрочено задач" value={s.tasksOverdue ?? 0} tone={s.tasksOverdue ? 'danger' : null} />
+        <Stat label="Продлевал сроки" value={s.tasksExtended ?? 0} tone={s.tasksExtended ? 'warn' : null} />
+        <Stat label="Не начал вовремя" value={s.tasksNotStarted ?? 0} tone={s.tasksNotStarted ? 'warn' : null} />
         <Stat label="«На сегодня всё»" value={s.dayEnds} />
       </div>
     </Card>
