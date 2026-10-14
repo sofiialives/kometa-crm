@@ -82,7 +82,22 @@ export function describe(item) {
     case 'task_late':
       return { title: `Не успевает начать «${d.taskTitle || 'задачу'}»${d.startAt ? ` (по плану в ${hm(d.startAt)})` : ''}`, detail: quote(item.text), tone: 'warn' }
     case 'task_take':
+    case 'task_started':
       return { title: `Взял(а) в работу «${d.taskTitle || 'задачу'}»`, detail: '', tone: 'ok' }
+    case 'task_created':
+      return { title: `Новая задача «${d.taskTitle || 'задача'}»${d.deadline ? `, срок ${dateHm(d.deadline)}` : ''}`, detail: [d.origin === 'hierarchy' ? 'из Иерархии' : '', d.byOther ? 'поставил руководитель' : ''].filter(Boolean).join(' · '), tone: 'muted' }
+    case 'task_done':
+      return { title: `Закрыл(а) «${d.taskTitle || 'задачу'}»${d.onTime === false ? ' · позже срока' : ' · в срок'}`, detail: '', tone: d.onTime === false ? 'warn' : 'ok' }
+    case 'task_reopened':
+      return { title: `Вернул(а) из «Готово» «${d.taskTitle || 'задачу'}»`, detail: '', tone: 'warn' }
+    case 'task_extended':
+      return d.byOther
+        ? { title: `Руководитель продлил срок «${d.taskTitle || 'задачи'}»${d.from && d.to ? `: ${dateHm(d.from)} → ${dateHm(d.to)}` : ''}`, detail: '', tone: 'muted' }
+        : { title: `Продлил(а) срок «${d.taskTitle || 'задачи'}»${d.from && d.to ? `: ${dateHm(d.from)} → ${dateHm(d.to)}` : ''}`, detail: '', tone: 'warn' }
+    case 'task_not_started':
+      return { title: `Не начал(а) вовремя «${d.taskTitle || 'задачу'}»${d.startAt ? ` (по плану в ${hm(d.startAt)})` : ''}`, detail: d.told === false ? 'сообщение Яну не дошло' : 'Яну ушло сообщение', tone: 'warn' }
+    case 'task_overdue':
+      return { title: `Просрочена «${d.taskTitle || 'задача'}»${d.nights > 1 ? ` · ночей: ${d.nights}` : ''}${d.points ? ` · ${signedPoints(d.points)}` : ''}`, detail: '', tone: 'danger' }
     case 'day_end':
       return { title: 'Закончил(а) рабочий день', detail: '', tone: 'muted' }
     case 'fm_request':
