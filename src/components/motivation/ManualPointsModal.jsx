@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Button, Checkbox, Input, Modal, Select, Spinner, Textarea } from '../../shared/ui'
-import { eventPoints } from '../../utils/motivation'
+import { eventPoints, withDepartment } from '../../utils/motivation'
 import { useRequestKey } from './useRequestKey'
 
 const ADJUSTMENT = '__adjustment'
@@ -109,7 +109,7 @@ export function ManualPointsModal({ open, onClose, employees, preselected, loadO
           label="Сотрудник"
           required
           placeholder="Выберите сотрудника"
-          options={employees.map((e) => ({ value: e.id, label: e.profile ? `${e.name} — ${e.profile.title}` : e.name }))}
+          options={employees.map((e) => ({ value: e.id, label: e.profile ? `${withDepartment(e.name, e.department)}, ${e.profile.title}` : withDepartment(e.name, e.department) }))}
           value={userId}
           onChange={(e) => { setUserId(e.target.value); clear('userId') }}
           error={errors.userId}
