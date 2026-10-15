@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Avatar, Button, Card, EmptyState, Input, Spinner } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
 import { useMotivationStore } from '../../core/store/motivationStore'
 import { dateTime, dayMonth, pointsTone, pointsWord, signedPoints } from '../../utils/motivation'
 import { plural } from '../../shared/lib/plural'
 import { HintsBlock } from './HintsBlock'
+import { HistoryView } from './HistoryView'
+import { useAutoRefresh } from '../../shared/lib/useAutoRefresh'
 
 /**
- * «На проверке» — очередь владельца. CRM заметила, что задачу закрыли в
- * срок или просрочили, и подсказывает баллы из профиля человека. Начисляет
- * владелец: так заказчик хочет, пока проверяет систему.
+ * «История баллов» владельца: все начисления с фильтрами и рядом «Ждут
+ * решения» — заявки по правилам, которые владелец настроил «мне на
+ * решение», и подсказки пополнить банк за новые работы.
  *
  * Подсказанные баллы можно поменять прямо в строке. У личных задач рядом
  * — оценка сложности по названию и описанию и сколько человек уже получил
@@ -21,6 +24,7 @@ const RULE_LABEL = {
   personal_task_on_time: 'Личная задача закрыта в срок',
   task_overdue: 'Просрочка задачи из Иерархии',
   personal_task_overdue: 'Личная задача просрочена',
+  task_not_started: 'Задача не начата вовремя',
 }
 
 const COMPLEXITY = {
@@ -34,16 +38,21 @@ export function ReviewSection() {
   // Заявка обновилась, пока на неё смотрели (ночь добавила штраф) — сервер
   // ответит 409, и очередь перечитывается, чтобы владелец увидел новое число.
   const refresh = () => { setDone(new Set()); fetchReviews(view) }
-  const [view, setView] = useState('pending')
+  // Кнопка из телеграма («Открыть») ведёт сразу в «Ждут решения».
+  const [params] = useSearchParams()
+  const [view, setView] = useState(() => (params.get('view') === 'pending' ? 'pending' : 'history'))
+  const pendingCount = useMotivationStore((s) => s.reviewsPending)
   const [done, setDone] = useState(() => new Set())
 
   const fetchReviewsCount = useMotivationStore((s) => s.fetchReviewsCount)
   useEffect(() => {
-    setDone(new Set())
-    fetchReviews(view)
     // Счётчик на вкладке мог устареть: ночью пришли заявки, днём — работы.
     fetchReviewsCount()
+    if (view !== 'pending') return
+    setDone(new Set())
+    fetchReviews('pending')
   }, [fetchReviews, fetchReviewsCount, view])
+  useAutoRefresh(() => { if (view === 'pending') { setDone(new Set()); fetchReviews('pending') } })
 
   const items = (reviews?.items ?? []).filter((r) => !done.has(r.id))
   const markDone = (id) => setDone((s) => new Set(s).add(id))
@@ -52,7 +61,7 @@ export function ReviewSection() {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-2" role="tablist">
-          {[['pending', 'Ждут решения'], ['decided', 'Решённые']].map(([id, label]) => (
+          {[['history', 'История баллов'], ['pending', pendingCount ? `Ждут решения · ${pendingCount}` : 'Ждут решения']].map(([id, label]) => (
             <button
               key={id}
               type="button"
@@ -68,28 +77,26 @@ export function ReviewSection() {
             </button>
           ))}
         </div>
-        {reviews?.taskPoints && <TaskPointsNote taskPoints={reviews.taskPoints} />}
+        {view === 'pending' && reviews?.taskPoints && <TaskPointsNote taskPoints={reviews.taskPoints} />}
       </div>
 
+      {view === 'history' && <HistoryView isAdmin />}
       {view === 'pending' && <HintsBlock />}
 
-      {reviewsLoading && !reviews ? (
+      {view !== 'pending' ? null : reviewsLoading && !reviews ? (
         <div className="grid place-items-center py-14"><Spinner /></div>
       ) : reviewsError && !reviews ? (
         <p className="text-sm text-danger">{reviewsError}</p>
       ) : items.length === 0 ? (
         <Card>
           <EmptyState
-            label={view === 'pending' ? 'Заявок нет' : 'Решений пока нет'}
-            text={view === 'pending'
-              ? 'Когда кто-то закроет задачу в срок или просрочит её, она появится здесь с подсказанными баллами.'
-              : 'Здесь будут последние начисленные, отклонённые и снятые заявки.'}
+            label="Заявок нет"
+            text="Сюда приходят только правила, которые в условиях отдела настроены «мне на решение». Остальные баллы начисляются сами и видны в «Истории баллов»." 
           />
         </Card>
       ) : (
         <ul className="flex flex-col gap-3">
-          {items.map((r) => (view === 'pending'
-            ? (
+          {items.map((r) => (
               <PendingItem
                 key={r.id}
                 review={r}
@@ -101,8 +108,7 @@ export function ReviewSection() {
                 })}
                 onReject={() => rejectReview(r.id).then((res) => { if (res.ok) markDone(r.id); return res })}
               />
-            )
-            : <DecidedItem key={r.id} review={r} />))}
+          ))}
         </ul>
       )}
     </div>
@@ -111,10 +117,8 @@ export function ReviewSection() {
 
 function TaskPointsNote({ taskPoints }) {
   const text = !taskPoints.from
-    ? 'Баллы за задачи не включены — дата в «Настройках» → «Общие параметры»'
-    : taskPoints.mode === 'auto'
-      ? `Баллы за задачи начисляются сами с ${dayMonth(taskPoints.from)}, заявки сюда не попадают`
-      : `Задачи попадают сюда с ${dayMonth(taskPoints.from)}`
+    ? 'Баллы за задачи не включены, дата в «Настройках», «Общие параметры»'
+    : `Баллы за задачи считаются с ${dayMonth(taskPoints.from)}`
   return <p className="text-xs text-ink-3">{text}</p>
 }
 
@@ -218,35 +222,6 @@ function PendingItem({ review, dailyCap, onApprove, onReject }) {
           <p className="text-xs text-warn">Заявка прошлого месяца: он уже закрыт, поэтому баллы лягут в текущий месяц.</p>
         )}
         {error && <p className="text-sm text-danger">{error}</p>}
-      </Card>
-    </li>
-  )
-}
-
-function DecidedItem({ review }) {
-  const status = review.status === 'approved'
-    ? `Начислено ${signedPoints(review.awarded?.prizePoints ?? review.prizePoints)}${review.awarded?.cancelled ? ', потом отменено' : ''}`
-    : review.status === 'rejected'
-      ? 'Не начислено'
-      : 'Снята'
-  return (
-    <li>
-      <Card className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-col gap-1">
-          <Who review={review} />
-          <p className="text-sm">
-            <span className="text-ink-3">{RULE_LABEL[review.rule]}: </span>
-            {review.task?.title}
-          </p>
-        </div>
-        <div className="flex flex-col items-end gap-0.5 text-right">
-          <span className={cx('text-sm font-semibold', review.status === 'approved' ? pointsTone(review.awarded?.prizePoints ?? review.prizePoints) : 'text-ink-3')}>{status}</span>
-          <span className="text-xs text-ink-3">
-            {dateTime(review.decidedAt)}
-            {review.decidedBy ? ` · ${review.decidedBy.name}` : ''}
-          </span>
-          {review.decisionNote && <span className="text-xs text-ink-3">{review.decisionNote}</span>}
-        </div>
       </Card>
     </li>
   )

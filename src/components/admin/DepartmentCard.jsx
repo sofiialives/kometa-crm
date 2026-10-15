@@ -2,19 +2,13 @@ import { useState } from 'react'
 import { Card, Badge, EmptyState, Button, Input } from '../../shared/ui'
 import { MemberRow } from './MemberRow'
 import { memberCount, membersOf, splitByLead } from '../../utils/admin'
-import { plural, withPlural } from '../../shared/lib/plural'
 
 export function DepartmentCard({ department, users, onPromote, onMove, onDismiss, onAddPosition, onDelete, worksCount = 0, statsByUser }) {
   const members = membersOf(users, department.id)
   const { lead, staff } = splitByLead(members, department)
-  // Бэк отказывает и при живых сотрудниках, и при незакрытых работах.
-  // Показываем ту же причину заранее, чтобы удаление не срывалось на
-  // последнем шаге.
-  const blocker = members.length > 0
-    ? 'Сначала переведите или увольте всех сотрудников отдела'
-    : worksCount > 0
-      ? `В отделе ${plural(worksCount, 'осталась', 'осталось', 'осталось')} ${withPlural(worksCount, 'работа', 'работы', 'работ')} — ${plural(worksCount, 'перенесите или удалите её', 'перенесите или удалите их', 'перенесите или удалите их')}`
-      : null
+  // Удалить нельзя только отдел с живыми сотрудниками: их сначала
+  // переводят. Отдел с работами уходит в архив, работы остаются.
+  const blocker = members.length > 0 ? 'Сначала переведите или увольте всех сотрудников отдела' : null
 
   const [adding, setAdding] = useState(false)
   const [draft, setDraft] = useState('')
@@ -70,7 +64,7 @@ export function DepartmentCard({ department, users, onPromote, onMove, onDismiss
         <div className="flex shrink-0 items-center gap-2">
           <Badge tone="neutral">{memberCount(members.length)}</Badge>
           <button
-            onClick={() => !blocker && onDelete(department)}
+            onClick={() => !blocker && onDelete({ ...department, worksCount })}
             disabled={Boolean(blocker)}
             title={blocker || 'Удалить отдел'}
             className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-ink-3 transition-colors disabled:cursor-not-allowed disabled:opacity-35 enabled:hover:bg-danger-soft enabled:hover:text-danger cursor-pointer"

@@ -94,6 +94,26 @@ export const useAuthStore = create(
         }
       },
 
+      /**
+       * Свежие роль, отдел и должность с сервера. Владелец поменял роль в
+       * админке — человек увидит новые права без повторного входа. Ошибку
+       * молча пропускаем: выход по просроченной сессии делает клиент API.
+       */
+      async refreshMe() {
+        if (!get().token) return
+        try {
+          const fresh = await api.get('/auth/me')
+          // Пока ждали ответа, человек мог выйти.
+          if (!get().token) return
+          const current = get().user
+          if (!current || ['role', 'departmentId', 'position', 'name', 'status'].some((k) => current[k] !== fresh[k])) {
+            set({ user: { ...current, ...fresh } })
+          }
+        } catch {
+          // сеть или сессия: не трогаем
+        }
+      },
+
       /** Страница настроек: имя, фото (data URL), цвет кружка-аватарки. */
       async updateProfile(patch) {
         set({ error: null })

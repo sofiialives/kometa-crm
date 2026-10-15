@@ -129,6 +129,8 @@ export const useMotivationStore = create((set) => ({
 
   // «Журнал бота» — в сторе не держим: живёт, пока открыт раздел.
   fetchBotJournalPeople: () => call(() => api.get('/motivation/bot-journal/people')),
+  // История баллов: месяц или всё время, отдел, человек; before — догрузка.
+  fetchHistory: (params) => call(() => api.get(`/motivation/history${query(params)}`)),
   fetchBotJournal: (userId, month) => call(() => api.get(`/motivation/bot-journal${query({ userId, month })}`)),
 
   topUp: (body) => call(() => api.post('/motivation/bank/top-up', body)),

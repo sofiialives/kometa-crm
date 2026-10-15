@@ -5,6 +5,7 @@ import { useMotivationStore } from '../../core/store/motivationStore'
 import { todayKey } from '../../utils/calls'
 import { dateTime, signedPoints } from '../../utils/motivation'
 import { AwayModal } from './AwayModal'
+import { useAutoRefresh } from '../../shared/lib/useAutoRefresh'
 
 /**
  * Журнал вечернего звонка — как в школе: открыл день, отметил каждого.
@@ -36,24 +37,26 @@ export function CallJournalSection() {
   const [busy, setBusy] = useState(() => new Set())
   const [rowError, setRowError] = useState({})
   const [awayFor, setAwayFor] = useState(null)
-  const [bulkConfirm, setBulkConfirm] = useState(false)
   const [absentConfirm, setAbsentConfirm] = useState(null)
   // Быстро переключили день — ответ за прежний день может прийти позже и
   // не должен перезаписать новый.
   const latest = useRef(0)
 
-  const load = useCallback(async (d) => {
+  // silent — фоновое обновление: без спиннера и без блокировки кнопок.
+  const load = useCallback(async (d, { silent = false } = {}) => {
     const n = ++latest.current
-    setLoading(true)
+    if (!silent) setLoading(true)
     setError(null)
     const res = await fetchCallJournal(d)
     if (n !== latest.current) return
-    setLoading(false)
+    if (!silent) setLoading(false)
     if (res.ok) setJournal(res.data)
-    else setError(res.error)
+    else if (!silent) setError(res.error)
   }, [fetchCallJournal])
 
-  useEffect(() => { setBulkConfirm(false); load(day) }, [day, load])
+  useEffect(() => { load(day) }, [day, load])
+  // Пока отметка уходит на сервер, не обновляем: старый ответ затёр бы её.
+  useAutoRefresh(() => { if (busy.size === 0) load(day, { silent: true }) })
 
   const setBusyFor = (id, on) => setBusy((s) => {
     const next = new Set(s)
@@ -80,20 +83,13 @@ export function CallJournalSection() {
       setRowError((e) => ({ ...e, [id]: res.error }))
       return
     }
+    // Начатое до отметки фоновое обновление уже устарело — его ответ не нужен.
+    latest.current += 1
     setJournal((j) => j && ({
       ...j,
       summary: res.data.summary,
       rows: j.rows.map((r) => (r.employee.id === id ? res.data.row : r)),
     }))
-  }
-
-  // Остальным — «был»: кого ещё не отметили и у кого нет форс-мажора.
-  const rest = useMemo(() => (journal?.rows ?? []).filter((r) => !r.status && !r.away), [journal])
-  async function markRestPresent() {
-    setBulkConfirm(false)
-    for (const row of rest) {
-      await mark(row, 'present')
-    }
   }
 
   async function dropAway(row) {
@@ -126,19 +122,9 @@ export function CallJournalSection() {
           max={today}
         />
         {s && (
-          <div className="flex flex-wrap items-center gap-3">
-            <p className="text-sm text-ink-2">
-              Отмечено {s.total - s.unmarked} из {s.total}: был {s.present}, не был {s.absent}, форс-мажор {s.excused}
-            </p>
-            {rest.length > 0 && (bulkConfirm ? (
-              <span className="flex items-center gap-2">
-                <Button size="sm" onClick={markRestPresent}>Да, отметить {rest.length}</Button>
-                <Button size="sm" variant="ghost" onClick={() => setBulkConfirm(false)}>Отмена</Button>
-              </span>
-            ) : (
-              <Button size="sm" variant="secondary" onClick={() => setBulkConfirm(true)}>Остальным — «был»</Button>
-            ))}
-          </div>
+          <p className="text-sm text-ink-2">
+            Отмечено {s.total - s.unmarked} из {s.total}: был {s.present}, не был {s.absent}, форс-мажор {s.excused}
+          </p>
         )}
       </div>
 

@@ -11,8 +11,10 @@ import { MonthSelect } from '../../components/motivation/MonthSelect'
 import { TeamSection } from '../../components/motivation/TeamSection'
 import { SettingsSection } from '../../components/motivation/settings/SettingsSection'
 import { ReviewSection } from '../../components/motivation/ReviewSection'
+import { HistoryView } from '../../components/motivation/HistoryView'
 import { CallJournalSection } from '../../components/motivation/CallJournalSection'
 import { BotJournalSection } from '../../components/motivation/BotJournalSection'
+import { useAutoRefresh } from '../../shared/lib/useAutoRefresh'
 
 /**
  * Вкладка «Мотивация».
@@ -35,11 +37,12 @@ const SECTIONS = {
     { id: 'my', label: 'Моя мотивация' },
     { id: 'conditions', label: 'Мои условия' },
     { id: 'team', label: 'Команда' },
+    { id: 'history', label: 'История баллов' },
     { id: 'bot', label: 'Журнал бота' },
   ],
   admin: [
     { id: 'team', label: 'Команда' },
-    { id: 'review', label: 'На проверке' },
+    { id: 'review', label: 'История баллов' },
     { id: 'calls', label: 'Журнал звонка' },
     { id: 'bot', label: 'Журнал бота' },
     { id: 'settings', label: 'Настройки' },
@@ -51,9 +54,10 @@ const SUBTITLES = {
   conditions: 'За что вы получаете и теряете баллы — правила для вашей должности.',
   team: 'Банки, баллы и уровни сотрудников и руководителей. Здесь же пополняется банк и ставятся баллы.',
   teamLead: 'Премии и уровни сотрудников вашего отдела. Начисляет и списывает владелец.',
-  review: 'Задачи, закрытые в срок и просроченные. CRM подсказывает баллы, начисляете вы.',
+  review: 'Все баллы: кому, сколько, за что и когда, с пометкой «авто» или «вручную». Рядом заявки, которые ждут вашего решения.',
+  history: 'Баллы людей вашего отдела: кому, сколько, за что и когда.',
   calls: 'Кто был на вечернем звонке. «Был» и «не был» сразу ложатся баллами из профиля, форс-мажор — без баллов.',
-  settings: 'Профили должностей, шкалы, уровни и назначение профилей. Меняется без разработчика.',
+  settings: 'Условия по отделам из CRM, шкалы, уровни и лимиты. Меняется без разработчика.',
   bot: 'Что было с человеком в телеграме: отлучки и сколько его не было, опоздания, форс-мажоры, чек-ины. Сверху — итоги месяца.',
   botLead: 'Отлучки, опоздания, форс-мажоры и чек-ины людей вашего отдела. Переписку и причины видит только владелец.',
 }
@@ -65,6 +69,7 @@ export default function MotivationPage() {
   // Счётчик заявок — на вкладке «На проверке», чтобы владелец видел их из
   // любого раздела.
   useEffect(() => { if (role === 'admin') fetchReviewsCount() }, [role, fetchReviewsCount])
+  useAutoRefresh(() => { if (role === 'admin') fetchReviewsCount() })
   const sections = (SECTIONS[role] || SECTIONS.staff).map((s) => (s.id === 'review' ? { ...s, badge: reviewsPending } : s))
 
   const [params, setParams] = useSearchParams()
@@ -92,6 +97,7 @@ export default function MotivationPage() {
       {section === 'conditions' && <MyConditions />}
       {section === 'team' && <TeamSection month={month} onMonthChange={(m) => setParam('month', m)} />}
       {section === 'review' && <ReviewSection />}
+      {section === 'history' && <HistoryView isAdmin={false} />}
       {section === 'calls' && <CallJournalSection />}
       {section === 'bot' && (
         <BotJournalSection
@@ -117,6 +123,7 @@ function MySection({ month, onMonthChange }) {
 
   // Другой месяц — другие записи: «новое» в нём отмечается заново.
   useEffect(() => { marked.current = false; fetchMine(month || undefined) }, [fetchMine, month])
+  useAutoRefresh(() => fetchMine(month || undefined))
 
   const hasNew = Boolean(mine?.unseen && (mine.unseen.bankCents > 0 || mine.unseen.events > 0))
 

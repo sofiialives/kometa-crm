@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Button, Card, Checkbox, DatePicker, Input, Select } from '../../../shared/ui'
+import { Button, Card, Checkbox, DatePicker, Input } from '../../../shared/ui'
 import { todayKey } from '../../../utils/calls'
 import { dayMonth, nextMonthStartKey } from '../../../utils/motivation'
 
@@ -56,7 +56,6 @@ export function GeneralPanel({ general, onSave }) {
       notifyPoints: Boolean(form.notifyPoints),
       autoTasksFrom: form.autoTasksFrom || null,
       checkinFrom: form.checkinFrom || null,
-      taskPointsMode: form.taskPointsMode || 'review',
       personalTaskDailyLimit: limit,
     })
     setBusy(false)
@@ -91,9 +90,7 @@ export function GeneralPanel({ general, onSave }) {
       </div>
       <AutoTasks
         value={form.autoTasksFrom || null}
-        mode={form.taskPointsMode || 'review'}
-        onModeChange={(taskPointsMode) => { setMessage(null); setForm((f) => ({ ...f, taskPointsMode })) }}
-        dirty={(form.autoTasksFrom || null) !== (general.autoTasksFrom || null) || (form.taskPointsMode || 'review') !== (general.taskPointsMode || 'review')}
+        dirty={(form.autoTasksFrom || null) !== (general.autoTasksFrom || null)}
         onChange={(autoTasksFrom) => { setMessage(null); setForm((f) => ({ ...f, autoTasksFrom })) }}
       />
       <Checkins
@@ -145,25 +142,19 @@ function Checkins({ value, dirty, onChange }) {
   )
 }
 
-const MODES = [
-  { value: 'review', label: 'На проверку мне — раздел «На проверке»' },
-  { value: 'auto', label: 'Начислять автоматически' },
-]
-
-function AutoTasks({ value, mode, onModeChange, dirty, onChange }) {
+function AutoTasks({ value, dirty, onChange }) {
   const today = todayKey()
   const on = Boolean(value)
   const when = value <= today ? `С ${dayMonth(value)}` : `Начиная с ${dayMonth(value)}`
-  const status = !on
-    ? 'Выключены: закрытые и просроченные задачи на баллы не влияют.'
-    : mode === 'auto'
-      ? `${when} баллы начисляются сами: в срок — плюс, просрочка — минус. Задачи, просроченные раньше, не штрафуются.`
-      : `${when} закрытые в срок и просроченные задачи попадают в «На проверке» с подсказанными баллами, начисляете вы.`
+  // Сразу баллы или на решение — задаётся у каждого правила в условиях отдела.
+  const status = on
+    ? `${when} баллы за задачи считаются по правилам в условиях отделов: сразу или вам на решение, как задано у правила. Задачи, просроченные раньше, не штрафуются.`
+    : 'Выключены: закрытые и просроченные задачи на баллы не влияют.'
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-line p-3">
       <Checkbox
-        label="Баллы за задачи: в срок — плюс, просрочка — минус"
+        label="Баллы за задачи: в срок плюс, просрочка минус"
         checked={on}
         onChange={(e) => onChange(e.target.checked ? nextMonthStartKey(today) : null)}
       />
@@ -177,17 +168,11 @@ function AutoTasks({ value, mode, onModeChange, dirty, onChange }) {
             min={today}
             required
           />
-          <Select
-            label="Как начислять"
-            options={MODES}
-            value={mode}
-            onChange={(e) => onModeChange(e.target.value)}
-          />
         </div>
       )}
       <p className="text-xs text-ink-3 leading-relaxed">
         {status}
-        {dirty && <span className="text-warn"> Не сохранено — нажмите «Сохранить».</span>}
+        {dirty && <span className="text-warn"> Не сохранено, нажмите «Сохранить».</span>}
       </p>
     </div>
   )

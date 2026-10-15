@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Button, Select, Spinner } from '../../shared/ui'
 import { useMotivationStore } from '../../core/store/motivationStore'
+import { useAutoRefresh } from '../../shared/lib/useAutoRefresh'
 import { useClientsStore } from '../../core/store/clientsStore'
 import { useAuthStore } from '../../core/store/authStore'
 import { TeamTable } from './TeamTable'
@@ -42,6 +43,7 @@ export function TeamSection({ month, onMonthChange }) {
     if (isAdmin) { fetchEmployees(); fetchClients() }
   }, [fetchTeamMonths, fetchEmployees, fetchClients, isAdmin])
   useEffect(() => { reload() }, [reload])
+  useAutoRefresh(reload)
 
   // Действие в любой форме — перезапрос таблицы и открытой карточки.
   const wrap = (fn) => async (body) => {

@@ -67,9 +67,8 @@ export function nextMonthStartKey(today = todayKey()) {
  * Подпись автособытия в условиях: работает ли оно уже. Без неё «+2 за
  * задачу в срок» читалось бы как обещание, которое пока не выполняется.
  */
-export function autoStatusLabel(rules) {
-  const review = rules?.taskPointsMode !== 'auto'
-  const base = review ? 'По задачам, начисляет владелец после проверки' : 'Автоматически по задачам'
+export function autoStatusLabel(rules, event) {
+  const base = event?.review ? 'По задачам, начисляет владелец после проверки' : 'Автоматически по задачам'
   if (rules?.autoTasksOn) return base
   if (rules?.autoTasksFrom) return `${base}, начнёт работать ${dayMonth(rules.autoTasksFrom)}`
   return `${base}, пока не включено`
@@ -98,6 +97,7 @@ export const AUTO_RULES = [
   { value: 'personal_task_on_time', label: 'Личная задача закрыта в срок' },
   { value: 'task_overdue', label: 'Просрочка задачи из Иерархии, за каждый день' },
   { value: 'personal_task_overdue', label: 'Просрочка личной задачи, один раз' },
+  { value: 'task_not_started', label: 'Задача не начата вовремя, через 15 минут после начала' },
 ]
 
 const RULE_LABEL = Object.fromEntries(AUTO_RULES.map((r) => [r.value, r.label]))
@@ -204,4 +204,13 @@ export function newRequestKey() {
     const r = (Math.random() * 16) | 0
     return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16)
   })
+}
+
+/**
+ * Имя с отделом в скобках: «(Дизайн) Александр». Тёзок в разных отделах
+ * так видно сразу. Без отдела — просто имя.
+ */
+export function withDepartment(name, department) {
+  const dept = typeof department === 'string' ? department : department?.name
+  return dept ? `(${dept}) ${name}` : name
 }

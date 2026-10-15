@@ -111,7 +111,7 @@ function EventsTable({ title, events, empty, rules }) {
               <div className="flex flex-col gap-1">
                 <p className="text-sm font-medium leading-snug">{e.title}</p>
                 {e.example && <p className="text-xs text-ink-3 leading-relaxed">Например: {e.example}</p>}
-                <p className="text-xs text-ink-2">{e.mode === 'auto' ? autoStatusLabel(rules) : modeLabel(e)}</p>
+                <p className="text-xs text-ink-2">{e.mode === 'auto' ? autoStatusLabel(rules, e) : modeLabel(e)}</p>
               </div>
               <p className={cx('text-sm font-semibold tabular-nums sm:text-right', pointsTone(e.prizePoints || e.levelPoints))}>
                 {eventPoints(e)}

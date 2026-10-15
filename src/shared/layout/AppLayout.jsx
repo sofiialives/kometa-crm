@@ -4,9 +4,15 @@ import { Footer } from './Footer'
 import { Sidebar, MobileNav } from './Sidebar'
 import { NameGate } from './NameGate'
 import { cx } from '../lib/cx'
+import { useAutoRefresh } from '../lib/useAutoRefresh'
+import { useAuthStore } from '../../core/store/authStore'
 
 export function AppLayout() {
   const wide = useLocation().pathname.startsWith('/calls')
+  // Роль и отдел меняются в админке — подтягиваем их сами, раз в минуту и
+  // при возврате на вкладку, без повторного входа.
+  const refreshMe = useAuthStore((s) => s.refreshMe)
+  useAutoRefresh(refreshMe, 60000)
 
   return (
     <div className="min-h-full flex flex-col">

@@ -4,6 +4,7 @@ import { useAuthStore } from '../../core/store/authStore'
 import { cx } from '../../shared/lib/cx'
 import { useMotivationStore } from '../../core/store/motivationStore'
 import { MonthSelect } from './MonthSelect'
+import { withDepartment } from '../../utils/motivation'
 import { dayHeading, describe, duration, hm, times } from '../../utils/botJournal'
 
 /**
@@ -61,7 +62,7 @@ export function BotJournalSection({ person, onPersonChange, month, onMonthChange
           className="w-72"
           size="sm"
           aria-label="Сотрудник"
-          options={list.map((p) => ({ value: p.id, label: p.department ? `${p.name} · ${p.department.name}` : p.name }))}
+          options={list.map((p) => ({ value: p.id, label: withDepartment(p.name, p.department) }))}
           value={selected || ''}
           onChange={(e) => onPersonChange(e.target.value)}
         />

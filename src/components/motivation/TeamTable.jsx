@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Avatar, Card, EmptyState } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
-import { awayLabel, dateTime, dollars } from '../../utils/motivation'
+import { awayLabel, dateTime, dollars, withDepartment } from '../../utils/motivation'
 
 /**
  * Таблица команды: имя, должность (профиль), банк, баллы, уровень премии,
@@ -112,7 +112,7 @@ export function TeamTable({ rows, totals, isCurrent = true, onOpen }) {
                 <Avatar name={r.employee.name} email={r.employee.email} src={r.employee.avatarUrl} color={r.employee.avatarColor} size={32} />
                 <div className="flex min-w-0 flex-1 flex-col">
                   <span className="flex min-w-0 items-center font-medium">
-                    <span className="truncate">{r.employee.name}</span>
+                    <span className="truncate">{withDepartment(r.employee.name, r.employee.department)}</span>
                     {r.employee.role === 'lead' && <LeadMark />}
                     {r.away && <AwayMark away={r.away} />}
                   </span>

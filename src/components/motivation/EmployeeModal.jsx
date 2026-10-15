@@ -7,6 +7,7 @@ import { MonthSelect } from './MonthSelect'
 import { CancelEventModal } from './CancelEventModal'
 import { WriteOffModal } from './WriteOffModal'
 import { useMotivationStore } from '../../core/store/motivationStore'
+import { withDepartment } from '../../utils/motivation'
 
 /**
  * Человек глазами руководителя или владельца: его «Моя мотивация» и «Мои
@@ -61,7 +62,7 @@ export function EmployeeModal({ employeeId, month, refreshKey, onClose, onTopUp,
 
   return (
     <>
-      <Modal open={open} onClose={onClose} title={employee ? employee.name : 'Сотрудник'} size="lg">
+      <Modal open={open} onClose={onClose} title={employee ? withDepartment(employee.name, employee.department) : 'Сотрудник'} size="lg">
         {!data && !error && <div className="grid place-items-center py-14"><Spinner /></div>}
         {error && <p className="text-sm text-danger">{error}</p>}
 
