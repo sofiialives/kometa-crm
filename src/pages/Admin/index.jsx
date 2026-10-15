@@ -313,7 +313,9 @@ export default function AdminPage() {
         danger
         title="Удалить отдел?"
         confirmText="Удалить"
-        text={deletingDept ? `Отдел «${deletingDept.name}» пропадёт без возможности отменить.` : ''}
+        text={!deletingDept ? '' : deletingDept.worksCount > 0
+          ? `У отдела «${deletingDept.name}» есть работы. Отдел уйдёт в архив: пропадёт из всех списков, а его работы и история останутся. Название освободится.`
+          : `Отдел «${deletingDept.name}» пропадёт без возможности отменить.`}
       />
 
       <ConfirmModal
