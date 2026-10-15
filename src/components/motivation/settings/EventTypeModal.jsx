@@ -4,7 +4,13 @@ import { AUTO_RULES } from '../../../utils/motivation'
 
 const MODES = [
   { value: 'manual', label: 'Вручную, отмечает владелец' },
-  { value: 'auto', label: 'Автоматически по задачам CRM' },
+  { value: 'auto', label: 'Автоматически по правилу CRM' },
+]
+
+// Что делать, когда правило сработало: баллы сразу или владельцу на решение.
+const DECISIONS = [
+  { value: 'instant', label: 'Начислять сразу' },
+  { value: 'review', label: 'Мне на решение, в «Ждут решения»' },
 ]
 
 /**
@@ -25,6 +31,7 @@ export function EventTypeModal({ open, event, onClose, onSubmit }) {
   const [level, setLevel] = useState(() => (event ? String(event.levelPoints) : ''))
   const [mode, setMode] = useState(() => event?.mode || 'manual')
   const [autoRule, setAutoRule] = useState(() => event?.autoRule || '')
+  const [decision, setDecision] = useState(() => (event?.review ? 'review' : 'instant'))
   const [enabled, setEnabled] = useState(() => (event ? event.enabled : true))
   const [errors, setErrors] = useState({})
   // Ошибка поля гаснет, как только его начали исправлять.
@@ -40,7 +47,8 @@ export function EventTypeModal({ open, event, onClose, onSubmit }) {
 
   async function submit() {
     const next = {}
-    if (!title.trim()) next.title = 'Укажите название'
+    // У автоматического события название берётся из правила само.
+    if (mode === 'manual' && !title.trim()) next.title = 'Укажите название'
     // Пустое поле — не ноль: Number('') даёт 0 и молча сохранило бы событие
     // без баллов.
     const p = Number(prize)
@@ -54,12 +62,12 @@ export function EventTypeModal({ open, event, onClose, onSubmit }) {
     setBusy(true)
     setServerError(null)
     const res = await onSubmit({
-      title: title.trim(),
-      example: example.trim() || null,
+      ...(mode === 'manual' ? { title: title.trim(), example: example.trim() || null } : {}),
       prizePoints: p,
       levelPoints: l,
       mode,
       autoRule: mode === 'auto' ? autoRule : null,
+      review: mode === 'auto' && decision === 'review',
       enabled,
     })
     setBusy(false)
@@ -80,8 +88,12 @@ export function EventTypeModal({ open, event, onClose, onSubmit }) {
       )}
     >
       <div className="flex flex-col gap-4">
-        <Input label="Название" required value={title} onChange={(e) => { setTitle(e.target.value); clear('title') }} error={errors.title} maxLength={200} />
-        <Textarea label="Короткий пример для сотрудника" rows={2} value={example} onChange={(e) => setExample(e.target.value)} maxLength={300} />
+        {mode === 'manual' && (
+          <>
+            <Input label="Название" required value={title} onChange={(e) => { setTitle(e.target.value); clear('title') }} error={errors.title} maxLength={200} />
+            <Textarea label="Короткий пример для сотрудника" rows={2} value={example} onChange={(e) => setExample(e.target.value)} maxLength={300} />
+          </>
+        )}
 
         <Input
           label={split ? 'Баллы в премию' : 'Баллы'}
@@ -114,7 +126,18 @@ export function EventTypeModal({ open, event, onClose, onSubmit }) {
             value={autoRule}
             onChange={(e) => { setAutoRule(e.target.value); clear('autoRule') }}
             error={errors.autoRule}
-            hint="Каждое правило может быть в профиле только один раз"
+            hint="Название события подставится из правила. Каждое правило может быть в профиле только один раз"
+          />
+        )}
+        {mode === 'auto' && (
+          <Select
+            label="Как начислять"
+            options={DECISIONS}
+            value={decision}
+            onChange={(e) => setDecision(e.target.value)}
+            hint={decision === 'review'
+              ? 'Баллы не начислятся сами: заявка придёт вам в «Ждут решения» и в телеграм с кнопками'
+              : 'Баллы начислятся сами и появятся в «Истории баллов» с пометкой «авто»'}
           />
         )}
 

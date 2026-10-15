@@ -10,8 +10,8 @@ import { GeneralPanel } from './GeneralPanel'
 
 /**
  * Раздел «Настройки» — только владелец (админ). Всё, что в задании отдано владельцу:
- * профили и их события, назначение профилей, общая шкала премии, уровни
- * работы, лимит штрафа и уведомления. Меняется без разработчика.
+ * условия по отделам и их события, общая шкала премии, уровни работы,
+ * лимиты и уведомления. Меняется без разработчика.
  */
 export function SettingsSection() {
   const store = useMotivationStore()
@@ -51,7 +51,7 @@ export function SettingsSection() {
 
   return (
     <div className="flex flex-col gap-4">
-      <ProfilesPanel profiles={settings.profiles} onOpen={setOpenProfileId} actions={actions} />
+      <ProfilesPanel profiles={settings.profiles} departments={settings.departments || []} onOpen={setOpenProfileId} actions={actions} />
       <AssignmentsPanel employees={settings.employees} profiles={settings.profiles} onAssign={actions.assignProfile} />
 
       <Card className="flex flex-col gap-4">

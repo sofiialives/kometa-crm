@@ -3,14 +3,16 @@ import { Avatar, Card, Select } from '../../../shared/ui'
 import { dayMonth } from '../../../utils/motivation'
 
 /**
- * Назначение профилей: у каждого сотрудника ровно один профиль. Смена
- * профиля действует с этого момента — события до неё остаются посчитаны
- * по прежним условиям.
+ * Ручное назначение старых профилей — только для людей, чьему отделу ещё
+ * не заданы условия по отделу. Остальным условия достаются сами. Когда
+ * условия есть у всех отделов, блок не показывается.
  */
 export function AssignmentsPanel({ employees, profiles, onAssign }) {
   const [busyId, setBusyId] = useState(null)
   const [error, setError] = useState(null)
-  const options = profiles.map((p) => ({ value: p.id, label: p.title }))
+  const legacy = profiles.filter((p) => !p.department)
+  const options = legacy.map((p) => ({ value: p.id, label: p.title }))
+  const covered = new Set(profiles.filter((p) => p.department).map((p) => p.department.id))
 
   async function change(employee, profileId) {
     if (!profileId || profileId === employee.profileId) return
@@ -20,13 +22,14 @@ export function AssignmentsPanel({ employees, profiles, onAssign }) {
     setError(res.ok ? null : res.error)
   }
 
-  const active = employees.filter((e) => e.active)
+  const active = employees.filter((e) => e.active && !(e.department && covered.has(e.department.id)))
+  if (active.length === 0 || legacy.length === 0) return null
 
   return (
     <Card className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <p className="caption">Назначение профилей</p>
-        <p className="text-sm text-ink-3">Банк и баллы есть у сотрудников и руководителей. У владельца их нет — он начисляет другим.</p>
+        <p className="caption">Старые профили вручную</p>
+        <p className="text-sm text-ink-3">Здесь только люди, чьему отделу ещё не заданы условия выше. Задайте условия отделу, и назначать вручную не придётся.</p>
       </div>
       {error && <p className="text-sm text-danger">{error}</p>}
       <ul className="flex flex-col divide-y divide-line">
