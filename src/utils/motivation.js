@@ -67,9 +67,8 @@ export function nextMonthStartKey(today = todayKey()) {
  * Подпись автособытия в условиях: работает ли оно уже. Без неё «+2 за
  * задачу в срок» читалось бы как обещание, которое пока не выполняется.
  */
-export function autoStatusLabel(rules) {
-  const review = rules?.taskPointsMode !== 'auto'
-  const base = review ? 'По задачам, начисляет владелец после проверки' : 'Автоматически по задачам'
+export function autoStatusLabel(rules, event) {
+  const base = event?.review ? 'По задачам, начисляет владелец после проверки' : 'Автоматически по задачам'
   if (rules?.autoTasksOn) return base
   if (rules?.autoTasksFrom) return `${base}, начнёт работать ${dayMonth(rules.autoTasksFrom)}`
   return `${base}, пока не включено`

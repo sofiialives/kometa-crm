@@ -103,6 +103,8 @@ export const useAuthStore = create(
         if (!get().token) return
         try {
           const fresh = await api.get('/auth/me')
+          // Пока ждали ответа, человек мог выйти.
+          if (!get().token) return
           const current = get().user
           if (!current || ['role', 'departmentId', 'position', 'name', 'status'].some((k) => current[k] !== fresh[k])) {
             set({ user: { ...current, ...fresh } })

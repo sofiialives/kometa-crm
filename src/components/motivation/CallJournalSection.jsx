@@ -42,19 +42,21 @@ export function CallJournalSection() {
   // не должен перезаписать новый.
   const latest = useRef(0)
 
-  const load = useCallback(async (d) => {
+  // silent — фоновое обновление: без спиннера и без блокировки кнопок.
+  const load = useCallback(async (d, { silent = false } = {}) => {
     const n = ++latest.current
-    setLoading(true)
+    if (!silent) setLoading(true)
     setError(null)
     const res = await fetchCallJournal(d)
     if (n !== latest.current) return
-    setLoading(false)
+    if (!silent) setLoading(false)
     if (res.ok) setJournal(res.data)
-    else setError(res.error)
+    else if (!silent) setError(res.error)
   }, [fetchCallJournal])
 
   useEffect(() => { load(day) }, [day, load])
-  useAutoRefresh(() => load(day))
+  // Пока отметка уходит на сервер, не обновляем: старый ответ затёр бы её.
+  useAutoRefresh(() => { if (busy.size === 0) load(day, { silent: true }) })
 
   const setBusyFor = (id, on) => setBusy((s) => {
     const next = new Set(s)
@@ -81,6 +83,8 @@ export function CallJournalSection() {
       setRowError((e) => ({ ...e, [id]: res.error }))
       return
     }
+    // Начатое до отметки фоновое обновление уже устарело — его ответ не нужен.
+    latest.current += 1
     setJournal((j) => j && ({
       ...j,
       summary: res.data.summary,

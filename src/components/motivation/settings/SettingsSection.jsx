@@ -51,7 +51,7 @@ export function SettingsSection() {
 
   return (
     <div className="flex flex-col gap-4">
-      <ProfilesPanel profiles={settings.profiles} departments={settings.departments || []} onOpen={setOpenProfileId} actions={actions} />
+      <ProfilesPanel profiles={settings.profiles} departments={settings.departments || []} employees={settings.employees || []} onOpen={setOpenProfileId} actions={actions} />
       <AssignmentsPanel employees={settings.employees} profiles={settings.profiles} onAssign={actions.assignProfile} />
 
       <Card className="flex flex-col gap-4">

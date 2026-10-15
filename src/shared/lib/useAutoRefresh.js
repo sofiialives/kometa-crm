@@ -9,7 +9,16 @@ export function useAutoRefresh(callback, interval = 30000) {
   const ref = useRef(callback)
   ref.current = callback
   useEffect(() => {
-    const run = () => { if (document.visibilityState === 'visible') ref.current() }
+    // Возврат на вкладку даёт сразу два события, focus и visibilitychange:
+    // второе за пару секунд пропускаем, иначе запросы уходят дважды.
+    let last = 0
+    const run = () => {
+      if (document.visibilityState !== 'visible') return
+      const now = Date.now()
+      if (now - last < 2000) return
+      last = now
+      ref.current()
+    }
     const id = setInterval(run, interval)
     document.addEventListener('visibilitychange', run)
     window.addEventListener('focus', run)

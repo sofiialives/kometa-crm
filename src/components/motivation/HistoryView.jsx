@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button, Card, EmptyState, Select, Spinner } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
 import { useMotivationStore } from '../../core/store/motivationStore'
@@ -9,6 +9,8 @@ const SOURCE = {
   auto: 'авто',
   manual: 'вручную',
   review: 'по решению',
+  rejected: 'не начислено',
+  withdrawn: 'заявку сняла система',
 }
 
 /**
@@ -33,8 +35,10 @@ export function HistoryView({ isAdmin }) {
 
   useEffect(() => {
     fetchTeamMonths()
-    fetchPeople().then((res) => { if (res.ok) setPeople(res.data) })
-  }, [fetchPeople, fetchTeamMonths])
+    // Руководителю история показывает только специалистов его отдела —
+    // себя и других руководителей в выборе не держим.
+    fetchPeople().then((res) => { if (res.ok) setPeople(isAdmin ? res.data : res.data.filter((p) => p.role === 'staff')) })
+  }, [fetchPeople, fetchTeamMonths, isAdmin])
 
   const departments = useMemo(() => {
     const map = new Map()
@@ -43,27 +47,34 @@ export function HistoryView({ isAdmin }) {
   }, [people])
   const shownPeople = people.filter((p) => !departmentId || p.department?.id === departmentId)
 
+  // Ответ на запрос с прежними фильтрами, пришедший поздно, не должен
+  // смешаться с новой выборкой.
+  const latest = useRef(0)
+  const filters = { month, departmentId: departmentId || undefined, userId: userId || undefined }
+
   useEffect(() => {
-    let alive = true
+    const n = ++latest.current
     setLoading(true)
     setError(null)
     fetchHistory({ month, departmentId: departmentId || undefined, userId: userId || undefined }).then((res) => {
-      if (!alive) return
+      if (n !== latest.current) return
       setLoading(false)
       if (res.ok) setPage(res.data); else setError(res.error)
     })
-    return () => { alive = false }
   }, [fetchHistory, month, departmentId, userId])
 
   // Новые записи сверху сами, пока человек не листал дальше первой страницы.
   useAutoRefresh(() => {
-    if (page && page.items.length > 100) return
-    fetchHistory({ month, departmentId: departmentId || undefined, userId: userId || undefined }).then((res) => { if (res.ok) setPage(res.data) })
+    if (loading || (page && page.items.length > 100)) return
+    const n = ++latest.current
+    fetchHistory(filters).then((res) => { if (n === latest.current && res.ok) setPage(res.data) })
   })
 
   async function more() {
+    const n = ++latest.current
     setLoading(true)
-    const res = await fetchHistory({ month, departmentId: departmentId || undefined, userId: userId || undefined, before: page.next })
+    const res = await fetchHistory({ ...filters, before: page.next })
+    if (n !== latest.current) return
     setLoading(false)
     if (res.ok) setPage((p) => ({ ...res.data, items: [...p.items, ...res.data.items] }))
     else setError(res.error)
@@ -120,6 +131,9 @@ export function HistoryView({ isAdmin }) {
 
 function Row({ item }) {
   const cancelled = Boolean(item.cancelled)
+  // Заявка, по которой решили «не начислять» или которую сняла система:
+  // баллов нет, показываем, сколько предлагалось.
+  const declined = item.kind === 'review'
   const source = SOURCE[item.source] || item.source
   return (
     <li className="grid gap-2 py-3 first:pt-0 last:pb-0 sm:grid-cols-[10rem_1fr_auto] sm:items-start">
@@ -135,10 +149,14 @@ function Row({ item }) {
           {cancelled && ` · отменено${item.cancelled.by ? `, ${item.cancelled.by}` : ''}${item.cancelled.reason ? `: ${item.cancelled.reason}` : ''}`}
         </span>
       </div>
-      <span className={cx('text-sm font-semibold tabular-nums', cancelled ? 'text-ink-3 line-through' : pointsTone(item.prizePoints))}>
-        {signedPoints(item.prizePoints)}
-        {item.levelPoints !== item.prizePoints && <span className="ml-1 text-xs font-normal text-ink-3">уровень {signedPoints(item.levelPoints)}</span>}
-      </span>
+      {declined ? (
+        <span className="text-sm text-ink-3 tabular-nums">0, предлагалось {signedPoints(item.suggestedPoints)}</span>
+      ) : (
+        <span className={cx('text-sm font-semibold tabular-nums', cancelled ? 'text-ink-3 line-through' : pointsTone(item.prizePoints))}>
+          {signedPoints(item.prizePoints)}
+          {item.levelPoints !== item.prizePoints && <span className="ml-1 text-xs font-normal text-ink-3">уровень {signedPoints(item.levelPoints)}</span>}
+        </span>
+      )}
     </li>
   )
 }

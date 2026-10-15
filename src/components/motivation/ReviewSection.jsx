@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Avatar, Button, Card, EmptyState, Input, Spinner } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
 import { useMotivationStore } from '../../core/store/motivationStore'
@@ -37,7 +38,9 @@ export function ReviewSection() {
   // Заявка обновилась, пока на неё смотрели (ночь добавила штраф) — сервер
   // ответит 409, и очередь перечитывается, чтобы владелец увидел новое число.
   const refresh = () => { setDone(new Set()); fetchReviews(view) }
-  const [view, setView] = useState('history')
+  // Кнопка из телеграма («Открыть») ведёт сразу в «Ждут решения».
+  const [params] = useSearchParams()
+  const [view, setView] = useState(() => (params.get('view') === 'pending' ? 'pending' : 'history'))
   const pendingCount = useMotivationStore((s) => s.reviewsPending)
   const [done, setDone] = useState(() => new Set())
 
