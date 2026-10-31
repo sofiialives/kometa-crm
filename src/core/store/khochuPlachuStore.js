@@ -18,10 +18,10 @@ export const useKhochuPlachuStore = create((set, get) => ({
   loading: false,
   error: null,
 
-  async fetchAmbassadors({ q, theme, status } = {}) {
+  async fetchAmbassadors({ q, theme, status, fromDate, toDate } = {}) {
     set({ loading: true, error: null })
     try {
-      const ambassadors = await api.get(`/khochu-plachu/ambassadors${query({ q, theme, status })}`)
+      const ambassadors = await api.get(`/khochu-plachu/ambassadors${query({ q, theme, status, fromDate, toDate })}`)
       set({ ambassadors, loading: false })
       return { ok: true }
     } catch (e) {

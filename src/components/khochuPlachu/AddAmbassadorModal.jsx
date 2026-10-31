@@ -1,6 +1,13 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button, DatePicker, Field, Input, Modal, TimePicker } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
+import { todayKey } from '../../utils/calls'
+import { MSK_OFFSET_MS } from '../../utils/tasks'
+
+function nowMskTime() {
+  const d = new Date(Date.now() + MSK_OFFSET_MS)
+  return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`
+}
 
 const EMPTY_LINK = { label: '', url: '' }
 
@@ -27,6 +34,12 @@ export function AddAmbassadorModal({ open, onClose, onSubmit, themes }) {
     reset()
     onClose()
   }
+
+  useEffect(() => {
+    if (!open) return
+    setCallDate(todayKey())
+    setCallTime(nowMskTime())
+  }, [open])
 
   function addFiles(list) {
     setFiles((prev) => [...prev, ...Array.from(list || [])])
@@ -55,7 +68,6 @@ export function AddAmbassadorModal({ open, onClose, onSubmit, themes }) {
     if (!telegramGroupLink.trim()) next.telegramGroupLink = 'Укажите ссылку на общий чат'
     if (!contactUsername.trim()) next.contactUsername = 'Укажите контакт'
     else if (!contactUsername.trim().startsWith('@')) next.contactUsername = 'Юзернейм должен начинаться с @'
-    if (files.length === 0) next.files = 'Прикрепите хотя бы один скриншот'
     const cleanLinks = links.filter((l) => l.label.trim() || l.url.trim())
     if (cleanLinks.length === 0) next.links = 'Добавьте хотя бы одну ссылку'
     else if (cleanLinks.some((l) => !l.label.trim() || !l.url.trim())) next.links = 'Заполните название и ссылку у каждой соцсети'
@@ -96,7 +108,7 @@ export function AddAmbassadorModal({ open, onClose, onSubmit, themes }) {
       }
     >
       <div className="flex flex-col gap-4">
-        <Field label="Скриншоты переписки" required error={errors.files}>
+        <Field label="Скриншоты переписки" error={errors.files}>
           <div className="flex flex-wrap gap-2">
             {files.map((f, i) => (
               <div key={i} className="relative flex items-center gap-2 rounded-lg border border-line-2 bg-panel px-3 py-2 text-sm">
@@ -160,7 +172,7 @@ export function AddAmbassadorModal({ open, onClose, onSubmit, themes }) {
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <DatePicker label="Удобная дата звонка" value={callDate} onChange={setCallDate} />
+          <DatePicker label="Удобная дата звонка" value={callDate} onChange={setCallDate} today={todayKey()} />
           <TimePicker label="Удобное время звонка" value={callTime} onChange={setCallTime} />
         </div>
 

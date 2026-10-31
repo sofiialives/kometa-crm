@@ -3,11 +3,12 @@ import { useAuthStore } from '../../core/store/authStore'
 import { useDepartmentsStore } from '../../core/store/departmentsStore'
 import { useKhochuPlachuStore } from '../../core/store/khochuPlachuStore'
 import { PageSection } from '../../widgets'
-import { Button, ConfirmModal, EmptyState, Input, Select, Spinner } from '../../shared/ui'
+import { Button, ConfirmModal, DateRangePicker, EmptyState, Input, Select, Spinner } from '../../shared/ui'
 import { AddAmbassadorModal } from '../../components/khochuPlachu/AddAmbassadorModal'
 import { AmbassadorCard } from '../../components/khochuPlachu/AmbassadorCard'
 import { AmbassadorDetailModal } from '../../components/khochuPlachu/AmbassadorDetailModal'
 import { AnalyticsPanel } from '../../components/khochuPlachu/AnalyticsPanel'
+import { todayKey } from '../../utils/calls'
 
 const DEPARTMENT_NAME = 'Хочу Плачу фокус'
 const ACCOUNT_MANAGER_POSITION = 'Аккаунт менеджер'
@@ -30,6 +31,8 @@ export default function KhochuPlachuPage() {
   const [q, setQ] = useState('')
   const [theme, setTheme] = useState('')
   const [status, setStatus] = useState('')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
   const [addOpen, setAddOpen] = useState(false)
   const [confirm, setConfirm] = useState(null)
   const [detail, setDetail] = useState(null)
@@ -42,21 +45,18 @@ export default function KhochuPlachuPage() {
 
   const debounced = useDebounced(q, 300)
   useEffect(() => {
-    fetchAmbassadors({ q: debounced, theme, status })
-  }, [fetchAmbassadors, debounced, theme, status])
+    fetchAmbassadors({ q: debounced, theme, status, fromDate, toDate })
+  }, [fetchAmbassadors, debounced, theme, status, fromDate, toDate])
 
-  const statusOptions = useMemo(() => {
-    if (isAdmin) return [{ value: 'approved', label: 'Одобрены' }]
-    return [
-      { value: '', label: 'Все статусы' },
-      { value: 'pending', label: 'На рассмотрении' },
-      { value: 'approved', label: 'Одобрены' },
-      { value: 'removed', label: 'Снятые' },
-    ]
-  }, [isAdmin])
+  const statusOptions = useMemo(() => [
+    { value: '', label: 'Все статусы' },
+    { value: 'pending', label: 'На рассмотрении' },
+    { value: 'approved', label: 'Одобрены' },
+    { value: 'removed', label: 'Снятые' },
+  ], [])
 
   async function refresh() {
-    await fetchAmbassadors({ q: debounced, theme, status })
+    await fetchAmbassadors({ q: debounced, theme, status, fromDate, toDate })
     fetchAnalytics()
   }
 
@@ -78,7 +78,7 @@ export default function KhochuPlachuPage() {
     >
       <AnalyticsPanel analytics={analytics} />
 
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap items-end gap-3">
         <Input placeholder="Поиск по тематике, условиям, контакту…" value={q} onChange={(e) => setQ(e.target.value)} className="flex-1 min-w-[220px]" />
         <Select
           value={theme}
@@ -88,6 +88,12 @@ export default function KhochuPlachuPage() {
           className="w-52"
         />
         <Select value={status} onChange={(e) => setStatus(e.target.value)} options={statusOptions} className="w-52" />
+        <DateRangePicker
+          value={{ from: fromDate, to: toDate }}
+          onChange={({ from, to }) => { setFromDate(from); setToDate(to) }}
+          today={todayKey()}
+          className="w-56"
+        />
       </div>
 
       {loading && ambassadors.length === 0 ? (
