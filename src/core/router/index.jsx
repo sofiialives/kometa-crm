@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { createBrowserRouter, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { AppLayout } from '../../shared/layout/AppLayout'
@@ -10,6 +11,8 @@ import BoardPage from '../../pages/Board'
 import MotivationPage from '../../pages/Motivation'
 import AdminPage from '../../pages/Admin'
 import SettingsPage from '../../pages/Settings'
+import KhochuPlachuPage from '../../pages/KhochuPlachu'
+import { useDepartmentsStore } from '../store/departmentsStore'
 
 function Protected() {
   const isAuthed = useAuthStore((s) => Boolean(s.token))
@@ -21,6 +24,24 @@ function Protected() {
 function AdminOnly() {
   const isAdmin = useAuthStore((s) => s.user?.role === 'admin')
   if (!isAdmin) return <Navigate to="/" replace />
+  return <Outlet />
+}
+
+function KhochuPlachuOnly() {
+  const user = useAuthStore((s) => s.user)
+  const departments = useDepartmentsStore((s) => s.departments)
+  const fetchDepartments = useDepartmentsStore((s) => s.fetchDepartments)
+
+  useEffect(() => {
+    if (departments.length === 0) fetchDepartments()
+  }, [departments.length, fetchDepartments])
+
+  const isAdmin = user?.role === 'admin'
+  const department = departments.find((d) => d.id === user?.departmentId)
+  const hasAccess = isAdmin
+    || (department?.name === 'Хочу Плачу фокус' && ['Менеджер', 'Аккаунт менеджер'].includes(user?.position))
+
+  if (!hasAccess) return <Navigate to="/" replace />
   return <Outlet />
 }
 
@@ -40,6 +61,12 @@ export const router = createBrowserRouter([
           // отдел, админ — всех и настройки. Кто что видит, решает сервер.
           { path: '/motivation', element: <MotivationPage /> },
           { path: '/settings', element: <SettingsPage /> },
+          {
+            element: <KhochuPlachuOnly />,
+            children: [
+              { path: '/khochu-plachu', element: <KhochuPlachuPage /> },
+            ],
+          },
           {
             element: <AdminOnly />,
             children: [

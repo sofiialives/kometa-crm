@@ -1,15 +1,36 @@
 import { NavLink, useNavigate, Link } from 'react-router-dom'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuthStore } from '../../core/store/authStore'
 import { useUiStore } from '../../core/store/uiStore'
+import { useDepartmentsStore } from '../../core/store/departmentsStore'
+import { useKhochuPlachuStore } from '../../core/store/khochuPlachuStore'
 import { Avatar } from '../ui/Avatar'
 import { ConfirmModal } from '../ui/Modal'
 import { cx } from '../lib/cx'
 import { roleLabel } from './Header'
 
 function useNavItems() {
-  const isAdmin = useAuthStore((s) => s.user?.role === 'admin')
+  const user = useAuthStore((s) => s.user)
+  const isAdmin = user?.role === 'admin'
+  const departments = useDepartmentsStore((s) => s.departments)
+  const fetchDepartments = useDepartmentsStore((s) => s.fetchDepartments)
+  const unreadCount = useKhochuPlachuStore((s) => s.unreadCount)
+  const fetchUnreadCount = useKhochuPlachuStore((s) => s.fetchUnreadCount)
+
+  useEffect(() => {
+    if (departments.length === 0) fetchDepartments()
+  }, [departments.length, fetchDepartments])
+
+  const department = departments.find((d) => d.id === user?.departmentId)
+  const isKhochuPlachuDept = department?.name === 'Хочу Плачу фокус'
+  const isAccountManager = isKhochuPlachuDept && user?.position === 'Аккаунт менеджер'
+  const canSeeKhochuPlachu = isAdmin || (isKhochuPlachuDept && ['Менеджер', 'Аккаунт менеджер'].includes(user?.position))
+
+  useEffect(() => {
+    if (isAccountManager) fetchUnreadCount()
+  }, [isAccountManager, fetchUnreadCount])
+
   return [
     ...(isAdmin ? [{ to: '/admin', label: 'Админ-панель', icon: IconShield }] : []),
     ...(isAdmin ? [{ to: '/board', label: 'Клиенты', icon: IconBoardMoney }] : []),
@@ -21,6 +42,7 @@ function useNavItems() {
     { to: '/calls', label: 'Звонки', icon: IconPhone },
     { to: '/archive', label: 'Архив', icon: IconArchive },
     { to: '/motivation', label: 'Мотивация', icon: IconTrophy },
+    ...(canSeeKhochuPlachu ? [{ to: '/khochu-plachu', label: 'Хочу Плачу!', icon: IconPaw, badge: isAccountManager ? unreadCount : 0 }] : []),
   ]
 }
 
@@ -47,7 +69,7 @@ function NavList({ onNavigate }) {
   return (
     <nav className="flex flex-col gap-1">
       <p className="caption px-3.5 pb-2">Навигация</p>
-      {items.map(({ to, label, icon: Icon }) => (
+      {items.map(({ to, label, icon: Icon, badge }) => (
         <NavLink
           key={to}
           to={to}
@@ -63,7 +85,10 @@ function NavList({ onNavigate }) {
           }
         >
           <Icon />
-          {label}
+          <span className="flex-1">{label}</span>
+          {Boolean(badge) && (
+            <span className="rounded-full bg-accent-soft px-1.5 text-xs tabular-nums text-accent">{badge}</span>
+          )}
         </NavLink>
       ))}
     </nav>
@@ -167,4 +192,11 @@ function IconTrophy() {
 }
 function IconShield() {
   return (<svg {...ic}><path d="M12 2l8 3v6c0 5-3.5 9.4-8 11-4.5-1.6-8-6-8-11V5z"/><path d="M9 12l2 2 4-4"/></svg>)
+}
+function IconPaw() {
+  return (
+    <svg width={16} height={16} viewBox="0 0 156 152" fill="currentColor">
+      <path d="M59.916 0.00880488C69.2704 0.532275 76.896 12.4118 76.9041 26.6835C76.9278 40.8782 69.466 52.0402 60.0961 51.5938C50.8032 51.1629 43.1006 39.2678 43.0154 24.9805C42.9147 10.7703 50.5306 -0.360593 59.916 0.00880488ZM114.997 11.1161C123.869 14.4284 126.499 27.6254 121.053 40.7171C115.361 53.8393 103.727 61.8352 94.9165 58.6154C86.0288 55.3801 83.4759 42.1986 89.0759 29.138C94.6144 15.9848 106.248 7.98891 114.997 11.1161ZM11.5556 27.1345C21.099 25.1307 31.657 34.3948 35.4891 47.5937C38.8894 60.9461 34.3077 73.3302 24.8414 75.3496C15.3751 77.369 4.87853 68.1974 1.2316 54.8755C-2.41533 41.5535 2.33597 29.1234 11.5556 27.1345ZM150.221 55.0969C157.949 60.5034 157.512 73.8035 148.987 84.6709C140.463 95.5384 127.232 99.9253 119.288 94.3951C111.344 88.8649 111.92 75.6729 120.229 64.6818C128.877 53.9995 142.2 49.5511 150.221 55.0969ZM120.61 135.548C119.458 142.851 112.295 149.745 105.064 151.413C90.001 154.949 82.6744 111.656 67.3442 108.565C52.0139 105.473 26.4143 142.688 14.2385 133.098C7.29604 127.769 4.00004 116.683 6.67925 108.565C10.3806 97.3661 25.4129 93.9839 35.272 87.2336C48.3245 78.5618 60.1448 59.7007 75.6291 62.8231C91.0364 65.93 95.1477 87.6832 103.295 100.951C109.951 112.073 122.603 122.882 120.61 135.548Z" />
+    </svg>
+  )
 }
