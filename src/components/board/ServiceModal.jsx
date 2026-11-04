@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Button, Modal } from '../../shared/ui'
 import { ServiceFields, newService, serviceToPayload, validateService } from './ServiceFields'
-import { dayKey, monthBounds, monthKey } from '../../utils/board'
+import { dayKey, monthKey } from '../../utils/board'
 
 /** Одна услуга за месяц. Поля те же, что и в форме нового клиента. */
 export function ServiceModal({ open, onClose, onSubmit, service }) {
@@ -17,10 +17,10 @@ export function ServiceModal({ open, onClose, onSubmit, service }) {
         key: service.id,
         title: service.title,
         month: monthKey(service.month),
-        // Срок работ приходит всегда; запасной вариант на случай ответа без
-        // него, весь месяц, как и задумано по умолчанию.
-        workFrom: service.workFrom ? dayKey(service.workFrom) : monthBounds(service.month).from,
-        workTo: service.workTo ? dayKey(service.workTo) : monthBounds(service.month).to,
+        // Срок работ сервер отдаёт всегда: пустые границы он сам заменяет
+        // краями месяца услуги.
+        workFrom: dayKey(service.workFrom),
+        workTo: dayKey(service.workTo),
         // Услуги, заведённые до появления поля, даты не имеют: форма покажет
         // пустое обязательное поле, и при правке её придётся назвать.
         paidAt: service.paidAt ? dayKey(service.paidAt) : '',
