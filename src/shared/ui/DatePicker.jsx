@@ -35,7 +35,7 @@ function parse(value) {
  * полгода назад. Пока today служил заодно и нижней границей, в таких полях
  * выбиралось ровно одно число — сегодняшнее.
  */
-export function DatePicker({ label, hint, error, required, disabled, value, onChange, today, min, max, id: propId, className }) {
+export function DatePicker({ label, hint, error, required, disabled, size = 'md', value, onChange, today, min, max, id: propId, className }) {
   const id = useFieldId(propId)
   // Портал, fixed и пересчёт при прокрутке — общая механика всплывающих
   // панелей, одна на календарь и на выпадающие списки.
@@ -84,7 +84,7 @@ export function DatePicker({ label, hint, error, required, disabled, value, onCh
           disabled={disabled}
           onClick={() => setOpen((o) => !o)}
           className={cx(
-            controlClasses({ error }),
+            controlClasses({ error, size }),
             'flex items-center justify-between gap-2 text-left cursor-pointer disabled:opacity-60 disabled:cursor-default',
             open && 'border-accent ring-2 ring-accent/25',
           )}
@@ -144,7 +144,8 @@ export function DatePicker({ label, hint, error, required, disabled, value, onCh
               })}
             </div>
 
-            {today && (
+            {/* «Сегодня» вне разрешённых дат только сбило бы форму. */}
+            {today && !(max && today > max) && !(min && today < min) && (
               <button
                 type="button"
                 onClick={() => { onChange(today); setOpen(false) }}

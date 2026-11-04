@@ -70,6 +70,12 @@ export const useBoardStore = create((set, get) => ({
   addService: (body) => call(() => api.post('/board/services', body)),
   editService: (id, body) => call(() => api.patch(`/board/services/${id}`, body)),
   removeService: (id) => call(() => api.del(`/board/services/${id}`)),
+
+  // Отметка «оплачено» у одного расхода и день выплаты, который назвал человек.
+  // Снятие галочки шлёт только paid: false. Отвечает сервер обновлённым
+  // расходом; карточка и сводка после этого перечитываются страницей.
+  setExpensePaid: (id, paid, paidAt) =>
+    call(() => api.patch(`/board/expenses/${id}`, paid ? { paid, paidAt } : { paid })),
 }))
 
 // Все изменяющие вызовы отвечают одинаково: { ok } либо { ok: false, error }.

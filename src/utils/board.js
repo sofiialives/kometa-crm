@@ -1,4 +1,5 @@
 /** Общие мелочи Доски клиентов. */
+import { MSK_OFFSET_MS, MSK_TZ, defaultMskDateValue, splitDeadlineMsk } from './tasks'
 
 /**
  * Деньги приходят с сервера в центах целым числом. Показываем долларами.
@@ -13,27 +14,50 @@ export function money(cents) {
   return `${v < 0 ? '\u2212' : ''}$${amount}`
 }
 
+/**
+ * Месяцы и дни доски считаются по Москве, как и у остальной CRM. По UTC
+ * первого числа до трёх ночи по Москве ещё шёл прошлый месяц, и новая
+ * услуга ложилась не туда. Даты без времени (ГГГГ-ММ-ДД, первое число
+ * месяца) приходят полуночью UTC, то есть тремя часами утра по Москве:
+ * тот же день, так что на них сдвиг ничего не меняет.
+ */
+const msk = (value) => new Date(new Date(value).getTime() + MSK_OFFSET_MS)
+
 /** «октябрь 2026» — подпись месяца, к которому привязана услуга. */
 export function monthLabel(value) {
   return new Date(value)
-    .toLocaleDateString('ru-RU', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+    .toLocaleDateString('ru-RU', { month: 'long', year: 'numeric', timeZone: MSK_TZ })
     .replace(/\s*г\.$/, '')
 }
 
 /** Значение для поля месяца: первое число, ГГГГ-ММ-01. */
 export function monthKey(value = new Date()) {
-  const d = new Date(value)
+  const d = msk(value)
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-01`
 }
 
-export function dayKey(value = new Date()) {
-  return new Date(value).toISOString().slice(0, 10)
+/** Значение для поля даты: ГГГГ-ММ-ДД. Без аргумента это сегодня по Москве. */
+export function dayKey(value) {
+  return value === undefined ? defaultMskDateValue() : splitDeadlineMsk(value).date
+}
+
+/**
+ * Первый и последний день месяца, оба включительно, строками ГГГГ-ММ-ДД.
+ * Это срок работ по умолчанию. Без месяца сроку взяться неоткуда, и вернутся
+ * пустые строки.
+ */
+export function monthBounds(value) {
+  if (!value) return { from: '', to: '' }
+  const [y, m] = monthKey(value).split('-').map(Number)
+  const prefix = `${y}-${String(m).padStart(2, '0')}`
+  const last = new Date(Date.UTC(y, m, 0)).getUTCDate()
+  return { from: `${prefix}-01`, to: `${prefix}-${String(last).padStart(2, '0')}` }
 }
 
 export function dateLabel(value) {
   if (!value) return ''
   return new Date(value)
-    .toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+    .toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: MSK_TZ })
     .replace(/\s*г\.$/, '')
 }
 
@@ -87,6 +111,38 @@ export function servicesWord(n) {
   return `${n} услуг`
 }
 
+// Названия месяцев для фраз: «сохранена за ноябрь» и «выручка в ноябре».
+const MONTH_FOR = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь']
+const MONTH_IN = ['январе', 'феврале', 'марте', 'апреле', 'мае', 'июне', 'июле', 'августе', 'сентябре', 'октябре', 'ноябре', 'декабре']
+
+/**
+ * Услуга, которую сервер показал в периоде только потому, что работы по ней
+ * идут в нём: её месяц и выручка в другом периоде. Такие услуги в суммы
+ * периода не входят.
+ */
+export const isFinishing = (service) => service.inPeriod === false
+
+/**
+ * Номер месяца (с нуля) и приписка с годом. Год нужен, только если месяц не в
+ * текущем году: иначе фраза про «ноябрь» двусмысленна.
+ */
+function monthParts(value) {
+  const [year, month] = monthKey(value).split('-')
+  return { i: Number(month) - 1, tail: year === monthKey().slice(0, 4) ? '' : ` ${year}` }
+}
+
+/** «октябрь» для фраз вроде «сохранена за октябрь». */
+export function monthName(value) {
+  const { i, tail } = monthParts(value)
+  return `${MONTH_FOR[i]}${tail}`
+}
+
+/** «Выручка в ноябре, сюда не входит» — пометка у доделки. */
+export function finishingNote(service) {
+  const { i, tail } = monthParts(service.month)
+  return `Выручка в ${MONTH_IN[i]}${tail}, сюда не входит`
+}
+
 /**
  * Месяцы для выпадающего списка: последний год плюс следующий месяц.
  *
@@ -94,7 +150,7 @@ export function servicesWord(n) {
  * раньше, чем он наступил, — обычное дело.
  */
 export function recentMonths(count = 12) {
-  const now = new Date()
+  const now = msk(new Date())
   return Array.from({ length: count + 1 }, (_, i) => {
     const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1 - i, 1))
     return { value: monthKey(d), label: monthLabel(d) }

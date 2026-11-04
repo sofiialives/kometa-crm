@@ -11,7 +11,15 @@ import { dateLabel, marginText, money, servicesWord, tenure } from '../../utils/
  */
 export function BoardCard({ card, onOpen, onLeave, onReturn, periodLabel }) {
   const left = card.status === 'left'
-  const empty = card.serviceCountInPeriod === 0
+  // Услуг с деньгами в периоде нет: суммы нулевые, их приглушаем.
+  const noMoney = card.serviceCountInPeriod === 0
+  // Оранжевая пометка нужна только клиенту, у которого в периоде не видно
+  // вообще ничего: ни услуг с деньгами, ни доделок.
+  const empty = (card.serviceCountVisible ?? card.serviceCountInPeriod) === 0
+  // Доделки: услуга видна в периоде, потому что работы идут в нём, а выручка
+  // и расходы лежат в другом месяце. Список доски отдаёт только число, названия
+  // видны в карточке клиента.
+  const finishingCount = Math.max(0, (card.serviceCountVisible ?? 0) - card.serviceCountInPeriod)
 
   return (
     <Card
@@ -31,15 +39,22 @@ export function BoardCard({ card, onOpen, onLeave, onReturn, periodLabel }) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <Row label={`Выручка · ${periodLabel}`} value={money(card.revenueCents)} muted={empty} />
+        <Row label={`Выручка · ${periodLabel}`} value={money(card.revenueCents)} muted={noMoney} />
         <Row
           label={`Прибыль · ${periodLabel}`}
           value={money(card.profitCents)}
           tone={card.profitCents < 0 ? 'text-danger' : 'text-ok'}
           note={marginText(card.profitCents, card.revenueCents)}
-          muted={empty}
+          muted={noMoney}
         />
+        {card.unpaidCents > 0 && (
+          <Row label="Не выплачено" value={money(card.unpaidCents)} tone="text-warn" />
+        )}
       </div>
+
+      {finishingCount > 0 && (
+        <p className="text-xs text-ink-3">Доделки · {servicesWord(finishingCount)}, выручка в других месяцах</p>
+      )}
 
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-3">
         <span>с нами {tenure(card.daysWithUs)}</span>
@@ -53,7 +68,7 @@ export function BoardCard({ card, onOpen, onLeave, onReturn, periodLabel }) {
         </p>
       )}
 
-      {empty && !left && <p className="text-xs text-warn">В этом периоде услуг не было</p>}
+      {empty && !left && <p className="text-xs text-warn">Услуг пока нет</p>}
 
       {/* Перенос между колонками прямо с карточки — как стрелки в
           Задачнике. Иначе пришлось бы открывать карточку ради одного

@@ -17,6 +17,9 @@ export function BoardSummary({ summary, periodLabel }) {
       value: money(summary?.profitCents),
       tone: (summary?.profitCents ?? 0) < 0 ? 'text-danger' : 'text-ok',
       note: marginText(summary?.profitCents, summary?.revenueCents),
+      // Расходы услуг периода, которые ещё не выплатили. В прибыль они уже
+      // вычтены, так что это напоминание под ней, а не отдельная сумма.
+      warning: summary?.unpaidCents > 0 ? `Не выплачено ${money(summary.unpaidCents)}` : null,
     },
     { label: 'Клиентов в работе', value: summary?.activeCount ?? 0 },
     { label: 'Клиентов ушло', value: summary?.leftCount ?? 0, tone: 'text-ink-2' },
@@ -29,6 +32,7 @@ export function BoardSummary({ summary, periodLabel }) {
           <p className="caption">{t.label}</p>
           <p className={cx('font-display text-2xl font-bold tracking-tight tabular-nums', t.tone)}>{t.value}</p>
           {t.note && <p className="text-xs text-ink-3 tabular-nums">{t.note}</p>}
+          {t.warning && <p className="text-xs text-warn tabular-nums">{t.warning}</p>}
         </Card>
       ))}
     </div>

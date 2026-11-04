@@ -1,6 +1,8 @@
-import { AddAction, Badge, Button, EmptyState, Modal, Spinner } from '../../shared/ui'
+import { AddAction, Badge, Button, Checkbox, DatePicker, EmptyState, Modal, Spinner } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
-import { dateLabel, marginText, money, monthLabel, servicesWord, tenure } from '../../utils/board'
+import {
+  dateLabel, dayKey, finishingNote, isFinishing, marginText, money, monthLabel, servicesWord, tenure,
+} from '../../utils/board'
 import { ClientProductButton } from '../motivation/ClientProductButton'
 
 /**
@@ -11,10 +13,14 @@ import { ClientProductButton } from '../motivation/ClientProductButton'
  * иначе две арифметики однажды разойдутся.
  */
 export function CardModal({
-  open, onClose, card, loading, periodLabel,
-  onAddService, onEditService, onDeleteService, onLeave, onReturn, onRemove,
+  open, onClose, card, loading, periodLabel, notice, payingExpenses,
+  onAddService, onEditService, onDeleteService, onChangePaid, onLeave, onReturn, onRemove,
 }) {
   const left = card?.status === 'left'
+  // Доделки идут отдельным списком: их деньги относятся к другому периоду.
+  const services = card?.services ?? []
+  const regular = services.filter((s) => !isFinishing(s))
+  const finishing = services.filter(isFinishing)
 
   return (
     <Modal
@@ -55,7 +61,7 @@ export function CardModal({
               )}
             </div>
 
-            <div className="flex gap-6">
+            <div className="flex flex-wrap gap-x-6 gap-y-3">
               <Figure label={`Выручка · ${periodLabel}`} value={money(card.revenueCents)} />
               <Figure
                 label={`Прибыль · ${periodLabel}`}
@@ -63,6 +69,11 @@ export function CardModal({
                 tone={card.profitCents < 0 ? 'text-danger' : 'text-ok'}
                 note={marginText(card.profitCents, card.revenueCents)}
               />
+              {/* Расходы, которые ещё предстоит выплатить. В прибыль они уже
+                  вычтены, так что это не третья сумма, а напоминание. */}
+              {card.unpaidCents > 0 && (
+                <Figure label="Не выплачено" value={money(card.unpaidCents)} tone="text-warn" />
+              )}
             </div>
           </div>
 
@@ -72,20 +83,35 @@ export function CardModal({
               <p className="caption">{servicesWord(card.serviceCountTotal)} за всё время</p>
             </div>
 
-            {card.services.length === 0 ? (
+            {notice && <p className="text-sm text-ok" role="status">{notice}</p>}
+
+            {services.length === 0 ? (
               <EmptyState
                 label="Пусто"
-                text="В этом периоде услуг не было. Добавьте их или переключите период наверху доски."
+                text={card.serviceCountTotal === 0
+                  ? 'Услуг пока нет. Добавьте первую.'
+                  : 'В этом периоде услуг не было. Добавьте их или переключите период наверху доски.'}
               />
             ) : (
-              card.services.map((s) => (
+              regular.map((s) => (
                 <ServiceBlock
                   key={s.id}
                   service={s}
+                  paying={payingExpenses}
                   onEdit={() => onEditService(s)}
                   onDelete={() => onDeleteService(s)}
+                  onChangePaid={onChangePaid}
                 />
               ))
+            )}
+
+            {finishing.length > 0 && (
+              <>
+                <p className="caption mt-1">Доделки</p>
+                {finishing.map((s) => (
+                  <FinishingBlock key={s.id} service={s} onEdit={() => onEditService(s)} />
+                ))}
+              </>
             )}
 
             <AddAction onClick={onAddService}>Добавить услугу</AddAction>
@@ -106,7 +132,24 @@ function Figure({ label, value, tone, note }) {
   )
 }
 
-function ServiceBlock({ service, onEdit, onDelete }) {
+/**
+ * Услуга другого месяца, по которой работы идут в этом периоде. Сумм здесь
+ * нет намеренно: выручка и расходы лежат в месяце услуги, а в итоги этого
+ * периода не входят. Править её можно, например продлить срок.
+ */
+function FinishingBlock({ service, onEdit }) {
+  return (
+    <section className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-card border border-dashed border-line-2 px-4 py-3">
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <p className="truncate text-sm font-medium text-ink-2" title={service.title}>{service.title}</p>
+        <span className="text-xs text-ink-3">{finishingNote(service)}</span>
+      </div>
+      <Button variant="ghost" size="sm" onClick={onEdit}>Изменить</Button>
+    </section>
+  )
+}
+
+function ServiceBlock({ service, paying, onEdit, onDelete, onChangePaid }) {
   return (
     <section className="flex flex-col gap-3 rounded-card border border-line p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -131,7 +174,7 @@ function ServiceBlock({ service, onEdit, onDelete }) {
         <Line label="Выручка" value={money(service.revenueCents)} />
 
         {service.expenses.map((e) => (
-          <Line key={e.id} label={e.title} value={`− ${money(e.amountCents)}`} muted indent />
+          <ExpenseLine key={e.id} expense={e} pending={paying?.[e.id]} onChange={(next) => onChangePaid(e, next)} />
         ))}
 
         {service.expenses.length === 0 && (
@@ -149,6 +192,58 @@ function ServiceBlock({ service, onEdit, onDelete }) {
         </div>
       </div>
     </section>
+  )
+}
+
+/**
+ * Строка расхода с галочкой «оплачено» и днём выплаты. Любое изменение сразу
+ * уходит на сервер: отдельной кнопки «сохранить» нет. Пока запрос идёт,
+ * показываем уже новое значение и не даём нажать второй раз.
+ *
+ * Ставишь галочку, день по умолчанию сегодняшний (по Москве); его можно сменить
+ * в календаре, в том числе задним числом. Оплаченный расход приглушён: внимание
+ * нужно тому, что ещё не выплачено. У старых оплаченных расходов дня нет, и
+ * тогда пишем просто «оплачено».
+ */
+function ExpenseLine({ expense, pending, onChange }) {
+  const { paid, paidAt } = pending ?? {
+    paid: Boolean(expense.paid),
+    paidAt: expense.paidAt ? dayKey(expense.paidAt) : '',
+  }
+  const busy = pending !== undefined
+  const tone = paid ? 'text-ink-3' : 'text-ink-2'
+  const today = dayKey()
+
+  return (
+    <div className="flex flex-col gap-1.5 pl-3">
+      <div className="flex items-center gap-2">
+        {/* Отрицательный отступ раздвигает зону нажатия, не меняя высоту строки:
+            квадрат в 20 пикселей пальцем на телефоне не поймать. */}
+        <Checkbox
+          className={cx('-m-1.5 p-1.5', busy && 'opacity-60')}
+          checked={paid}
+          disabled={busy}
+          onChange={(ev) => onChange(ev.target.checked ? { paid: true, paidAt: today } : { paid: false })}
+          aria-label={`Расход «${expense.title}» оплачен`}
+        />
+        <span className={cx('min-w-0 flex-1 truncate text-sm', tone)} title={expense.title}>{expense.title}</span>
+        <span className={cx('shrink-0 text-sm tabular-nums', tone)}>{`− ${money(expense.amountCents)}`}</span>
+      </div>
+
+      {/* Отступ слева равен ширине галочки и зазору: день стоит под названием. */}
+      {paid && paidAt && (
+        <DatePicker
+          className="ml-7 w-44"
+          size="sm"
+          value={paidAt}
+          onChange={(v) => onChange({ paid: true, paidAt: v })}
+          today={today}
+          max={today}
+          disabled={busy}
+        />
+      )}
+      {paid && !paidAt && <span className="pl-7 text-[11px] leading-tight text-ink-3">оплачено</span>}
+    </div>
   )
 }
 
