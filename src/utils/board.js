@@ -123,13 +123,23 @@ const MONTH_IN = ['январе', 'феврале', 'марте', 'апреле'
 export const isFinishing = (service) => service.inPeriod === false
 
 /**
- * «Работы по услуге за ноябрь, выручка в ноябре». Год дописываем, только если
- * месяц услуги не в текущем году: иначе фраза двусмысленна.
+ * Номер месяца (с нуля) и приписка с годом. Год нужен, только если месяц не в
+ * текущем году: иначе фраза про «ноябрь» двусмысленна.
  */
+function monthParts(value) {
+  const [year, month] = monthKey(value).split('-')
+  return { i: Number(month) - 1, tail: year === monthKey().slice(0, 4) ? '' : ` ${year}` }
+}
+
+/** «октябрь» для фраз вроде «сохранена за октябрь». */
+export function monthName(value) {
+  const { i, tail } = monthParts(value)
+  return `${MONTH_FOR[i]}${tail}`
+}
+
+/** «Работы по услуге за ноябрь, выручка в ноябре». */
 export function finishingNote(service) {
-  const [year, month] = monthKey(service.month).split('-')
-  const i = Number(month) - 1
-  const tail = year === monthKey().slice(0, 4) ? '' : ` ${year}`
+  const { i, tail } = monthParts(service.month)
   return `Работы по услуге за ${MONTH_FOR[i]}${tail}, выручка в ${MONTH_IN[i]}${tail}`
 }
 

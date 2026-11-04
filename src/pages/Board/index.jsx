@@ -11,7 +11,7 @@ import { CardModal } from '../../components/board/CardModal'
 import { AddClientModal } from '../../components/board/AddClientModal'
 import { ServiceModal } from '../../components/board/ServiceModal'
 import { LeaveModal } from '../../components/board/LeaveModal'
-import { lastLabel, monthKey, monthLabel } from '../../utils/board'
+import { lastLabel, monthKey, monthLabel, monthName } from '../../utils/board'
 
 export default function BoardPage() {
   const {
@@ -57,6 +57,9 @@ export default function BoardPage() {
   // Расходы, у которых отметка «оплачено» ушла на сервер и ответа ещё нет:
   // id расхода и значение, которое мы просим поставить (paid и день выплаты).
   const [payingExpenses, setPayingExpenses] = useState({})
+  // Короткая подсказка после сохранения: услуга ушла в месяц, которого сейчас не
+  // видно, и без неё она казалась бы пропавшей.
+  const [notice, setNotice] = useState(null)
 
   // Запрос собираем ровно из того, что нужно режиму: лишние даты в режиме
   // месяца сервер отклонит проверкой.
@@ -70,6 +73,13 @@ export default function BoardPage() {
   const ready = period.mode !== 'period' || period.from || period.to
 
   useEffect(() => { fetchAllClients(); fetchMonths() }, [fetchAllClients, fetchMonths])
+
+  useEffect(() => {
+    if (!notice) return undefined
+    const t = setTimeout(() => setNotice(null), 7000)
+    return () => clearTimeout(t)
+  }, [notice])
+
   useEffect(() => { if (ready) fetchBoard(request) }, [fetchBoard, request, ready])
 
   const periodLabel = useMemo(() => {
@@ -111,6 +121,15 @@ export default function BoardPage() {
     return res
   }
 
+  // Подсказываем, только когда открыт один месяц и услуга легла в другой: у
+  // скользящих окон и «за всё время» своего месяца нет, сравнивать не с чем.
+  function noteMonths(months) {
+    const other = months.filter((m) => m && m !== period.month)
+    if (period.mode !== 'month' || other.length === 0) return
+    const names = new Intl.ListFormat('ru').format([...new Set(other)].map(monthName))
+    setNotice(`${other.length > 1 ? 'Услуги сохранены' : 'Услуга сохранена'} за ${names}`)
+  }
+
   async function changeExpensePaid(expense, { paid, paidAt }) {
     const id = expense.id
     setPayingExpenses((p) => ({ ...p, [id]: { paid, paidAt: paid ? paidAt : '' } }))
@@ -134,6 +153,9 @@ export default function BoardPage() {
       <PeriodSwitcher value={period} onChange={setPeriod} monthsWithData={months} />
 
       {error && <p className="text-sm text-danger">{error}</p>}
+      {/* Пока открыта карточка клиента, подсказка показана в ней: страница под
+          окном затемнена, и текст на ней никто бы не прочитал. */}
+      {notice && !openId && <p className="text-sm text-ok" role="status">{notice}</p>}
 
       {!ready ? (
         <EmptyState label="Выберите период" text="Задайте хотя бы одну границу диапазона." />
@@ -169,6 +191,7 @@ export default function BoardPage() {
         card={card}
         loading={cardLoading}
         periodLabel={periodLabel}
+        notice={notice}
         payingExpenses={payingExpenses}
         onAddService={() => setServiceModal({ service: null })}
         onEditService={(service) => setServiceModal({ service })}
@@ -182,7 +205,11 @@ export default function BoardPage() {
       <AddClientModal
         open={addOpen}
         onClose={() => setAddOpen(false)}
-        onSubmit={(body) => run(() => addClient(body))}
+        onSubmit={async (body) => {
+          const res = await run(() => addClient(body))
+          if (res?.ok) noteMonths((body.services ?? []).map((s) => s.month))
+          return res
+        }}
         clients={allClients}
         alreadyOnBoard={onBoard}
       />
@@ -191,11 +218,17 @@ export default function BoardPage() {
         open={Boolean(serviceModal)}
         onClose={() => setServiceModal(null)}
         service={serviceModal?.service}
-        onSubmit={(body) => run(() =>
-          serviceModal?.service
-            ? editService(serviceModal.service.id, body)
-            : addService({ ...body, boardClientId: openId }),
-        )}
+        onSubmit={async (body) => {
+          const editing = serviceModal?.service
+          const res = await run(() =>
+            editing
+              ? editService(editing.id, body)
+              : addService({ ...body, boardClientId: openId }),
+          )
+          // Правка без смены месяца ничего не перекладывает: услуга и так была там.
+          if (res?.ok && (!editing || monthKey(editing.month) !== body.month)) noteMonths([body.month])
+          return res
+        }}
       />
 
       <LeaveModal

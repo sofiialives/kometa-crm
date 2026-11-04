@@ -13,7 +13,7 @@ import { ClientProductButton } from '../motivation/ClientProductButton'
  * иначе две арифметики однажды разойдутся.
  */
 export function CardModal({
-  open, onClose, card, loading, periodLabel, payingExpenses,
+  open, onClose, card, loading, periodLabel, notice, payingExpenses,
   onAddService, onEditService, onDeleteService, onChangePaid, onLeave, onReturn, onRemove,
 }) {
   const left = card?.status === 'left'
@@ -82,6 +82,8 @@ export function CardModal({
               <p className="caption">Услуги · {periodLabel}</p>
               <p className="caption">{servicesWord(card.serviceCountTotal)} за всё время</p>
             </div>
+
+            {notice && <p className="text-sm text-ok" role="status">{notice}</p>}
 
             {services.length === 0 ? (
               <EmptyState
