@@ -1,6 +1,6 @@
 import { AddAction, DatePicker, Input, MoneyInput, Select } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
-import { dayKey, marginText, money, monthOptions } from '../../utils/board'
+import { dayKey, marginText, money, monthBounds, monthOptions } from '../../utils/board'
 
 export const newExpense = () => ({ key: Math.random().toString(36).slice(2), title: '', amount: '' })
 export const newService = () => ({
@@ -9,6 +9,8 @@ export const newService = () => ({
   // называют сами, иначе в отчёте о деньгах окажется выдуманный день, а
   // услуга, оплаченная в конце октября, ляжет в ноябрь.
   title: '', month: '', paidAt: '', revenue: '', expenses: [],
+  // Срок работ: границы выбранного месяца, пока их не поменяли руками.
+  workFrom: '', workTo: '',
 })
 
 export const num = (v) => (v === '' ? 0 : Number(String(v).replace(',', '.')))
@@ -20,8 +22,8 @@ export function serviceProfit(service) {
 }
 
 /**
- * Поля одной услуги: что делали, за какой месяц, выручка, день оплаты и
- * строки расходов.
+ * Поля одной услуги: что делали, за какой месяц, срок работ, выручка, день
+ * оплаты и строки расходов.
  *
  * Один компонент на два места — форму новой услуги и форму нового клиента,
  * где услуги заводятся сразу. Заказчик так и описывал: «нажали на кнопочку
@@ -32,6 +34,16 @@ export function ServiceFields({ value, onChange, onRemove, compact }) {
   const set = (patch) => onChange({ ...value, ...patch })
   const patchExpense = (key, patch) =>
     set({ expenses: value.expenses.map((e) => (e.key === key ? { ...e, ...patch } : e)) })
+
+  // Пока срок работ равен границам прежнего месяца (или ещё не задан), он идёт
+  // за месяцем. Поменяли руками, например продлили на начало следующего
+  // месяца, и смена месяца его уже не трогает.
+  const pickMonth = (month) => {
+    const was = monthBounds(value.month)
+    const now = monthBounds(month)
+    const follows = value.workFrom === was.from && value.workTo === was.to
+    set(follows ? { month, workFrom: now.from, workTo: now.to } : { month })
+  }
 
   const profit = serviceProfit(value)
   const margin = marginText(profit, num(value.revenue))
@@ -65,18 +77,40 @@ export function ServiceFields({ value, onChange, onRemove, compact }) {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        {/* Месяц на всю ширину, а сумма и день оплаты — парой под ним: «сколько»
-            и «когда» читаются вместе, и третье поле не висит одно в углу. */}
+        {/* Месяц на всю ширину, под ним парой срок работ, а за ним сумма и день
+            оплаты: «с» и «по», «сколько» и «когда» читаются вместе, и третье
+            поле не висит одно в углу. */}
         <Select
           className="sm:col-span-2"
           label="За какой месяц"
           required
           placeholder="Выберите месяц"
           value={value.month}
-          onChange={(e) => set({ month: e.target.value })}
+          onChange={(e) => pickMonth(e.target.value)}
           options={monthOptions([], value.month)}
           hint="Суммы относятся к этому месяцу"
         />
+        <DatePicker
+          label="Работы с"
+          value={value.workFrom}
+          onChange={(v) => set({ workFrom: v })}
+          today={today}
+          max={value.workTo || undefined}
+          disabled={!value.month}
+        />
+        <DatePicker
+          label="Работы по"
+          value={value.workTo}
+          onChange={(v) => set({ workTo: v })}
+          today={today}
+          min={value.workFrom || undefined}
+          disabled={!value.month}
+        />
+        {/* Подсказка одна на оба поля; отрицательный отступ гасит часть зазора
+            сетки, чтобы она читалась подписью к паре, а не отдельной строкой. */}
+        <p className="-mt-2 text-xs leading-snug text-ink-3 sm:col-span-2">
+          По умолчанию весь месяц. Доделываете в следующем, продлите срок
+        </p>
         <MoneyInput
           label="Сколько заплатил клиент"
           required
@@ -167,6 +201,8 @@ export function ServiceFields({ value, onChange, onRemove, compact }) {
 export function validateService(s) {
   if (!s.title.trim()) return 'Укажите название услуги'
   if (!s.month) return `Выберите, за какой месяц услуга «${s.title.trim()}»`
+  if (!s.workFrom || !s.workTo) return `Укажите срок работ по «${s.title.trim()}»`
+  if (s.workFrom > s.workTo) return `В сроке работ по «${s.title.trim()}» дата «с» позже даты «по»`
   if (s.revenue === '' || !Number.isFinite(num(s.revenue))) return `Выручка по «${s.title.trim()}» не число`
   if (!s.paidAt) return `Укажите, когда клиент заплатил за «${s.title.trim()}»`
   for (const e of s.expenses) {
@@ -180,6 +216,9 @@ export function validateService(s) {
 export const serviceToPayload = (s) => ({
   title: s.title.trim(),
   month: s.month,
+  // Срок работ уходит всегда явными датами, даже если он равен месяцу.
+  workFrom: s.workFrom,
+  workTo: s.workTo,
   // Строка ГГГГ-ММ-ДД: DatePicker отдаёт её, а не событие и не Date.
   paidAt: s.paidAt,
   revenue: num(s.revenue),
