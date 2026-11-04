@@ -79,9 +79,12 @@ export default function BoardPage() {
     return monthLabel(period.month)
   }, [period])
 
+  // Клиент может быть на доске, но не виден в выбранном периоде, и его карточки
+  // в колонках нет. Поэтому список берём из сводки, где сервер отдаёт всех, а
+  // по видимым карточкам считаем, только если сервер поля не прислал.
   const onBoard = useMemo(
-    () => new Set([...active, ...left].map((c) => c.client.id)),
-    [active, left],
+    () => new Set(summary?.onBoardClientIds ?? [...active, ...left].map((c) => c.client.id)),
+    [summary, active, left],
   )
 
   async function open(id) {
