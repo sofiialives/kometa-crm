@@ -22,14 +22,16 @@ export function TelegramCard() {
   // новое окно после ответа сервера браузер может и не открыть (Safari,
   // телефоны, долгий ответ), а обычную ссылку по клику не блокирует никто.
   const [deepLink, setDeepLink] = useState(null)
+  // Сколько минут живёт код, говорит сервер.
+  const [ttlMin, setTtlMin] = useState(15)
 
-  // Код в ссылке одноразовый и живёт 15 минут: дольше держать его на экране
+  // Код в ссылке одноразовый и живёт недолго: дольше держать его на экране
   // незачем, после привязки и отключения тоже.
   useEffect(() => {
     if (!deepLink) return undefined
-    const timer = setTimeout(() => setDeepLink(null), 15 * 60 * 1000)
+    const timer = setTimeout(() => setDeepLink(null), ttlMin * 60 * 1000)
     return () => clearTimeout(timer)
-  }, [deepLink])
+  }, [deepLink, ttlMin])
 
   async function load() {
     try {
@@ -57,7 +59,8 @@ export function TelegramCard() {
     setBusy(true)
     setError(null)
     try {
-      const { deepLink: link } = await api.post('/telegram/code')
+      const { deepLink: link, expiresInMin } = await api.post('/telegram/code')
+      if (expiresInMin > 0) setTtlMin(expiresInMin)
       setDeepLink(link)
       window.open(link, '_blank', 'noopener')
     } catch (e) {
@@ -129,7 +132,7 @@ export function TelegramCard() {
               <Button variant="ghost" onClick={connect} loading={busy}>Новая ссылка</Button>
             </div>
             <p className="caption">
-              Если бот не открылся сам, нажмите «Открыть бота» и в нём «Start». Ссылка работает 15 минут.
+              Если бот не открылся сам, нажмите «Открыть бота» и в нём «Start». Ссылка работает {ttlMin} минут.
             </p>
           </div>
         ) : (
