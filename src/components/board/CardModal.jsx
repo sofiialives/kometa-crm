@@ -1,6 +1,8 @@
 import { AddAction, Badge, Button, Checkbox, EmptyState, Modal, Spinner } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
-import { dateLabel, marginText, money, monthLabel, servicesWord, shortDateLabel, tenure } from '../../utils/board'
+import {
+  dateLabel, finishingNote, isFinishing, marginText, money, monthLabel, servicesWord, shortDateLabel, tenure,
+} from '../../utils/board'
 import { ClientProductButton } from '../motivation/ClientProductButton'
 
 /**
@@ -15,6 +17,10 @@ export function CardModal({
   onAddService, onEditService, onDeleteService, onTogglePaid, onLeave, onReturn, onRemove,
 }) {
   const left = card?.status === 'left'
+  // Доделки идут отдельным списком: их деньги относятся к другому периоду.
+  const services = card?.services ?? []
+  const regular = services.filter((s) => !isFinishing(s))
+  const finishing = services.filter(isFinishing)
 
   return (
     <Modal
@@ -72,13 +78,13 @@ export function CardModal({
               <p className="caption">{servicesWord(card.serviceCountTotal)} за всё время</p>
             </div>
 
-            {card.services.length === 0 ? (
+            {services.length === 0 ? (
               <EmptyState
                 label="Пусто"
                 text="В этом периоде услуг не было. Добавьте их или переключите период наверху доски."
               />
             ) : (
-              card.services.map((s) => (
+              regular.map((s) => (
                 <ServiceBlock
                   key={s.id}
                   service={s}
@@ -88,6 +94,15 @@ export function CardModal({
                   onTogglePaid={onTogglePaid}
                 />
               ))
+            )}
+
+            {finishing.length > 0 && (
+              <>
+                <p className="caption mt-1">Доделки</p>
+                {finishing.map((s) => (
+                  <FinishingBlock key={s.id} service={s} onEdit={() => onEditService(s)} />
+                ))}
+              </>
             )}
 
             <AddAction onClick={onAddService}>Добавить услугу</AddAction>
@@ -105,6 +120,23 @@ function Figure({ label, value, tone, note }) {
       <span className={cx('font-display text-xl font-bold tabular-nums', tone)}>{value}</span>
       {note && <span className="text-xs text-ink-3 tabular-nums">{note}</span>}
     </div>
+  )
+}
+
+/**
+ * Услуга другого месяца, по которой работы идут в этом периоде. Сумм здесь
+ * нет намеренно: выручка и расходы лежат в месяце услуги, а в итоги этого
+ * периода не входят. Править её можно, например продлить срок.
+ */
+function FinishingBlock({ service, onEdit }) {
+  return (
+    <section className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-card border border-dashed border-line-2 px-4 py-3">
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <p className="truncate text-sm font-medium text-ink-2" title={service.title}>{service.title}</p>
+        <span className="text-xs text-ink-3">{finishingNote(service)}</span>
+      </div>
+      <Button variant="ghost" size="sm" onClick={onEdit}>Изменить</Button>
+    </section>
   )
 }
 
