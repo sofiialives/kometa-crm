@@ -68,7 +68,7 @@ export function BoardCard({ card, onOpen, onLeave, onReturn, periodLabel }) {
         </p>
       )}
 
-      {empty && !left && <p className="text-xs text-warn">В этом периоде услуг не было</p>}
+      {empty && !left && <p className="text-xs text-warn">Услуг пока нет</p>}
 
       {/* Перенос между колонками прямо с карточки — как стрелки в
           Задачнике. Иначе пришлось бы открывать карточку ради одного
