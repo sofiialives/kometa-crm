@@ -144,7 +144,8 @@ export function DatePicker({ label, hint, error, required, disabled, size = 'md'
               })}
             </div>
 
-            {today && (
+            {/* «Сегодня» вне разрешённых дат только сбило бы форму. */}
+            {today && !(max && today > max) && !(min && today < min) && (
               <button
                 type="button"
                 onClick={() => { onChange(today); setOpen(false) }}
