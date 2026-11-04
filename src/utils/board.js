@@ -1,4 +1,5 @@
 /** Общие мелочи Доски клиентов. */
+import { MSK_OFFSET_MS, MSK_TZ } from './tasks'
 
 /**
  * Деньги приходят с сервера в центах целым числом. Показываем долларами.
@@ -13,27 +14,37 @@ export function money(cents) {
   return `${v < 0 ? '\u2212' : ''}$${amount}`
 }
 
+/**
+ * Месяцы и дни доски считаются по Москве, как и у остальной CRM. По UTC
+ * первого числа до трёх ночи по Москве ещё шёл прошлый месяц, и новая
+ * услуга ложилась не туда. Даты без времени (ГГГГ-ММ-ДД, первое число
+ * месяца) приходят полуночью UTC, то есть тремя часами утра по Москве:
+ * тот же день, так что на них сдвиг ничего не меняет.
+ */
+const msk = (value) => new Date(new Date(value).getTime() + MSK_OFFSET_MS)
+
 /** «октябрь 2026» — подпись месяца, к которому привязана услуга. */
 export function monthLabel(value) {
   return new Date(value)
-    .toLocaleDateString('ru-RU', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+    .toLocaleDateString('ru-RU', { month: 'long', year: 'numeric', timeZone: MSK_TZ })
     .replace(/\s*г\.$/, '')
 }
 
 /** Значение для поля месяца: первое число, ГГГГ-ММ-01. */
 export function monthKey(value = new Date()) {
-  const d = new Date(value)
+  const d = msk(value)
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-01`
 }
 
+/** Значение для поля даты: ГГГГ-ММ-ДД. */
 export function dayKey(value = new Date()) {
-  return new Date(value).toISOString().slice(0, 10)
+  return msk(value).toISOString().slice(0, 10)
 }
 
 export function dateLabel(value) {
   if (!value) return ''
   return new Date(value)
-    .toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+    .toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: MSK_TZ })
     .replace(/\s*г\.$/, '')
 }
 
@@ -94,7 +105,7 @@ export function servicesWord(n) {
  * раньше, чем он наступил, — обычное дело.
  */
 export function recentMonths(count = 12) {
-  const now = new Date()
+  const now = msk(new Date())
   return Array.from({ length: count + 1 }, (_, i) => {
     const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1 - i, 1))
     return { value: monthKey(d), label: monthLabel(d) }

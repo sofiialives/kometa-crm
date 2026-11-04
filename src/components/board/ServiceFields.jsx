@@ -1,7 +1,6 @@
 import { AddAction, DatePicker, Input, MoneyInput, Select } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
-import { marginText, money, monthOptions } from '../../utils/board'
-import { mskDateValueIn } from '../../utils/tasks'
+import { dayKey, marginText, money, monthOptions } from '../../utils/board'
 
 export const newExpense = () => ({ key: Math.random().toString(36).slice(2), title: '', amount: '' })
 export const newService = (month) => ({
@@ -35,10 +34,9 @@ export function ServiceFields({ value, onChange, onRemove, compact }) {
 
   const profit = serviceProfit(value)
   const margin = marginText(profit, num(value.revenue))
-  // День по Москве, а не по UTC, как у остальных дат доски: в первые три часа
-  // суток по Москве день по UTC ещё вчерашний, и оплату, пришедшую сегодня,
-  // нельзя было бы выбрать.
-  const today = mskDateValueIn()
+  // День по Москве: в первые три часа суток день по UTC ещё вчерашний, и
+  // оплату, пришедшую сегодня, нельзя было бы выбрать.
+  const today = dayKey()
 
   return (
     <div className={cx('flex flex-col gap-4', compact && 'rounded-card border border-line p-4')}>
