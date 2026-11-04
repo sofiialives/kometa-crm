@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AddAction, Button, DatePicker, Input, Modal, Select } from '../../shared/ui'
 import { ServiceFields, newService, serviceToPayload, validateService } from './ServiceFields'
-import { dayKey, monthKey, money } from '../../utils/board'
+import { dayKey, money } from '../../utils/board'
 import { cx } from '../../shared/lib/cx'
 import { serviceProfit } from './ServiceFields'
 
@@ -16,7 +16,7 @@ import { serviceProfit } from './ServiceFields'
  * Список клиентов в CRM один на всё — и в Иерархии, и в Архиве, и здесь.
  * Поэтому выбираем существующего, а нового можно завести тут же.
  */
-export function AddClientModal({ open, onClose, onSubmit, clients, alreadyOnBoard, defaultMonth }) {
+export function AddClientModal({ open, onClose, onSubmit, clients, alreadyOnBoard }) {
   const [clientId, setClientId] = useState('')
   const [clientName, setClientName] = useState('')
   const [contact, setContact] = useState('')
@@ -139,7 +139,7 @@ export function AddClientModal({ open, onClose, onSubmit, clients, alreadyOnBoar
             />
           ))}
 
-          <AddAction onClick={() => setServices((l) => [...l, newService(defaultMonth || monthKey())])}>
+          <AddAction onClick={() => setServices((l) => [...l, newService()])}>
             Добавить услугу
           </AddAction>
         </div>

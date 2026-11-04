@@ -4,9 +4,9 @@ import { ServiceFields, newService, serviceToPayload, validateService } from './
 import { dayKey, monthKey } from '../../utils/board'
 
 /** Одна услуга за месяц. Поля те же, что и в форме нового клиента. */
-export function ServiceModal({ open, onClose, onSubmit, service, defaultMonth }) {
+export function ServiceModal({ open, onClose, onSubmit, service }) {
   const editing = Boolean(service)
-  const [value, setValue] = useState(() => newService(monthKey()))
+  const [value, setValue] = useState(() => newService())
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
 
@@ -23,9 +23,9 @@ export function ServiceModal({ open, onClose, onSubmit, service, defaultMonth })
         revenue: String(service.revenueCents / 100),
         expenses: service.expenses.map((e) => ({ key: e.id, title: e.title, amount: String(e.amountCents / 100) })),
       }
-      : newService(defaultMonth || monthKey()))
+      : newService())
     setError(null)
-  }, [open, service, defaultMonth])
+  }, [open, service])
 
   async function submit() {
     const problem = validateService(value)

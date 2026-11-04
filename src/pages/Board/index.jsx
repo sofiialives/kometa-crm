@@ -166,14 +166,12 @@ export default function BoardPage() {
         onSubmit={(body) => run(() => addClient(body))}
         clients={allClients}
         alreadyOnBoard={onBoard}
-        defaultMonth={period.mode === 'month' ? period.month : undefined}
       />
 
       <ServiceModal
         open={Boolean(serviceModal)}
         onClose={() => setServiceModal(null)}
         service={serviceModal?.service}
-        defaultMonth={period.mode === 'month' ? period.month : undefined}
         onSubmit={(body) => run(() =>
           serviceModal?.service
             ? editService(serviceModal.service.id, body)

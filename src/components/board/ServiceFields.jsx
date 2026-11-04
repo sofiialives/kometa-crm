@@ -3,11 +3,12 @@ import { cx } from '../../shared/lib/cx'
 import { dayKey, marginText, money, monthOptions } from '../../utils/board'
 
 export const newExpense = () => ({ key: Math.random().toString(36).slice(2), title: '', amount: '' })
-export const newService = (month) => ({
+export const newService = () => ({
   key: Math.random().toString(36).slice(2),
-  // Пустая, а не «сегодня»: дату оплаты называют сами, иначе в отчёте о
-  // деньгах окажется выдуманный день.
-  title: '', month, paidAt: '', revenue: '', expenses: [],
+  // Месяц и дата оплаты пустые, а не «открытый месяц» и «сегодня»: их
+  // называют сами, иначе в отчёте о деньгах окажется выдуманный день, а
+  // услуга, оплаченная в конце октября, ляжет в ноябрь.
+  title: '', month: '', paidAt: '', revenue: '', expenses: [],
 })
 
 export const num = (v) => (v === '' ? 0 : Number(String(v).replace(',', '.')))
@@ -70,6 +71,7 @@ export function ServiceFields({ value, onChange, onRemove, compact }) {
           className="sm:col-span-2"
           label="За какой месяц"
           required
+          placeholder="Выберите месяц"
           value={value.month}
           onChange={(e) => set({ month: e.target.value })}
           options={monthOptions([], value.month)}
@@ -164,6 +166,7 @@ export function ServiceFields({ value, onChange, onRemove, compact }) {
 /** Общая проверка полей услуги — одна на обе формы. */
 export function validateService(s) {
   if (!s.title.trim()) return 'Укажите название услуги'
+  if (!s.month) return `Выберите, за какой месяц услуга «${s.title.trim()}»`
   if (s.revenue === '' || !Number.isFinite(num(s.revenue))) return `Выручка по «${s.title.trim()}» не число`
   if (!s.paidAt) return `Укажите, когда клиент заплатил за «${s.title.trim()}»`
   for (const e of s.expenses) {
