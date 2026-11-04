@@ -1,7 +1,7 @@
-import { AddAction, Badge, Button, Checkbox, EmptyState, Modal, Spinner } from '../../shared/ui'
+import { AddAction, Badge, Button, Checkbox, DatePicker, EmptyState, Modal, Spinner } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
 import {
-  dateLabel, finishingNote, isFinishing, marginText, money, monthLabel, servicesWord, shortDateLabel, tenure,
+  dateLabel, dayKey, finishingNote, isFinishing, marginText, money, monthLabel, servicesWord, tenure,
 } from '../../utils/board'
 import { ClientProductButton } from '../motivation/ClientProductButton'
 
@@ -14,7 +14,7 @@ import { ClientProductButton } from '../motivation/ClientProductButton'
  */
 export function CardModal({
   open, onClose, card, loading, periodLabel, payingExpenses,
-  onAddService, onEditService, onDeleteService, onTogglePaid, onLeave, onReturn, onRemove,
+  onAddService, onEditService, onDeleteService, onChangePaid, onLeave, onReturn, onRemove,
 }) {
   const left = card?.status === 'left'
   // Доделки идут отдельным списком: их деньги относятся к другому периоду.
@@ -96,7 +96,7 @@ export function CardModal({
                   paying={payingExpenses}
                   onEdit={() => onEditService(s)}
                   onDelete={() => onDeleteService(s)}
-                  onTogglePaid={onTogglePaid}
+                  onChangePaid={onChangePaid}
                 />
               ))
             )}
@@ -145,7 +145,7 @@ function FinishingBlock({ service, onEdit }) {
   )
 }
 
-function ServiceBlock({ service, paying, onEdit, onDelete, onTogglePaid }) {
+function ServiceBlock({ service, paying, onEdit, onDelete, onChangePaid }) {
   return (
     <section className="flex flex-col gap-3 rounded-card border border-line p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -170,7 +170,7 @@ function ServiceBlock({ service, paying, onEdit, onDelete, onTogglePaid }) {
         <Line label="Выручка" value={money(service.revenueCents)} />
 
         {service.expenses.map((e) => (
-          <ExpenseLine key={e.id} expense={e} pending={paying?.[e.id]} onToggle={() => onTogglePaid(e)} />
+          <ExpenseLine key={e.id} expense={e} pending={paying?.[e.id]} onChange={(next) => onChangePaid(e, next)} />
         ))}
 
         {service.expenses.length === 0 && (
@@ -192,34 +192,53 @@ function ServiceBlock({ service, paying, onEdit, onDelete, onTogglePaid }) {
 }
 
 /**
- * Строка расхода с галочкой «оплачено». Клик сразу уходит на сервер: отдельной
- * кнопки «сохранить» у галочки нет. Пока запрос идёт, показываем уже новое
- * значение и не даём нажать второй раз.
+ * Строка расхода с галочкой «оплачено» и днём выплаты. Любое изменение сразу
+ * уходит на сервер: отдельной кнопки «сохранить» нет. Пока запрос идёт,
+ * показываем уже новое значение и не даём нажать второй раз.
  *
- * Оплаченный расход приглушён: внимание нужно тому, что ещё не выплачено.
+ * Ставишь галочку, день по умолчанию сегодняшний (по Москве); его можно сменить
+ * в календаре, в том числе задним числом. Оплаченный расход приглушён: внимание
+ * нужно тому, что ещё не выплачено. У старых оплаченных расходов дня нет, и
+ * тогда пишем просто «оплачено».
  */
-function ExpenseLine({ expense, pending, onToggle }) {
-  const paid = pending ?? Boolean(expense.paid)
+function ExpenseLine({ expense, pending, onChange }) {
+  const { paid, paidAt } = pending ?? {
+    paid: Boolean(expense.paid),
+    paidAt: expense.paidAt ? dayKey(expense.paidAt) : '',
+  }
+  const busy = pending !== undefined
   const tone = paid ? 'text-ink-3' : 'text-ink-2'
+  const today = dayKey()
 
   return (
-    <div className="flex items-center gap-2 pl-3">
-      {/* Отрицательный отступ раздвигает зону нажатия, не меняя высоту строки:
-          квадрат в 20 пикселей пальцем на телефоне не поймать. */}
-      <Checkbox
-        className={cx('-m-1.5 p-1.5', pending !== undefined && 'opacity-60')}
-        checked={paid}
-        disabled={pending !== undefined}
-        onChange={onToggle}
-        aria-label={`Расход «${expense.title}» оплачен`}
-      />
-      <span className="flex min-w-0 flex-1 flex-col">
-        <span className={cx('truncate text-sm', tone)} title={expense.title}>{expense.title}</span>
-        {paid && expense.paidAt && (
-          <span className="text-[11px] leading-tight text-ink-3">оплачено {shortDateLabel(expense.paidAt)}</span>
-        )}
-      </span>
-      <span className={cx('shrink-0 text-sm tabular-nums', tone)}>{`− ${money(expense.amountCents)}`}</span>
+    <div className="flex flex-col gap-1.5 pl-3">
+      <div className="flex items-center gap-2">
+        {/* Отрицательный отступ раздвигает зону нажатия, не меняя высоту строки:
+            квадрат в 20 пикселей пальцем на телефоне не поймать. */}
+        <Checkbox
+          className={cx('-m-1.5 p-1.5', busy && 'opacity-60')}
+          checked={paid}
+          disabled={busy}
+          onChange={(ev) => onChange(ev.target.checked ? { paid: true, paidAt: today } : { paid: false })}
+          aria-label={`Расход «${expense.title}» оплачен`}
+        />
+        <span className={cx('min-w-0 flex-1 truncate text-sm', tone)} title={expense.title}>{expense.title}</span>
+        <span className={cx('shrink-0 text-sm tabular-nums', tone)}>{`− ${money(expense.amountCents)}`}</span>
+      </div>
+
+      {/* Отступ слева равен ширине галочки и зазору: день стоит под названием. */}
+      {paid && paidAt && (
+        <DatePicker
+          className="ml-7 w-44"
+          size="sm"
+          value={paidAt}
+          onChange={(v) => onChange({ paid: true, paidAt: v })}
+          today={today}
+          max={today}
+          disabled={busy}
+        />
+      )}
+      {paid && !paidAt && <span className="pl-7 text-[11px] leading-tight text-ink-3">оплачено</span>}
     </div>
   )
 }

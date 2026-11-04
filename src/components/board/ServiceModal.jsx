@@ -31,7 +31,8 @@ export function ServiceModal({ open, onClose, onSubmit, service }) {
           title: e.title,
           amount: String(e.amountCents / 100),
           paid: Boolean(e.paid),
-          paidAt: e.paidAt || null,
+          // У расходов, оплаченных до появления поля, дня нет.
+          paidAt: e.paidAt ? dayKey(e.paidAt) : '',
         })),
       }
       : newService())

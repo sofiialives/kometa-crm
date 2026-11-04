@@ -54,8 +54,8 @@ export default function BoardPage() {
   const [leaveFor, setLeaveFor] = useState(null)
   const [confirm, setConfirm] = useState(null)
   const [busy, setBusy] = useState(false)
-  // Расходы, у которых галочка «оплачено» ушла на сервер и ответа ещё нет:
-  // id расхода и значение, которое мы просим поставить.
+  // Расходы, у которых отметка «оплачено» ушла на сервер и ответа ещё нет:
+  // id расхода и значение, которое мы просим поставить (paid и день выплаты).
   const [payingExpenses, setPayingExpenses] = useState({})
 
   // Запрос собираем ровно из того, что нужно режиму: лишние даты в режиме
@@ -111,10 +111,10 @@ export default function BoardPage() {
     return res
   }
 
-  async function toggleExpensePaid(expense) {
+  async function changeExpensePaid(expense, { paid, paidAt }) {
     const id = expense.id
-    setPayingExpenses((p) => ({ ...p, [id]: !expense.paid }))
-    await run(() => setExpensePaid(id, !expense.paid), 'Не удалось отметить расход')
+    setPayingExpenses((p) => ({ ...p, [id]: { paid, paidAt: paid ? paidAt : '' } }))
+    await run(() => setExpensePaid(id, paid, paidAt), 'Не удалось отметить расход')
     setPayingExpenses((p) => {
       const next = { ...p }
       delete next[id]
@@ -173,7 +173,7 @@ export default function BoardPage() {
         onAddService={() => setServiceModal({ service: null })}
         onEditService={(service) => setServiceModal({ service })}
         onDeleteService={(service) => setConfirm({ kind: 'service', service })}
-        onTogglePaid={toggleExpensePaid}
+        onChangePaid={changeExpensePaid}
         onLeave={() => setLeaveFor(card)}
         onReturn={() => run(() => markActive(openId), 'Не удалось вернуть клиента в работу')}
         onRemove={() => setConfirm({ kind: 'client' })}

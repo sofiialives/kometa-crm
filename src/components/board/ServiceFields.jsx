@@ -1,11 +1,11 @@
 import { AddAction, Checkbox, DatePicker, Input, MoneyInput, Select } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
-import { dayKey, marginText, money, monthBounds, monthOptions, shortDateLabel } from '../../utils/board'
+import { dayKey, marginText, money, monthBounds, monthOptions } from '../../utils/board'
 
-// id есть только у расходов, уже сохранённых на сервере; paidAt заполняет сервер,
-// в форме он нужен лишь для подписи «оплачено ...».
+// id есть только у расходов, уже сохранённых на сервере. paidAt — день выплаты
+// строкой ГГГГ-ММ-ДД, пустой, пока расход не оплачен.
 export const newExpense = () => ({
-  key: Math.random().toString(36).slice(2), title: '', amount: '', paid: false, paidAt: null,
+  key: Math.random().toString(36).slice(2), title: '', amount: '', paid: false, paidAt: '',
 })
 export const newService = () => ({
   key: Math.random().toString(36).slice(2),
@@ -180,15 +180,26 @@ export function ServiceFields({ value, onChange, onRemove, compact }) {
             </div>
 
             {/* Отметка под строкой, а не в ней: на телефоне в одну строку не
-                уместились бы название, сумма, галочка и крестик. Дату, когда
-                отметили, ставит сервер, поэтому после правки в форме её нет. */}
-            <div className="flex items-center gap-2">
+                уместились бы название, сумма, галочка и крестик. День выплаты
+                по умолчанию сегодняшний, его можно сменить, в том числе задним
+                числом. У старых оплаченных расходов дня нет, и тогда выбор не
+                показываем: дату придумывать за человека нельзя. */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
               <Checkbox
                 label="Оплачено"
                 checked={e.paid}
-                onChange={(ev) => patchExpense(e.key, { paid: ev.target.checked, paidAt: null })}
+                onChange={(ev) => patchExpense(e.key, ev.target.checked ? { paid: true, paidAt: today } : { paid: false, paidAt: '' })}
               />
-              {e.paid && e.paidAt && <span className="text-xs text-ink-3">{shortDateLabel(e.paidAt)}</span>}
+              {e.paid && e.paidAt && (
+                <DatePicker
+                  className="w-44"
+                  size="sm"
+                  value={e.paidAt}
+                  onChange={(v) => patchExpense(e.key, { paidAt: v })}
+                  today={today}
+                  max={today}
+                />
+              )}
             </div>
           </div>
         ))}
@@ -246,5 +257,7 @@ export const serviceToPayload = (s) => ({
     title: e.title.trim(),
     amount: num(e.amount),
     paid: e.paid,
+    // День выплаты уходит только у оплаченных; у старых его может не быть.
+    ...(e.paid && e.paidAt ? { paidAt: e.paidAt } : {}),
   })),
 })
