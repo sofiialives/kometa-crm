@@ -18,7 +18,7 @@ export default function BoardPage() {
     summary, active, left, card, months, loading, error,
     fetchBoard, fetchCard, closeCard, fetchMonths,
     addClient, markLeft, markActive, removeClient,
-    addService, editService, removeService,
+    addService, editService, removeService, setExpensePaid,
   } = useBoardStore()
 
   const allClients = useClientsStore((s) => s.clients)
@@ -54,6 +54,9 @@ export default function BoardPage() {
   const [leaveFor, setLeaveFor] = useState(null)
   const [confirm, setConfirm] = useState(null)
   const [busy, setBusy] = useState(false)
+  // Расходы, у которых галочка «оплачено» ушла на сервер и ответа ещё нет:
+  // id расхода и значение, которое мы просим поставить.
+  const [payingExpenses, setPayingExpenses] = useState({})
 
   // Запрос собираем ровно из того, что нужно режиму: лишние даты в режиме
   // месяца сервер отклонит проверкой.
@@ -105,6 +108,17 @@ export default function BoardPage() {
     return res
   }
 
+  async function toggleExpensePaid(expense) {
+    const id = expense.id
+    setPayingExpenses((p) => ({ ...p, [id]: !expense.paid }))
+    await run(() => setExpensePaid(id, !expense.paid), 'Не удалось отметить расход')
+    setPayingExpenses((p) => {
+      const next = { ...p }
+      delete next[id]
+      return next
+    })
+  }
+
   return (
     <PageSection
       pill="Доска клиентов"
@@ -152,9 +166,11 @@ export default function BoardPage() {
         card={card}
         loading={cardLoading}
         periodLabel={periodLabel}
+        payingExpenses={payingExpenses}
         onAddService={() => setServiceModal({ service: null })}
         onEditService={(service) => setServiceModal({ service })}
         onDeleteService={(service) => setConfirm({ kind: 'service', service })}
+        onTogglePaid={toggleExpensePaid}
         onLeave={() => setLeaveFor(card)}
         onReturn={() => run(() => markActive(openId), 'Не удалось вернуть клиента в работу')}
         onRemove={() => setConfirm({ kind: 'client' })}

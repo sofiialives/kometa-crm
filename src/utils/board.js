@@ -54,6 +54,12 @@ export function monthBounds(value) {
   return { from: `${prefix}-01`, to: `${prefix}-${String(last).padStart(2, '0')}` }
 }
 
+/** «28 октября» — день без года, для мелких пометок вроде «оплачено». */
+export function shortDateLabel(value) {
+  if (!value) return ''
+  return new Date(value).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', timeZone: MSK_TZ })
+}
+
 export function dateLabel(value) {
   if (!value) return ''
   return new Date(value)

@@ -1,8 +1,12 @@
-import { AddAction, DatePicker, Input, MoneyInput, Select } from '../../shared/ui'
+import { AddAction, Checkbox, DatePicker, Input, MoneyInput, Select } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
-import { dayKey, marginText, money, monthBounds, monthOptions } from '../../utils/board'
+import { dayKey, marginText, money, monthBounds, monthOptions, shortDateLabel } from '../../utils/board'
 
-export const newExpense = () => ({ key: Math.random().toString(36).slice(2), title: '', amount: '' })
+// id есть только у расходов, уже сохранённых на сервере; paidAt заполняет сервер,
+// в форме он нужен лишь для подписи «оплачено ...».
+export const newExpense = () => ({
+  key: Math.random().toString(36).slice(2), title: '', amount: '', paid: false, paidAt: null,
+})
 export const newService = () => ({
   key: Math.random().toString(36).slice(2),
   // Месяц и дата оплаты пустые, а не «открытый месяц» и «сегодня»: их
@@ -147,31 +151,45 @@ export function ServiceFields({ value, onChange, onRemove, compact }) {
         )}
 
         {value.expenses.map((e) => (
-          <div key={e.key} className="flex items-start gap-2">
-            <Input
-              className="flex-1"
-              size="sm"
-              value={e.title}
-              onChange={(ev) => patchExpense(e.key, { title: ev.target.value })}
-              placeholder="Копирайтер"
-            />
-            <MoneyInput
-              className="w-28 shrink-0"
-              size="sm"
-              value={e.amount}
-              onChange={(v) => patchExpense(e.key, { amount: v })}
-              placeholder="200"
-            />
-            <button
-              type="button"
-              onClick={() => set({ expenses: value.expenses.filter((x) => x.key !== e.key) })}
-              title="Убрать расход"
-              className="mt-1 grid h-7 w-7 shrink-0 place-items-center rounded-lg text-ink-3 transition-colors hover:bg-danger/10 hover:text-danger cursor-pointer"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
-            </button>
+          <div key={e.key} className="mb-1 flex flex-col gap-1.5">
+            <div className="flex items-start gap-2">
+              <Input
+                className="flex-1"
+                size="sm"
+                value={e.title}
+                onChange={(ev) => patchExpense(e.key, { title: ev.target.value })}
+                placeholder="Копирайтер"
+              />
+              <MoneyInput
+                className="w-28 shrink-0"
+                size="sm"
+                value={e.amount}
+                onChange={(v) => patchExpense(e.key, { amount: v })}
+                placeholder="200"
+              />
+              <button
+                type="button"
+                onClick={() => set({ expenses: value.expenses.filter((x) => x.key !== e.key) })}
+                title="Убрать расход"
+                className="mt-1 grid h-7 w-7 shrink-0 place-items-center rounded-lg text-ink-3 transition-colors hover:bg-danger/10 hover:text-danger cursor-pointer"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Отметка под строкой, а не в ней: на телефоне в одну строку не
+                уместились бы название, сумма, галочка и крестик. Дату, когда
+                отметили, ставит сервер, поэтому после правки в форме её нет. */}
+            <div className="flex items-center gap-2">
+              <Checkbox
+                label="Оплачено"
+                checked={e.paid}
+                onChange={(ev) => patchExpense(e.key, { paid: ev.target.checked, paidAt: null })}
+              />
+              {e.paid && e.paidAt && <span className="text-xs text-ink-3">{shortDateLabel(e.paidAt)}</span>}
+            </div>
           </div>
         ))}
 
@@ -222,5 +240,11 @@ export const serviceToPayload = (s) => ({
   // Строка ГГГГ-ММ-ДД: DatePicker отдаёт её, а не событие и не Date.
   paidAt: s.paidAt,
   revenue: num(s.revenue),
-  expenses: s.expenses.map((e) => ({ title: e.title.trim(), amount: num(e.amount) })),
+  expenses: s.expenses.map((e) => ({
+    // id нужен серверу, чтобы узнать расход и не потерять дату оплаты.
+    ...(e.id ? { id: e.id } : {}),
+    title: e.title.trim(),
+    amount: num(e.amount),
+    paid: e.paid,
+  })),
 })

@@ -25,7 +25,14 @@ export function ServiceModal({ open, onClose, onSubmit, service }) {
         // пустое обязательное поле, и при правке её придётся назвать.
         paidAt: service.paidAt ? dayKey(service.paidAt) : '',
         revenue: String(service.revenueCents / 100),
-        expenses: service.expenses.map((e) => ({ key: e.id, title: e.title, amount: String(e.amountCents / 100) })),
+        expenses: service.expenses.map((e) => ({
+          key: e.id,
+          id: e.id,
+          title: e.title,
+          amount: String(e.amountCents / 100),
+          paid: Boolean(e.paid),
+          paidAt: e.paidAt || null,
+        })),
       }
       : newService())
     setError(null)
