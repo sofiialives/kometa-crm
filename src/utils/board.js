@@ -1,5 +1,5 @@
 /** Общие мелочи Доски клиентов. */
-import { MSK_OFFSET_MS, MSK_TZ } from './tasks'
+import { MSK_OFFSET_MS, MSK_TZ, defaultMskDateValue, splitDeadlineMsk } from './tasks'
 
 /**
  * Деньги приходят с сервера в центах целым числом. Показываем долларами.
@@ -36,9 +36,9 @@ export function monthKey(value = new Date()) {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-01`
 }
 
-/** Значение для поля даты: ГГГГ-ММ-ДД. */
-export function dayKey(value = new Date()) {
-  return msk(value).toISOString().slice(0, 10)
+/** Значение для поля даты: ГГГГ-ММ-ДД. Без аргумента это сегодня по Москве. */
+export function dayKey(value) {
+  return value === undefined ? defaultMskDateValue() : splitDeadlineMsk(value).date
 }
 
 /**
