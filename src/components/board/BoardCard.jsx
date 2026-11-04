@@ -47,6 +47,9 @@ export function BoardCard({ card, onOpen, onLeave, onReturn, periodLabel }) {
           note={marginText(card.profitCents, card.revenueCents)}
           muted={noMoney}
         />
+        {card.unpaidCents > 0 && (
+          <Row label="Не выплачено" value={money(card.unpaidCents)} tone="text-warn" />
+        )}
       </div>
 
       {finishingCount > 0 && (

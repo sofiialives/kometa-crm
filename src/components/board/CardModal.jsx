@@ -61,7 +61,7 @@ export function CardModal({
               )}
             </div>
 
-            <div className="flex gap-6">
+            <div className="flex flex-wrap gap-x-6 gap-y-3">
               <Figure label={`Выручка · ${periodLabel}`} value={money(card.revenueCents)} />
               <Figure
                 label={`Прибыль · ${periodLabel}`}
@@ -69,6 +69,11 @@ export function CardModal({
                 tone={card.profitCents < 0 ? 'text-danger' : 'text-ok'}
                 note={marginText(card.profitCents, card.revenueCents)}
               />
+              {/* Расходы, которые ещё предстоит выплатить. В прибыль они уже
+                  вычтены, так что это не третья сумма, а напоминание. */}
+              {card.unpaidCents > 0 && (
+                <Figure label="Не выплачено" value={money(card.unpaidCents)} tone="text-warn" />
+              )}
             </div>
           </div>
 
