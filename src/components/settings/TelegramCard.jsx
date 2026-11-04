@@ -23,9 +23,19 @@ export function TelegramCard() {
   // телефоны, долгий ответ), а обычную ссылку по клику не блокирует никто.
   const [deepLink, setDeepLink] = useState(null)
 
+  // Код в ссылке одноразовый и живёт 15 минут: дольше держать его на экране
+  // незачем, после привязки и отключения тоже.
+  useEffect(() => {
+    if (!deepLink) return undefined
+    const timer = setTimeout(() => setDeepLink(null), 15 * 60 * 1000)
+    return () => clearTimeout(timer)
+  }, [deepLink])
+
   async function load() {
     try {
-      setStatus(await api.get('/telegram'))
+      const next = await api.get('/telegram')
+      setStatus(next)
+      if (next?.linked) setDeepLink(null)
       setError(null)
     } catch (e) {
       setError(e.message)
@@ -59,6 +69,7 @@ export function TelegramCard() {
   async function disconnect() {
     setBusy(true)
     setConfirmOff(false)
+    setDeepLink(null)
     try {
       await api.del('/telegram')
       await load()
