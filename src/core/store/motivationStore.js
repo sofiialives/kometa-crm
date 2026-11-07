@@ -165,7 +165,7 @@ export const useMotivationStore = create((set) => ({
   async fetchReviewsCount() {
     const res = await call(() => api.get('/motivation/reviews/count'))
     // На вкладке — и заявки, и подсказки о новых работах.
-    if (res.ok) set({ reviewsPending: res.data.pending + (res.data.hints ?? 0) })
+    if (res.ok) set({ reviewsPending: res.data.pending })
     return res
   },
 
@@ -177,19 +177,6 @@ export const useMotivationStore = create((set) => ({
 
   async rejectReview(id, body) {
     const res = await call(() => api.post(`/motivation/reviews/${id}/reject`, body || {}))
-    if (res.ok) set((s) => ({ reviewsPending: Math.max(0, s.reviewsPending - 1) }))
-    return res
-  },
-
-  // Подсказки «Пополнить банк?» о новых работах в Иерархии.
-  fetchHints: () => call(() => api.get('/motivation/hints')),
-  async markHintDone(id) {
-    const res = await call(() => api.post(`/motivation/hints/${id}/done`, {}))
-    if (res.ok) set((s) => ({ reviewsPending: Math.max(0, s.reviewsPending - 1) }))
-    return res
-  },
-  async dismissHint(id) {
-    const res = await call(() => api.post(`/motivation/hints/${id}/dismiss`, {}))
     if (res.ok) set((s) => ({ reviewsPending: Math.max(0, s.reviewsPending - 1) }))
     return res
   },
