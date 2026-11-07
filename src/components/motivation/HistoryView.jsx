@@ -19,7 +19,7 @@ const SOURCE = {
  * Фильтры по месяцу, отделу и человеку. Владелец видит всех, руководитель —
  * специалистов своего отдела.
  */
-export function HistoryView({ isAdmin }) {
+export function HistoryView({ isAdmin, reloadKey = 0 }) {
   const fetchHistory = useMotivationStore((s) => s.fetchHistory)
   const fetchPeople = useMotivationStore((s) => s.fetchBotJournalPeople)
   const fetchTeamMonths = useMotivationStore((s) => s.fetchTeamMonths)
@@ -61,7 +61,7 @@ export function HistoryView({ isAdmin }) {
       setLoading(false)
       if (res.ok) setPage(res.data); else setError(res.error)
     })
-  }, [fetchHistory, month, departmentId, userId])
+  }, [fetchHistory, month, departmentId, userId, reloadKey])
 
   // Новые записи сверху сами, пока человек не листал дальше первой страницы.
   useAutoRefresh(() => {
