@@ -41,19 +41,6 @@ export function dayKey(value) {
   return value === undefined ? defaultMskDateValue() : splitDeadlineMsk(value).date
 }
 
-/**
- * Первый и последний день месяца, оба включительно, строками ГГГГ-ММ-ДД.
- * Это срок работ по умолчанию. Без месяца сроку взяться неоткуда, и вернутся
- * пустые строки.
- */
-export function monthBounds(value) {
-  if (!value) return { from: '', to: '' }
-  const [y, m] = monthKey(value).split('-').map(Number)
-  const prefix = `${y}-${String(m).padStart(2, '0')}`
-  const last = new Date(Date.UTC(y, m, 0)).getUTCDate()
-  return { from: `${prefix}-01`, to: `${prefix}-${String(last).padStart(2, '0')}` }
-}
-
 export function dateLabel(value) {
   if (!value) return ''
   return new Date(value)

@@ -13,9 +13,12 @@ import { awayLabel, dateTime, dollars, withDepartment } from '../../utils/motiva
  * карточками. Таблицу с прокруткой вбок на телефоне никто не читает.
  */
 
+// Должность человека из CRM. Бэкенд кладёт её в строку или в карточку человека.
+const positionOf = (r) => (r.position ?? r.employee?.position ?? '').toString().trim()
+
 const COLUMNS = [
   { id: 'name', label: 'Сотрудник', get: (r) => r.employee.name.toLowerCase() },
-  { id: 'profile', label: 'Должность', get: (r) => (r.profile?.title || '').toLowerCase() },
+  { id: 'profile', label: 'Должность', get: (r) => positionOf(r).toLowerCase() },
   { id: 'bank', label: 'Банк', get: (r) => r.bankCents, numeric: true },
   { id: 'points', label: 'Баллы', get: (r) => r.prizePoints, numeric: true },
   { id: 'level', label: 'Уровень премии', get: (r) => r.currentLevel, numeric: true },
@@ -93,7 +96,7 @@ export function TeamTable({ rows, totals, isCurrent = true, onOpen }) {
                   </div>
                 </div>
               </td>
-              <td className="px-4 py-3 text-ink-2">{r.profile?.title || <span className="text-warn">Не назначен</span>}</td>
+              <td className="px-4 py-3 text-ink-2">{positionOf(r) || '—'}</td>
               <td className="px-4 py-3 text-right tabular-nums">{dollars(r.bankCents)}</td>
               <td className="px-4 py-3 text-right tabular-nums">{r.prizePoints}</td>
               <td className="px-4 py-3 text-right tabular-nums">{r.currentLevel ? `${r.currentLevel} из ${r.levelsCount}` : '—'}</td>
@@ -116,7 +119,7 @@ export function TeamTable({ rows, totals, isCurrent = true, onOpen }) {
                     {r.employee.role === 'lead' && <LeadMark />}
                     {r.away && <AwayMark away={r.away} />}
                   </span>
-                  <span className="truncate text-xs text-ink-3">{r.profile?.title || 'Профиль не назначен'}</span>
+                  <span className="truncate text-xs text-ink-3">{positionOf(r) || '—'}</span>
                 </div>
                 <span className="font-semibold tabular-nums">{dollars(r.earnedCents)}</span>
               </div>

@@ -11,7 +11,6 @@ import { ManualPointsModal } from './ManualPointsModal'
 import { ProductModal } from './ProductModal'
 import { ExportBar } from './ExportBar'
 import { EmployeeModal } from './EmployeeModal'
-import { employeesWord } from '../../utils/motivation'
 
 /**
  * Раздел «Команда». Руководитель видит сотрудников своего отдела и только
@@ -56,6 +55,10 @@ export function TeamSection({ month, onMonthChange }) {
   }
 
   const isCurrent = team?.isCurrent ?? true
+  const withoutProfile = Array.isArray(team?.departmentsWithoutProfile) ? team.departmentsWithoutProfile : []
+  const departmentsNote = withoutProfile.length
+    ? `У ${withoutProfile.length === 1 ? 'отдела' : 'отделов'} ${withoutProfile.map((d) => d.name).join(', ')} пока нет условий баллов, задать их можно в Настройках`
+    : null
   const months = teamMonths.length ? teamMonths : (team ? [team.month] : [])
 
   return (
@@ -90,12 +93,7 @@ export function TeamSection({ month, onMonthChange }) {
         <p className="text-xs text-ok">Месяц закрыт: итоги зафиксированы</p>
       )}
 
-      {team && team.withoutProfile > 0 && (
-        <p className="text-sm text-warn">
-          {employeesWord(team.withoutProfile)} без профиля должности: условия получения баллов для них не заданы.
-          {isAdmin ? ' Назначить профиль можно в «Настройках».' : ' Профиль назначает владелец.'}
-        </p>
-      )}
+      {departmentsNote && <p className="text-sm text-ink-3">{departmentsNote}</p>}
 
       {/* Ошибка видна и поверх таблицы прошлого запроса. */}
       {teamError && <p className="text-sm text-danger">{teamError}</p>}

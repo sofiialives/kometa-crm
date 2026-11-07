@@ -5,14 +5,14 @@ import { cx } from '../../shared/lib/cx'
 import { useMotivationStore } from '../../core/store/motivationStore'
 import { dateTime, dayMonth, pointsTone, pointsWord, signedPoints } from '../../utils/motivation'
 import { plural } from '../../shared/lib/plural'
-import { HintsBlock } from './HintsBlock'
 import { HistoryView } from './HistoryView'
 import { useAutoRefresh } from '../../shared/lib/useAutoRefresh'
 
 /**
  * «История баллов» владельца: все начисления с фильтрами и рядом «Ждут
  * решения» — заявки по правилам, которые владелец настроил «мне на
- * решение», и подсказки пополнить банк за новые работы.
+ * решение». Они же стоят блоком над историей: решённая заявка уходит из
+ * блока в историю.
  *
  * Подсказанные баллы можно поменять прямо в строке. У личных задач рядом
  * — оценка сложности по названию и описанию и сколько человек уже получил
@@ -33,29 +33,23 @@ const COMPLEXITY = {
   high: { label: 'Весомая', tone: 'bg-ok/10 text-ok', hint: 'Подробное описание того, что сделано' },
 }
 
+const PAGE = 10
+
 export function ReviewSection() {
-  const { reviews, reviewsLoading, reviewsError, fetchReviews, approveReview, rejectReview } = useMotivationStore()
-  // Заявка обновилась, пока на неё смотрели (ночь добавила штраф) — сервер
-  // ответит 409, и очередь перечитывается, чтобы владелец увидел новое число.
-  const refresh = () => { setDone(new Set()); fetchReviews(view) }
+  const fetchReviews = useMotivationStore((s) => s.fetchReviews)
+  const fetchReviewsCount = useMotivationStore((s) => s.fetchReviewsCount)
+  const reviews = useMotivationStore((s) => s.reviews)
   // Кнопка из телеграма («Открыть») ведёт сразу в «Ждут решения».
   const [params] = useSearchParams()
   const [view, setView] = useState(() => (params.get('view') === 'pending' ? 'pending' : 'history'))
   const pendingCount = useMotivationStore((s) => s.reviewsPending)
-  const [done, setDone] = useState(() => new Set())
+  // Растёт после каждого решения: история перечитывается и показывает его.
+  const [historyKey, setHistoryKey] = useState(0)
 
-  const fetchReviewsCount = useMotivationStore((s) => s.fetchReviewsCount)
   useEffect(() => {
-    // Счётчик на вкладке мог устареть: ночью пришли заявки, днём — работы.
+    // Счётчик на вкладке мог устареть: ночью пришли заявки.
     fetchReviewsCount()
-    if (view !== 'pending') return
-    setDone(new Set())
-    fetchReviews('pending')
-  }, [fetchReviews, fetchReviewsCount, view])
-  useAutoRefresh(() => { if (view === 'pending') { setDone(new Set()); fetchReviews('pending') } })
-
-  const items = (reviews?.items ?? []).filter((r) => !done.has(r.id))
-  const markDone = (id) => setDone((s) => new Set(s).add(id))
+  }, [fetchReviewsCount, view])
 
   return (
     <div className="flex flex-col gap-4">
@@ -80,38 +74,78 @@ export function ReviewSection() {
         {view === 'pending' && reviews?.taskPoints && <TaskPointsNote taskPoints={reviews.taskPoints} />}
       </div>
 
-      {view === 'history' && <HistoryView isAdmin />}
-      {view === 'pending' && <HintsBlock />}
-
-      {view !== 'pending' ? null : reviewsLoading && !reviews ? (
-        <div className="grid place-items-center py-14"><Spinner /></div>
-      ) : reviewsError && !reviews ? (
-        <p className="text-sm text-danger">{reviewsError}</p>
-      ) : items.length === 0 ? (
-        <Card>
-          <EmptyState
-            label="Заявок нет"
-            text="Сюда приходят только правила, которые в условиях отдела настроены «мне на решение». Остальные баллы начисляются сами и видны в «Истории баллов»." 
-          />
-        </Card>
-      ) : (
-        <ul className="flex flex-col gap-3">
-          {items.map((r) => (
-              <PendingItem
-                key={r.id}
-                review={r}
-                dailyCap={reviews.personalTaskDailyCap}
-                onApprove={(body) => approveReview(r.id, body).then((res) => {
-                  if (res.ok) markDone(r.id)
-                  else if (/обновилась/.test(res.error || '')) refresh()
-                  return res
-                })}
-                onReject={() => rejectReview(r.id).then((res) => { if (res.ok) markDone(r.id); return res })}
-              />
-          ))}
-        </ul>
-      )}
+      <PendingQueue
+        key={view}
+        compact={view === 'history'}
+        onDecided={() => setHistoryKey((k) => k + 1)}
+      />
+      {view === 'history' && <HistoryView isAdmin reloadKey={historyKey} />}
     </div>
+  )
+}
+
+/**
+ * Очередь заявок с кнопками «Начислить» и «Не начислять». В режиме compact
+ * это блок над историей: пустая очередь его не показывает, а длинную он
+ * выдаёт порциями с кнопкой «Показать ещё».
+ */
+function PendingQueue({ compact, onDecided }) {
+  const { reviews, reviewsLoading, reviewsError, fetchReviews, approveReview, rejectReview } = useMotivationStore()
+  const [done, setDone] = useState(() => new Set())
+  const [shown, setShown] = useState(PAGE)
+
+  const load = () => { setDone(new Set()); return fetchReviews('pending') }
+  useEffect(() => { load() }, [fetchReviews]) // eslint-disable-line react-hooks/exhaustive-deps
+  useAutoRefresh(load)
+
+  const items = (reviews?.items ?? []).filter((r) => !done.has(r.id))
+  const markDone = (id) => { setDone((s) => new Set(s).add(id)); onDecided?.() }
+  // Заявка обновилась, пока на неё смотрели (ночь добавила штраф) — сервер
+  // ответит 409, и очередь перечитывается, чтобы владелец увидел новое число.
+  const visible = compact ? items.slice(0, shown) : items
+
+  if (reviewsLoading && !reviews) {
+    return compact ? null : <div className="grid place-items-center py-14"><Spinner /></div>
+  }
+  if (reviewsError && !reviews) return compact ? null : <p className="text-sm text-danger">{reviewsError}</p>
+  if (items.length === 0) {
+    if (compact) return null
+    return (
+      <Card>
+        <EmptyState
+          label="Заявок нет"
+          text="Сюда приходят только правила, которые в условиях отдела настроены «мне на решение». Остальные баллы начисляются сами и видны в «Истории баллов»."
+        />
+      </Card>
+    )
+  }
+
+  return (
+    <section className="flex flex-col gap-3" aria-label="Ждут решения">
+      {compact && <p className="caption">Ждут решения · {items.length}</p>}
+      <ul className="flex flex-col gap-3">
+        {visible.map((r) => (
+          <PendingItem
+            key={r.id}
+            review={r}
+            dailyCap={reviews.personalTaskDailyCap}
+            onApprove={(body) => approveReview(r.id, body).then((res) => {
+              if (res.ok) markDone(r.id)
+              else if (/обновилась/.test(res.error || '')) load()
+              return res
+            })}
+            onReject={() => rejectReview(r.id).then((res) => { if (res.ok) markDone(r.id); return res })}
+          />
+        ))}
+      </ul>
+      {compact && items.length > visible.length && (
+        <div className="flex justify-center">
+          <Button size="sm" variant="secondary" onClick={() => setShown((n) => n + PAGE)}>
+            Показать ещё · {items.length - visible.length}
+          </Button>
+        </div>
+      )}
+    </section>
   )
 }
 

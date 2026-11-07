@@ -17,10 +17,6 @@ export function ServiceModal({ open, onClose, onSubmit, service }) {
         key: service.id,
         title: service.title,
         month: monthKey(service.month),
-        // Срок работ сервер отдаёт всегда: пустые границы он сам заменяет
-        // краями месяца услуги.
-        workFrom: dayKey(service.workFrom),
-        workTo: dayKey(service.workTo),
         // Услуги, заведённые до появления поля, даты не имеют: форма покажет
         // пустое обязательное поле, и при правке её придётся назвать.
         paidAt: service.paidAt ? dayKey(service.paidAt) : '',
