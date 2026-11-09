@@ -263,11 +263,13 @@ function TeamTable({ data, onOpen }) {
           <tbody>
             {data.people.map((p) => (
               <tr key={p.employee.id} className="border-b border-line last:border-b-0 hover:bg-panel-2">
-                <th scope="row" className="px-3 py-2 text-left font-medium">
-                  <button type="button" className="cursor-pointer text-left hover:text-accent hover:underline" onClick={() => onOpen(p.employee.id)}>
-                    {withDepartment(p.employee.name, p.employee.department)}
+                <th scope="row" className="min-w-[12rem] px-3 py-2 text-left font-medium">
+                  <button type="button" className="cursor-pointer whitespace-nowrap text-left hover:text-accent hover:underline" onClick={() => onOpen(p.employee.id)}>
+                    {p.employee.name}
                   </button>
-                  {!p.telegram && <span className="block text-xs font-normal text-ink-3">телеграм не подключён</span>}
+                  <span className="block text-xs font-normal text-ink-3">
+                    {[p.employee.department?.name ?? p.employee.department, !p.telegram && 'телеграм не подключён'].filter((x) => typeof x === 'string' && x).join(', ')}
+                  </span>
                 </th>
                 {COLUMNS.map((c) => cell(p.summary, c))}
               </tr>
