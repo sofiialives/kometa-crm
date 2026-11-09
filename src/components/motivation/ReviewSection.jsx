@@ -111,9 +111,10 @@ function PendingQueue({ compact, onDecided }) {
   // Выбранные галочками и люди из списка вместе: заявка берётся, если подходит под любое.
   const selectedIds = items.filter((r) => checked.has(r.id) || people.has(r.employee.id)).map((r) => r.id)
   const allSelected = items.length > 0 && selectedIds.length === items.length
-  // На сервер уходят ids выбранных заявок (люди из списка уже учтены в них).
-  async function dismiss(kind) {
-    const body = kind === 'all' ? { all: true } : { ids: selectedIds }
+  // На сервер уходят ids, запомненные при открытии подтверждения: пока окно
+  // открыто, список мог обновиться, и снять нужно ровно то, что человек видел.
+  async function dismiss(frozen) {
+    const body = { ids: frozen.ids }
     const res = await dismissReviews(body)
     if (!res.ok) return res
     setChecked(new Set())
@@ -153,8 +154,11 @@ function PendingQueue({ compact, onDecided }) {
         onPeople={setPeople}
         selectedCount={selectedIds.length}
         allSelected={allSelected}
-        onToggleAll={() => setChecked(allSelected ? new Set() : new Set(items.map((r) => r.id)))}
-        onClean={(kind) => setConfirm({ kind, count: kind === 'all' ? items.length : selectedIds.length })}
+        onToggleAll={() => { setChecked(allSelected ? new Set() : new Set(items.map((r) => r.id))); setPeople(new Set()) }}
+        onClean={(kind) => {
+          const ids = kind === 'all' ? items.map((r) => r.id) : [...selectedIds]
+          if (ids.length) setConfirm({ kind, ids, count: ids.length })
+        }}
       />
       <ul className="flex flex-col gap-3">
         {visible.map((r) => (
@@ -180,7 +184,7 @@ function PendingQueue({ compact, onDecided }) {
           </Button>
         </div>
       )}
-      {confirm && <DismissConfirm count={confirm.count} onCancel={() => setConfirm(null)} onConfirm={() => dismiss(confirm.kind)} onDone={() => setConfirm(null)} />}
+      {confirm && <DismissConfirm count={confirm.count} onCancel={() => setConfirm(null)} onConfirm={() => dismiss(confirm)} onDone={() => setConfirm(null)} />}
     </section>
   )
 }
