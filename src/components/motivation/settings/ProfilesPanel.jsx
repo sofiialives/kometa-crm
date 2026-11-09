@@ -73,7 +73,8 @@ export function ProfilesPanel({ profiles, departments, employees = [], onOpen, a
 
   const byKey = new Map(profiles.filter((p) => p.department && !p.userId).map((p) => [`${p.department.id}:${p.audience}`, p]))
   const personalIds = new Set(profiles.filter((p) => p.userId).map((p) => p.userId))
-  const legacy = profiles.filter((p) => !p.department)
+  // Персональные профили тоже без отдела, но они не старые: их видно по аватарке человека.
+  const legacy = profiles.filter((p) => !p.department && !p.userId)
 
   // «Задать условия» сразу создаёт пустой профиль отдела и открывает его окно.
   async function create(department, audience) {
