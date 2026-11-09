@@ -132,8 +132,8 @@ export const useMotivationStore = create((set) => ({
   // История баллов: месяц или всё время, отдел, человек; before — догрузка.
   fetchHistory: (params) => call(() => api.get(`/motivation/history${query(params)}`)),
   fetchBotJournal: (userId, month) => call(() => api.get(`/motivation/bot-journal${query({ userId, month })}`)),
-  // Таблица по людям: scope = 'all' (вся команда) или id отдела.
-  fetchBotJournalTeam: (scope, month) => call(() => api.get(`/motivation/bot-journal/team${query(scope === 'all' ? { month } : { departmentId: scope, month })}`)),
+  // Таблица по людям: scope = 'all' (вся команда, у руководителя его отдел) или id отдела.
+  fetchBotJournalTeam: (scope, month) => call(() => api.get(`/motivation/bot-journal${query(scope === 'all' ? { scope: 'all', month } : { departmentId: scope, month })}`)),
 
   topUp: (body) => call(() => api.post('/motivation/bank/top-up', body)),
   writeOff: (body) => call(() => api.post('/motivation/bank/write-off', body)),
@@ -186,7 +186,7 @@ export const useMotivationStore = create((set) => ({
   // Массовое снятие заявок: body = { ids } | { userIds } | { all: true }.
   // Баллы по ним не начисляются, в истории они остаются.
   async dismissReviews(body) {
-    const res = await call(() => api.post('/motivation/reviews/dismiss', body))
+    const res = await call(() => api.post('/motivation/reviews/withdraw', body))
     if (res.ok) await get().fetchReviewsCount()
     return res
   },

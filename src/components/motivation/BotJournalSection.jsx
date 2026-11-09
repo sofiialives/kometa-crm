@@ -17,10 +17,12 @@ import { dayHeading, describe, duration, hm, times } from '../../utils/botJourna
  * присылает.
  */
 export function BotJournalSection({ person, onPersonChange, month, onMonthChange }) {
-  const { fetchBotJournalPeople, fetchBotJournal } = useMotivationStore()
+  const { fetchBotJournalPeople, fetchBotJournal, fetchBotJournalTeam } = useMotivationStore()
+  const isAdmin = useAuthStore((st) => st.user?.role === 'admin')
   const meId = useAuthStore((s) => s.user?.id)
   const [people, setPeople] = useState(null)
   const [journal, setJournal] = useState(null)
+  const [team, setTeam] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const request = useRef(0)
@@ -32,15 +34,41 @@ export function BotJournalSection({ person, onPersonChange, month, onMonthChange
     })
   }, [fetchBotJournalPeople])
 
-  // Никого не выбрали — первый по алфавиту; руководителю — не он сам.
+  // Значение списка: 'all' (вся команда или мой отдел), 'dept:<id>' или id человека.
+  // Ничего не выбрано: «Вся команда» (у руководителя его отдел).
   const list = people ?? []
-  const selected = person && list.some((p) => p.id === person) ? person : (list.find((p) => p.id !== meId) ?? list[0])?.id
+  const departments = []
+  if (isAdmin) {
+    const seen = new Set()
+    for (const p of list) {
+      if (p.department?.id && !seen.has(p.department.id)) {
+        seen.add(p.department.id)
+        departments.push(p.department)
+      }
+    }
+    departments.sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+  }
+  const known = person === 'all' || (person?.startsWith('dept:') && departments.some((d) => `dept:${d.id}` === person)) || list.some((p) => p.id === person)
+  const selected = person && known ? person : 'all'
+  const isTeam = selected === 'all' || selected.startsWith('dept:')
 
   useEffect(() => {
-    if (!selected) return
+    if (!people) return
     const n = ++request.current
     setLoading(true)
     setError(null)
+    if (isTeam) {
+      setJournal(null)
+      const scope = selected === 'all' ? 'all' : selected.slice(5)
+      fetchBotJournalTeam(scope, month || undefined).then((res) => {
+        if (n !== request.current) return
+        setLoading(false)
+        if (res.ok) setTeam(res.data)
+        else { setTeam(null); setError(res.error) }
+      })
+      return
+    }
+    setTeam(null)
     // Другой человек — прежний журнал не показываем ни секунды.
     setJournal((j) => (j && j.employee.id !== selected ? null : j))
     fetchBotJournal(selected, month || undefined).then((res) => {
@@ -50,7 +78,14 @@ export function BotJournalSection({ person, onPersonChange, month, onMonthChange
       if (res.ok) setJournal(res.data)
       else { setJournal(null); setError(res.error) }
     })
-  }, [fetchBotJournal, selected, month])
+  }, [fetchBotJournal, fetchBotJournalTeam, people, selected, isTeam, month])
+
+  const options = [
+    { value: 'all', label: isAdmin ? 'Вся команда' : 'Весь отдел' },
+    ...departments.map((d) => ({ value: `dept:${d.id}`, label: `Отдел: ${d.name}` })),
+    ...list.map((p) => ({ value: p.id, label: withDepartment(p.name, p.department) })),
+  ]
+  const monthSource = isTeam ? team : journal
 
   if (people === null && !error) return <div className="grid place-items-center py-14"><Spinner /></div>
   if (people && !people.length) return <Card><EmptyState label="Пусто" text="Здесь пока некого показать: нет сотрудников с банком." /></Card>
@@ -62,12 +97,12 @@ export function BotJournalSection({ person, onPersonChange, month, onMonthChange
           className="w-72"
           size="sm"
           aria-label="Сотрудник"
-          options={list.map((p) => ({ value: p.id, label: withDepartment(p.name, p.department) }))}
+          options={options}
           value={selected || ''}
           onChange={(e) => onPersonChange(e.target.value)}
         />
-        {journal && (
-          <MonthSelect months={journal.months} current={journal.currentMonth} value={journal.month} onChange={onMonthChange} className="w-60" />
+        {monthSource && (
+          <MonthSelect months={monthSource.months} current={monthSource.currentMonth} value={monthSource.month} onChange={onMonthChange} className="w-60" />
         )}
         {loading && <Spinner size={16} />}
       </div>
@@ -79,6 +114,7 @@ export function BotJournalSection({ person, onPersonChange, month, onMonthChange
           {month && <Button size="sm" variant="ghost" onClick={() => onMonthChange('')}>Открыть текущий месяц</Button>}
         </div>
       )}
+      {team && <TeamTable data={team} onOpen={onPersonChange} />}
       {journal && !journal.telegram && (
         <p className="text-sm text-warn">Телеграм не подключён — бот этому человеку не пишет и чек-ин его не спрашивает.</p>
       )}
@@ -184,5 +220,67 @@ function Chat({ messages }) {
         )
       })}
     </div>
+  )
+}
+
+const COLUMNS = [
+  ['Отлучек', (s) => s.breaks],
+  ['Опозданий', (s) => s.lateBreaks, 'warn'],
+  ['Продлений', (s) => s.extensions],
+  ['Не отметился', (s) => s.unmarked, 'warn'],
+  ['Форс-мажоров', (s) => s.forceMajeure],
+  ['Чек-ины: ответил', (s) => `${s.checkins.answered} из ${s.checkins.asked}`],
+  ['Чек-ины: промолчал', (s) => s.checkins.penalized, 'danger'],
+  ['Задерживаюсь', (s) => s.lateReports, 'warn'],
+  ['Закрыл задач', (s) => s.tasksDone ?? 0],
+  ['Просрочено', (s) => s.tasksOverdue ?? 0, 'danger'],
+  ['Продлевал сроки', (s) => s.tasksExtended ?? 0, 'warn'],
+  ['Не начал вовремя', (s) => s.tasksNotStarted ?? 0, 'warn'],
+  ['На сегодня всё', (s) => s.dayEnds],
+]
+
+/** Таблица по людям за месяц, внизу итого. Клик по человеку открывает его отчёт. */
+function TeamTable({ data, onOpen }) {
+  if (!data.people.length) return <Card><EmptyState label="Пусто" text="Здесь пока некого показать." /></Card>
+  const cell = (summary, [label, get, tone]) => {
+    const v = get(summary)
+    const on = tone && Number(v) > 0
+    return (
+      <td key={label} className={cx('px-3 py-2 text-right tabular-nums', on && tone === 'warn' && 'text-warn', on && tone === 'danger' && 'text-danger')}>{v}</td>
+    )
+  }
+  return (
+    <Card className="flex flex-col gap-3">
+      <p className="caption">{data.department ? `Отдел: ${data.department.name}` : 'Итоги месяца по людям'}</p>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[56rem] text-sm">
+          <thead>
+            <tr className="border-b border-line text-xs text-ink-3">
+              <th scope="col" className="px-3 py-2 text-left font-medium">Сотрудник</th>
+              {COLUMNS.map(([label]) => <th key={label} scope="col" className="px-3 py-2 text-right font-medium">{label}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {data.people.map((p) => (
+              <tr key={p.employee.id} className="border-b border-line last:border-b-0 hover:bg-panel-2">
+                <th scope="row" className="px-3 py-2 text-left font-medium">
+                  <button type="button" className="cursor-pointer text-left hover:text-accent hover:underline" onClick={() => onOpen(p.employee.id)}>
+                    {withDepartment(p.employee.name, p.employee.department)}
+                  </button>
+                  {!p.telegram && <span className="block text-xs font-normal text-ink-3">телеграм не подключён</span>}
+                </th>
+                {COLUMNS.map((c) => cell(p.summary, c))}
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr className="border-t border-line-2 font-semibold">
+              <th scope="row" className="px-3 py-2 text-left">Итого</th>
+              {COLUMNS.map((c) => cell(data.totals, c))}
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </Card>
   )
 }
