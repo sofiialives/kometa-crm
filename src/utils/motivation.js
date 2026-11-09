@@ -95,9 +95,11 @@ export function bankEntryLabel(entry) {
 export const AUTO_RULES = [
   { value: 'task_on_time', label: 'Задача из Иерархии закрыта в срок' },
   { value: 'personal_task_on_time', label: 'Личная задача закрыта в срок' },
-  { value: 'task_overdue', label: 'Просрочка задачи из Иерархии, за каждый день' },
+  { value: 'task_overdue', label: 'Просрочка задачи из Иерархии' },
   { value: 'personal_task_overdue', label: 'Просрочка личной задачи, один раз' },
   { value: 'task_not_started', label: 'Задача не начата вовремя, через 15 минут после начала' },
+  { value: 'tasks_not_set', label: 'Не расставил задачи на день, проверка в 10:00 по Москве' },
+  { value: 'client_closed_on_time', label: 'Руководителю: все задачи по клиенту закрыты в срок' },
 ]
 
 const RULE_LABEL = Object.fromEntries(AUTO_RULES.map((r) => [r.value, r.label]))
@@ -176,15 +178,19 @@ export function scaleErrors(levels) {
   return errors
 }
 
-/** То же для уровней работы: первый с нуля, границы растут, названия есть. */
+/**
+ * То же для уровней работы: границы растут, названия есть. Первый уровень
+ * — нижняя граница всей шкалы и может быть отрицательным: штрафами
+ * человек может уйти в минус.
+ */
 export function workLevelErrors(levels) {
   const errors = []
   if (levels.length === 0) return ['Нужен хотя бы один уровень работы']
   levels.forEach((l, i) => {
     const n = i + 1
     if (!String(l.title || '').trim()) errors.push(`Уровень ${n}: нужно название`)
-    if (!Number.isInteger(l.minPoints) || l.minPoints < 0 || l.minPoints > 100) {
-      errors.push(`Уровень ${n}: граница должна быть целым числом от 0 до 100`)
+    if (!Number.isInteger(l.minPoints) || l.minPoints < -100 || l.minPoints > 100) {
+      errors.push(`Уровень ${n}: граница должна быть целым числом от −100 до 100`)
     }
     if (i > 0 && l.minPoints <= levels[i - 1].minPoints) errors.push(`Уровень ${n}: граница должна быть больше, чем у уровня ${n - 1}`)
   })

@@ -3,8 +3,10 @@ import { Button, Input, Textarea } from '../../../shared/ui'
 import { workLevelErrors } from '../../../utils/motivation'
 
 /**
- * Уровни работы: названия, границы и подсказки. Первый уровень всегда
- * начинается с нуля — иначе на малых баллах человек остался бы без уровня.
+ * Уровни работы: названия, границы и подсказки. Первый уровень — нижняя
+ * граница всей шкалы, остальные выше него. Граница может быть и
+ * отрицательной: шкала не обязана начинаться с нуля, человек может
+ * «уйти в минус» штрафами и это будет видно отдельным уровнем.
  */
 export function WorkLevelsEditor({ levels, onSave }) {
   const [rows, setRows] = useState([])
@@ -34,7 +36,7 @@ export function WorkLevelsEditor({ levels, onSave }) {
   }
 
   async function save() {
-    const payload = rows.map((r, i) => ({ title: r.title, minPoints: i === 0 ? 0 : Number(r.minPoints), hint: r.hint, from: r.from ?? null }))
+    const payload = rows.map((r) => ({ title: r.title, minPoints: Number(r.minPoints), hint: r.hint, from: r.from ?? null }))
     const local = workLevelErrors(payload)
     if (local.length) { setError(local[0]); setSaved(false); return }
     setBusy(true)
@@ -54,9 +56,8 @@ export function WorkLevelsEditor({ levels, onSave }) {
                 size="sm"
                 label="С баллов"
                 inputMode="numeric"
-                value={i === 0 ? '0' : r.minPoints}
-                disabled={i === 0}
-                onChange={(e) => update(i, 'minPoints', e.target.value.replace(/\D/g, '').slice(0, 3))}
+                value={r.minPoints}
+                onChange={(e) => update(i, 'minPoints', e.target.value.replace(/[^-\d]/g, '').replace(/(?!^)-/g, '').slice(0, 4))}
               />
               <button
                 type="button"

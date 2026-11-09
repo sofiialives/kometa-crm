@@ -25,6 +25,8 @@ const RULE_LABEL = {
   task_overdue: 'Просрочка задачи из Иерархии',
   personal_task_overdue: 'Личная задача просрочена',
   task_not_started: 'Задача не начата вовремя',
+  tasks_not_set: 'Не расставил задачи на день до 10:00',
+  client_closed_on_time: 'Все задачи по клиенту закрыты в срок',
 }
 
 const COMPLEXITY = {
