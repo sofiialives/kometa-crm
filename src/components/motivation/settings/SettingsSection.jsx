@@ -68,7 +68,8 @@ export function SettingsSection() {
 
       <GeneralPanel general={settings.general} onSave={actions.updateGeneral} />
 
-      {opened && (
+      {/* Отдел окна пропал из настроек (удалили, переименовали) — окно не открываем с пустым отделом. */}
+      {opened && (!opened.departmentId || (settings.departments || []).some((d) => d.id === opened.departmentId)) && (
         <ProfileEditor
           opened={opened}
           profiles={settings.profiles}

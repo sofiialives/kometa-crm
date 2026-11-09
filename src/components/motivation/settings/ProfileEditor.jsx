@@ -16,12 +16,15 @@ export function ProfileEditor({ opened, profiles, department, employees, globalS
   const [key, setKey] = useState(opened.key || 'staff')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
-  const [confirmReset, setConfirmReset] = useState(false)
+  // Кого убираем, запоминаем в момент нажатия: пока открыто подтверждение,
+  // выбор в списке не должен подменить человека.
+  const [confirmReset, setConfirmReset] = useState(null)
 
   const legacy = opened.profileId ? profiles.find((p) => p.id === opened.profileId) || null : null
   const deptId = department?.id
-  const deptProfile = (audience) => profiles.find((p) => !p.userId && p.department?.id === deptId && p.audience === audience) || null
-  const people = employees.filter((e) => e.active && e.department?.id === deptId)
+  // Отдел не нашёлся — ничего не подбираем: сравнение с undefined нашло бы чужие профили.
+  const deptProfile = (audience) => (deptId ? profiles.find((p) => !p.userId && p.department?.id === deptId && p.audience === audience) || null : null)
+  const people = deptId ? employees.filter((e) => e.active && e.department?.id === deptId) : []
   const person = key.startsWith('u:') ? people.find((e) => e.id === key.slice(2)) || null : null
 
   let profile = null
@@ -47,8 +50,10 @@ export function ProfileEditor({ opened, profiles, department, employees, globalS
   }
 
   async function removePersonal() {
-    const res = await actions.deleteProfile(profile.id)
-    if (res.ok) setConfirmReset(false); else setError(res.error)
+    const target = confirmReset
+    if (!target?.id || !target.userId) return { ok: false }
+    const res = await actions.deleteProfile(target.id)
+    if (res.ok) setConfirmReset(null); else setError(res.error)
     return res
   }
 
@@ -57,10 +62,10 @@ export function ProfileEditor({ opened, profiles, department, employees, globalS
       <div className="flex flex-col gap-6">
         {!legacy && (
           <div className="flex flex-col gap-2">
-            <Select label="Чьи условия правим" options={options} value={key} onChange={(e) => { setKey(e.target.value); setError(null) }} />
+            <Select label="Чьи условия правим" options={options} value={key} onChange={(e) => { setKey(e.target.value); setError(null); setConfirmReset(null) }} />
             {profile?.userId && (
               <div>
-                <Button size="sm" variant="ghost" onClick={() => setConfirmReset(true)}>Убрать персональные, вернуть условия отдела</Button>
+                <Button size="sm" variant="ghost" onClick={() => setConfirmReset({ id: profile.id, userId: profile.userId, name: person?.name })}>Убрать персональные, вернуть условия отдела</Button>
               </div>
             )}
           </div>
@@ -89,11 +94,11 @@ export function ProfileEditor({ opened, profiles, department, employees, globalS
       </div>
 
       <ConfirmModal
-        open={confirmReset}
-        onClose={() => setConfirmReset(false)}
+        open={Boolean(confirmReset)}
+        onClose={() => setConfirmReset(null)}
         danger
         title="Убрать персональные условия?"
-        text={`${person?.name || 'Сотрудник'} снова будет работать по условиям отдела. Начисленные баллы останутся.`}
+        text={`${confirmReset?.name || 'Сотрудник'} снова будет работать по условиям отдела. Начисленные баллы останутся.`}
         confirmText="Убрать"
         onConfirm={removePersonal}
       />
