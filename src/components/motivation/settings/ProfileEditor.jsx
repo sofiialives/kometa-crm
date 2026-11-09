@@ -1,38 +1,117 @@
 import { useEffect, useState } from 'react'
-import { Badge, Button, Checkbox, ConfirmModal, Input, Modal, MoneyInput, Textarea } from '../../../shared/ui'
+import { Badge, Button, Checkbox, ConfirmModal, Modal, Select, Textarea } from '../../../shared/ui'
 import { cx } from '../../../shared/lib/cx'
 import { ScaleEditor } from './ScaleEditor'
 import { EventTypeModal } from './EventTypeModal'
-import { MAX_DOLLARS, autoRuleLabel, eventPoints, lowerFirst, pointsTone } from '../../../utils/motivation'
+import { autoRuleLabel, eventPoints, lowerFirst, pointsTone } from '../../../utils/motivation'
 
 /**
- * Профиль должности целиком: название, стартовая сумма банка, события,
- * своя шкала премии и свои подсказки к уровням работы. Всё, что в задании
- * перечислено в «Что входит в профиль».
+ * Окно условий отдела. Сверху выбор, чьи условия правим: отдел по умолчанию,
+ * руководитель или конкретный человек. Человек без персональных условий
+ * работает по условиям отдела, персональные создаются кнопкой.
  *
- * Каждый блок сохраняется отдельно. Одна общая кнопка «Сохранить» на всё
- * окно путала бы: правка события уже ушла на сервер, а название ещё нет.
+ * Каждый блок сохраняется отдельно: правка события уходит на сервер сразу.
  */
-export function ProfileEditor({ profile, globalScale, workLevels, onClose, actions }) {
-  const [title, setTitle] = useState('')
-  const [startBank, setStartBank] = useState('')
+export function ProfileEditor({ opened, profiles, department, employees, globalScale, workLevels, onClose, actions }) {
+  const [key, setKey] = useState(opened.key || 'staff')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(null)
+  const [confirmReset, setConfirmReset] = useState(false)
+
+  const legacy = opened.profileId ? profiles.find((p) => p.id === opened.profileId) || null : null
+  const deptId = department?.id
+  const deptProfile = (audience) => profiles.find((p) => !p.userId && p.department?.id === deptId && p.audience === audience) || null
+  const people = employees.filter((e) => e.active && e.department?.id === deptId)
+  const person = key.startsWith('u:') ? people.find((e) => e.id === key.slice(2)) || null : null
+
+  let profile = null
+  let base = null
+  if (legacy) profile = legacy
+  else if (person) {
+    profile = profiles.find((p) => p.userId === person.id) || null
+    base = person.role === 'lead' ? deptProfile('lead') || deptProfile('staff') : deptProfile('staff')
+  } else profile = deptProfile(key)
+
+  const options = [
+    { value: 'staff', label: `${department?.name || 'Отдел'}, всем по умолчанию` },
+    { value: 'lead', label: 'Руководитель отдела' },
+    ...people.map((e) => ({ value: `u:${e.id}`, label: e.name })),
+  ]
+
+  async function create(body) {
+    setBusy(true)
+    setError(null)
+    const res = await actions.createProfile({ departmentId: deptId, ...body })
+    setBusy(false)
+    if (!res.ok) setError(res.error)
+  }
+
+  async function removePersonal() {
+    const res = await actions.deleteProfile(profile.id)
+    if (res.ok) setConfirmReset(false); else setError(res.error)
+    return res
+  }
+
+  return (
+    <Modal open onClose={onClose} title={legacy ? `Профиль «${legacy.title}»` : `Условия: ${department?.name || 'отдел'}`} size="lg">
+      <div className="flex flex-col gap-6">
+        {!legacy && (
+          <div className="flex flex-col gap-2">
+            <Select label="Чьи условия правим" options={options} value={key} onChange={(e) => { setKey(e.target.value); setError(null) }} />
+            {profile?.userId && (
+              <div>
+                <Button size="sm" variant="ghost" onClick={() => setConfirmReset(true)}>Убрать персональные, вернуть условия отдела</Button>
+              </div>
+            )}
+          </div>
+        )}
+        {error && <p className="text-sm text-danger">{error}</p>}
+
+        {profile ? (
+          <ProfileBody key={profile.id} profile={profile} globalScale={globalScale} workLevels={workLevels} actions={actions} />
+        ) : person ? (
+          <div className="flex flex-col items-start gap-3 rounded-lg border border-line p-4">
+            <p className="text-sm font-medium">Работает по условиям отдела</p>
+            <p className="text-sm text-ink-3">
+              {base ? 'Чтобы изменить условия только для этого человека, задайте персональные. Сначала в них скопируются текущие условия отдела.' : 'У отдела пока нет условий. Сначала задайте их.'}
+            </p>
+            {base && (
+              <Button loading={busy} onClick={() => create({ audience: person.role, userId: person.id, copyFromId: base.id })}>Задать персональные условия</Button>
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col items-start gap-3 rounded-lg border border-line p-4">
+            <p className="text-sm font-medium">Условий нет</p>
+            {key === 'lead' && <p className="text-sm text-ink-3">Руководитель работает по условиям специалистов.</p>}
+            <Button loading={busy} onClick={() => create({ audience: key })}>Задать условия</Button>
+          </div>
+        )}
+      </div>
+
+      <ConfirmModal
+        open={confirmReset}
+        onClose={() => setConfirmReset(false)}
+        danger
+        title="Убрать персональные условия?"
+        text={`${person?.name || 'Сотрудник'} снова будет работать по условиям отдела. Начисленные баллы останутся.`}
+        confirmText="Убрать"
+        onConfirm={removePersonal}
+      />
+    </Modal>
+  )
+}
+
+function ProfileBody({ profile, globalScale, workLevels, actions }) {
   const [hints, setHints] = useState({})
   const [eventModal, setEventModal] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [message, setMessage] = useState(null)
   const [busy, setBusy] = useState(null)
 
-  // Каждое поле сбрасывается, только когда на сервере поменялось именно оно.
-  // Сохранение названия или галочки шкалы перезапрашивает профиль целиком, и
-  // раньше вместе с ним пропадали набранные, но не сохранённые подсказки.
-  useEffect(() => { if (profile) setTitle(profile.title) }, [profile?.title]) // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    if (profile) setStartBank(profile.startBankCents ? String(profile.startBankCents / 100) : '')
-  }, [profile?.startBankCents]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Подсказки сбрасываются, только когда на сервере поменялись именно они:
+  // иначе сохранение галочки шкалы стирало бы набранный, но не сохранённый текст.
   const hintsKey = JSON.stringify(profile?.workHints || {})
-  useEffect(() => { if (profile) setHints(profile.workHints || {}) }, [hintsKey]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  if (!profile) return null
+  useEffect(() => { setHints(profile.workHints || {}) }, [hintsKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function run(key, fn, okText) {
     setBusy(key)
@@ -44,55 +123,11 @@ export function ProfileEditor({ profile, globalScale, workLevels, onClose, actio
 
   return (
     <>
-      <Modal open onClose={onClose} title={`Профиль «${profile.title}»`} size="lg">
+      <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-6">
           {message && (
             <p className={cx('text-sm', message.tone === 'ok' ? 'text-ok' : 'text-danger')}>{message.text}</p>
           )}
-
-          <section className="grid gap-3 sm:grid-cols-2">
-            <div className="flex items-end gap-2">
-              <Input label="Название" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={80} className="flex-1" />
-              <Button
-                variant="secondary"
-                loading={busy === 'title'}
-                disabled={!title.trim() || title.trim() === profile.title}
-                onClick={() => run('title', () => actions.updateProfile(profile.id, { title: title.trim() }), 'Название сохранено')}
-              >
-                Сохранить
-              </Button>
-            </div>
-            <div className="flex items-end gap-2">
-              <MoneyInput
-                label="Стартовая сумма банка"
-                value={startBank}
-                onChange={setStartBank}
-                className="flex-1"
-              />
-              <Button
-                variant="secondary"
-                loading={busy === 'bank'}
-                onClick={() => {
-                  if (!Number.isInteger(Number(startBank || 0))) {
-                    setMessage({ tone: 'danger', text: 'Стартовая сумма — целое число долларов' })
-                    return
-                  }
-                  if (Number(startBank || 0) > MAX_DOLLARS) {
-                    setMessage({ tone: 'danger', text: 'Стартовая сумма — не больше 1 000 000 $' })
-                    return
-                  }
-                  run('bank', () => actions.updateProfile(profile.id, { startBank: Number(startBank || 0) }), 'Стартовая сумма сохранена')
-                }}
-              >
-                Сохранить
-              </Button>
-            </div>
-            {/* Подсказка отдельной строкой, а не под полем: под полем она
-                опускала одно поле ниже соседнего. */}
-            <p className="text-xs text-ink-3 sm:col-span-2">
-              Стартовая сумма кладётся в банк первого числа каждого месяца. Если поменять её в середине месяца, сразу она ляжет только тем, кому в этом месяце ещё ничего не пополняли, остальным — с 1 числа. Пусто — ноль.
-            </p>
-          </section>
 
           <section className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -159,7 +194,7 @@ export function ProfileEditor({ profile, globalScale, workLevels, onClose, actio
             </div>
           </section>
         </div>
-      </Modal>
+      </div>
 
       {eventModal && (
         <EventTypeModal
