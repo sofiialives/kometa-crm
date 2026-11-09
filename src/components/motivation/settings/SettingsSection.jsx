@@ -15,7 +15,8 @@ import { GeneralPanel } from './GeneralPanel'
 export function SettingsSection() {
   const store = useMotivationStore()
   const { settings, settingsLoading, settingsError, fetchSettings } = store
-  const [openProfileId, setOpenProfileId] = useState(null)
+  // { departmentId, key: 'staff' | 'lead' | 'u:<id>' } или { profileId } для старых профилей
+  const [opened, setOpened] = useState(null)
 
   useEffect(() => { fetchSettings() }, [fetchSettings])
 
@@ -45,11 +46,9 @@ export function SettingsSection() {
   if (settingsError && !settings) return <p className="text-sm text-danger">{settingsError}</p>
   if (!settings) return null
 
-  const openProfile = settings.profiles.find((p) => p.id === openProfileId) || null
-
   return (
     <div className="flex flex-col gap-4">
-      <ProfilesPanel profiles={settings.profiles} departments={settings.departments || []} employees={settings.employees || []} onOpen={setOpenProfileId} actions={actions} />
+      <ProfilesPanel profiles={settings.profiles} departments={settings.departments || []} employees={settings.employees || []} onOpen={setOpened} actions={actions} />
 
       <Card className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
@@ -69,12 +68,15 @@ export function SettingsSection() {
 
       <GeneralPanel general={settings.general} onSave={actions.updateGeneral} />
 
-      {openProfile && (
+      {opened && (
         <ProfileEditor
-          profile={openProfile}
+          opened={opened}
+          profiles={settings.profiles}
+          department={(settings.departments || []).find((d) => d.id === opened.departmentId) || null}
+          employees={settings.employees || []}
           globalScale={settings.scale}
           workLevels={settings.workLevels}
-          onClose={() => setOpenProfileId(null)}
+          onClose={() => setOpened(null)}
           actions={actions}
         />
       )}

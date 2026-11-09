@@ -1,35 +1,52 @@
 import { useState } from 'react'
-import { Badge, Button, Card, ConfirmModal, Modal, Select } from '../../../shared/ui'
-import { dayMonth, employeesWord } from '../../../utils/motivation'
+import { Avatar, Badge, Button, Card, ConfirmModal } from '../../../shared/ui'
+import { employeesWord } from '../../../utils/motivation'
 import { withPlural } from '../../../shared/lib/plural'
 
-function PartCard({ department, audience, byKey, onOpen, onCreate, onDelete }) {
+function People({ people, personalIds }) {
+  if (!people.length) return <p className="text-xs text-ink-3">В отделе никого с этой ролью</p>
+  return (
+    <ul className="flex flex-wrap gap-1.5">
+      {people.map((u) => {
+        const personal = personalIds.has(u.id)
+        return (
+          <li key={u.id} className="relative">
+            <Avatar
+              name={u.name}
+              email={u.email}
+              src={u.avatarUrl}
+              color={u.avatarColor}
+              size={30}
+              title={personal ? `${u.name}, персональные условия` : u.name}
+              className={personal ? 'ring-2 ring-accent ring-offset-2 ring-offset-panel' : undefined}
+            />
+            {personal && <span aria-hidden className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-panel bg-accent" />}
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
+function PartCard({ department, audience, byKey, people, personalIds, busy, onOpen, onCreate, onDelete }) {
   const p = byKey.get(`${department.id}:${audience.value}`)
-  const fallback = audience.value === 'lead' && !p && byKey.get(`${department.id}:staff`)
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-line p-3">
-      <p className="text-sm font-semibold">{audience.label}</p>
-      {p ? (
-        <>
-          <p className="text-sm text-ink-2">
-            {withPlural(p.events.filter((e) => e.enabled).length, 'событие', 'события', 'событий')} · {p.assignedCount ? employeesWord(p.assignedCount) : 'пока никого'}
-          </p>
-          <p className="text-xs text-ink-3">Условия обновлены {dayMonth(p.conditionsUpdatedAt)}{p.customScale ? ' · своя шкала' : ''}</p>
-          <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="secondary" onClick={() => onOpen(p.id)}>Открыть</Button>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-semibold">{audience.label}</p>
+        {!p && <span className="text-xs text-ink-3">условий нет</span>}
+      </div>
+      <People people={people} personalIds={personalIds} />
+      <div className="flex flex-wrap gap-2">
+        {p ? (
+          <>
+            <Button size="sm" variant="secondary" onClick={() => onOpen({ departmentId: department.id, key: audience.value })}>Открыть</Button>
             <Button size="sm" variant="ghost" onClick={() => onDelete(p)}>Удалить</Button>
-          </div>
-        </>
-      ) : (
-        <>
-          <p className="text-sm text-ink-3">
-            {fallback ? 'Не заданы. Руководитель работает по условиям специалистов.' : 'Условия не заданы.'}
-          </p>
-          <div>
-            <Button size="sm" variant="secondary" onClick={() => onCreate(department, audience.value)}>Задать условия</Button>
-          </div>
-        </>
-      )}
+          </>
+        ) : (
+          <Button size="sm" variant="secondary" loading={busy} onClick={() => onCreate(department, audience.value)}>Задать условия</Button>
+        )}
+      </div>
     </div>
   )
 }
@@ -43,44 +60,32 @@ const AUDIENCES = [
  * Условия по отделам. Отделы берутся из CRM: заведённый в админке отдел
  * сразу появляется здесь. У отдела две части — для специалистов и для
  * руководителя; людям условия достаются сами по их отделу и роли.
- * Руководителю без своей части достаются условия специалистов.
+ * Руководителю без своей части достаются условия специалистов. Люди с точкой на аватарке работают по персональным условиям.
  *
  * Старые профили без отдела показаны отдельно: никому не назначаются, остались
  * для истории баллов, их можно удалить.
  */
 export function ProfilesPanel({ profiles, departments, employees = [], onOpen, actions }) {
-  const [creating, setCreating] = useState(null)
-  const [copyFrom, setCopyFrom] = useState('')
-  const [error, setError] = useState(null)
-  const [busy, setBusy] = useState(false)
+  const [createError, setCreateError] = useState(null)
+  const [busyKey, setBusyKey] = useState(null)
   const [deleting, setDeleting] = useState(null)
   const [deleteError, setDeleteError] = useState(null)
 
-  const byKey = new Map(profiles.filter((p) => p.department).map((p) => [`${p.department.id}:${p.audience}`, p]))
-  const legacy = profiles.filter((p) => !p.department)
+  const byKey = new Map(profiles.filter((p) => p.department && !p.userId).map((p) => [`${p.department.id}:${p.audience}`, p]))
+  const personalIds = new Set(profiles.filter((p) => p.userId).map((p) => p.userId))
+  // Персональные профили тоже без отдела, но они не старые: их видно по аватарке человека.
+  const legacy = profiles.filter((p) => !p.department && !p.userId)
 
-  const openCreate = (department, audience) => {
-    setCreating({ department, audience })
-    setCopyFrom('')
-    setError(null)
-  }
-
-  async function create() {
-    setBusy(true)
-    const res = await actions.createProfile({
-      departmentId: creating.department.id,
-      audience: creating.audience,
-      copyFromId: copyFrom || undefined,
-    })
-    setBusy(false)
-    if (res.ok) { setCreating(null); onOpen(res.data.id) } else setError(res.error)
+  // «Задать условия» сразу создаёт пустой профиль отдела и открывает его окно.
+  async function create(department, audience) {
+    setBusyKey(`${department.id}:${audience}`)
+    setCreateError(null)
+    const res = await actions.createProfile({ departmentId: department.id, audience })
+    setBusyKey(null)
+    if (res.ok) onOpen({ departmentId: department.id, key: audience }); else setCreateError(res.error)
   }
 
   const used = (p) => p && (p.assignedCount > 0 || p.eventsCount > 0)
-
-  // Сколько людей отдела получат условия сразу после «Задать условия».
-  const reach = (departmentId, audience) => employees.filter((e) => e.active && e.department?.id === departmentId
-    && (audience === 'lead' ? e.role === 'lead' : e.role === 'staff' || (e.role === 'lead' && !byKey.get(`${departmentId}:lead`)))).length
 
   return (
     <Card className="flex flex-col gap-4">
@@ -90,6 +95,8 @@ export function ProfilesPanel({ profiles, departments, employees = [], onOpen, a
           Отделы берутся из CRM, новый отдел из админки появится здесь сам. Людям условия достаются по их отделу и роли, назначать вручную не нужно.
         </p>
       </div>
+
+      {createError && <p className="text-sm text-danger">{createError}</p>}
 
       <ul className="flex flex-col gap-3">
         {departments.map((d) => (
@@ -103,7 +110,10 @@ export function ProfilesPanel({ profiles, departments, employees = [], onOpen, a
                   audience={a}
                   byKey={byKey}
                   onOpen={onOpen}
-                  onCreate={openCreate}
+                  people={employees.filter((e) => e.active && e.department?.id === d.id && e.role === a.value)}
+                  personalIds={personalIds}
+                  busy={busyKey === `${d.id}:${a.value}`}
+                  onCreate={create}
                   onDelete={(p) => { setDeleting(p); setDeleteError(null) }}
                 />
               ))}
@@ -132,7 +142,7 @@ export function ProfilesPanel({ profiles, departments, employees = [], onOpen, a
                   {withPlural(p.events.filter((e) => e.enabled).length, 'событие', 'события', 'событий')} · {p.assignedCount ? employeesWord(p.assignedCount) : 'никому не назначен'}
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  <Button size="sm" variant="secondary" onClick={() => onOpen(p.id)}>Открыть</Button>
+                  <Button size="sm" variant="secondary" onClick={() => onOpen({ profileId: p.id })}>Открыть</Button>
                   <Button size="sm" variant="ghost" onClick={() => { setDeleting(p); setDeleteError(null) }}>Удалить</Button>
                 </div>
               </li>
@@ -140,39 +150,6 @@ export function ProfilesPanel({ profiles, departments, employees = [], onOpen, a
           </ul>
         </div>
       )}
-
-      <Modal
-        open={Boolean(creating)}
-        onClose={() => setCreating(null)}
-        title={creating ? `${creating.department.name}: ${AUDIENCES.find((a) => a.value === creating.audience)?.label.toLowerCase()}` : ''}
-        size="sm"
-        footer={(
-          <>
-            <Button variant="ghost" onClick={() => setCreating(null)}>Отмена</Button>
-            <Button loading={busy} onClick={create}>Задать условия</Button>
-          </>
-        )}
-      >
-        <div className="flex flex-col gap-4">
-          <Select
-            label="Взять условия из профиля"
-            placeholder="Начать с пустого"
-            options={profiles.map((p) => ({ value: p.id, label: p.title }))}
-            value={copyFrom}
-            onChange={(e) => { setCopyFrom(e.target.value); setError(null) }}
-            hint="Можно скопировать события и шкалу из старого профиля или другого отдела. Пустые условия сразу получают звонок, чек-ин и покупку продукта"
-          />
-          {creating && (
-            <p className="text-sm text-ink-2">
-              {(() => {
-                const n = reach(creating.department.id, creating.audience)
-                return n ? `Условия сразу достанутся ${employeesWord(n)} отдела. С этого момента их баллы считаются по ним.` : 'В отделе пока нет людей с этой ролью. Условия достанутся тем, кто придёт.'
-              })()}
-            </p>
-          )}
-          {error && <p className="text-sm text-danger">{error}</p>}
-        </div>
-      </Modal>
 
       <ConfirmModal
         open={Boolean(deleting)}
