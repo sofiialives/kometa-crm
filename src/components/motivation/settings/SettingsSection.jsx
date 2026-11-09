@@ -3,7 +3,6 @@ import { Card, Spinner } from '../../../shared/ui'
 import { useMotivationStore } from '../../../core/store/motivationStore'
 import { ProfilesPanel } from './ProfilesPanel'
 import { ProfileEditor } from './ProfileEditor'
-import { AssignmentsPanel } from './AssignmentsPanel'
 import { ScaleEditor } from './ScaleEditor'
 import { WorkLevelsEditor } from './WorkLevelsEditor'
 import { GeneralPanel } from './GeneralPanel'
@@ -39,7 +38,6 @@ export function SettingsSection() {
       saveGlobalScale: wrap(store.saveGlobalScale),
       saveWorkLevels: wrap(store.saveWorkLevels),
       updateGeneral: wrap(store.updateGeneral),
-      assignProfile: wrap(store.assignProfile),
     }
   }, [store, fetchSettings])
 
@@ -52,7 +50,6 @@ export function SettingsSection() {
   return (
     <div className="flex flex-col gap-4">
       <ProfilesPanel profiles={settings.profiles} departments={settings.departments || []} employees={settings.employees || []} onOpen={setOpenProfileId} actions={actions} />
-      <AssignmentsPanel employees={settings.employees} profiles={settings.profiles} onAssign={actions.assignProfile} />
 
       <Card className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">

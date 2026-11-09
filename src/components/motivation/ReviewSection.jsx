@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Avatar, Button, Card, EmptyState, Input, Spinner } from '../../shared/ui'
+import { Avatar, Button, Card, Checkbox, EmptyState, Input, Modal, Spinner } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
 import { useMotivationStore } from '../../core/store/motivationStore'
 import { dateTime, dayMonth, pointsTone, pointsWord, signedPoints } from '../../utils/motivation'
@@ -90,15 +90,39 @@ export function ReviewSection() {
  * выдаёт порциями с кнопкой «Показать ещё».
  */
 function PendingQueue({ compact, onDecided }) {
-  const { reviews, reviewsLoading, reviewsError, fetchReviews, approveReview, rejectReview } = useMotivationStore()
+  const { reviews, reviewsLoading, reviewsError, fetchReviews, approveReview, rejectReview, dismissReviews } = useMotivationStore()
   const [done, setDone] = useState(() => new Set())
   const [shown, setShown] = useState(PAGE)
+  const [checked, setChecked] = useState(() => new Set())
+  const [people, setPeople] = useState(() => new Set())
+  const [confirm, setConfirm] = useState(null)
 
   const load = () => { setDone(new Set()); return fetchReviews('pending') }
   useEffect(() => { load() }, [fetchReviews]) // eslint-disable-line react-hooks/exhaustive-deps
   useAutoRefresh(load)
 
   const items = (reviews?.items ?? []).filter((r) => !done.has(r.id))
+  const toggleChecked = (id) => setChecked((s) => {
+    const next = new Set(s)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    return next
+  })
+  // Выбранные галочками и люди из списка вместе: заявка берётся, если подходит под любое.
+  const selectedIds = items.filter((r) => checked.has(r.id) || people.has(r.employee.id)).map((r) => r.id)
+  const allSelected = items.length > 0 && selectedIds.length === items.length
+  // На сервер уходят ids, запомненные при открытии подтверждения: пока окно
+  // открыто, список мог обновиться, и снять нужно ровно то, что человек видел.
+  async function dismiss(frozen) {
+    const body = { ids: frozen.ids }
+    const res = await dismissReviews(body)
+    if (!res.ok) return res
+    setChecked(new Set())
+    setPeople(new Set())
+    await load()
+    onDecided?.()
+    return res
+  }
   const markDone = (id) => { setDone((s) => new Set(s).add(id)); onDecided?.() }
   // Заявка обновилась, пока на неё смотрели (ночь добавила штраф) — сервер
   // ответит 409, и очередь перечитывается, чтобы владелец увидел новое число.
@@ -123,11 +147,26 @@ function PendingQueue({ compact, onDecided }) {
   return (
     <section className="flex flex-col gap-3" aria-label="Ждут решения">
       {compact && <p className="caption">Ждут решения · {items.length}</p>}
+      <CleanupBar
+        items={items}
+        checked={checked}
+        people={people}
+        onPeople={setPeople}
+        selectedCount={selectedIds.length}
+        allSelected={allSelected}
+        onToggleAll={() => { setChecked(allSelected ? new Set() : new Set(items.map((r) => r.id))); setPeople(new Set()) }}
+        onClean={(kind) => {
+          const ids = kind === 'all' ? items.map((r) => r.id) : [...selectedIds]
+          if (ids.length) setConfirm({ kind, ids, count: ids.length })
+        }}
+      />
       <ul className="flex flex-col gap-3">
         {visible.map((r) => (
           <PendingItem
             key={r.id}
             review={r}
+            checked={checked.has(r.id) || people.has(r.employee.id)}
+            onCheck={() => toggleChecked(r.id)}
             dailyCap={reviews.personalTaskDailyCap}
             onApprove={(body) => approveReview(r.id, body).then((res) => {
               if (res.ok) markDone(r.id)
@@ -145,7 +184,94 @@ function PendingQueue({ compact, onDecided }) {
           </Button>
         </div>
       )}
+      {confirm && <DismissConfirm count={confirm.count} onCancel={() => setConfirm(null)} onConfirm={() => dismiss(confirm)} onDone={() => setConfirm(null)} />}
     </section>
+  )
+}
+
+/** Панель очистки: выбрать все, выбрать людей, счётчик и кнопки. */
+function CleanupBar({ items, people, onPeople, selectedCount, allSelected, onToggleAll, onClean }) {
+  const [open, setOpen] = useState(false)
+  const list = []
+  const seen = new Set()
+  for (const r of items) {
+    if (seen.has(r.employee.id)) continue
+    seen.add(r.employee.id)
+    list.push(r.employee)
+  }
+  list.sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+  const togglePerson = (id) => {
+    const next = new Set(people)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    onPeople(next)
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-line px-3 py-2">
+      <Checkbox label="Выбрать все" checked={allSelected} onChange={onToggleAll} />
+      <div className="relative">
+        <Button size="sm" variant="secondary" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+          {people.size ? `Люди · ${people.size}` : 'Выбрать людей'}
+        </Button>
+        {open && (
+          <ul className="absolute left-0 top-full z-20 mt-1 flex max-h-64 w-72 flex-col overflow-y-auto rounded-lg border border-line-2 bg-panel shadow-lg">
+            {list.map((e) => (
+              <li key={e.id} className="border-b border-line last:border-b-0">
+                <button
+                  type="button"
+                  role="checkbox"
+                  aria-checked={people.has(e.id)}
+                  onClick={() => togglePerson(e.id)}
+                  className="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left text-sm hover:bg-panel-2"
+                >
+                  <span className={cx('grid size-4 shrink-0 place-items-center rounded border text-[10px] text-white', people.has(e.id) ? 'border-transparent bg-accent' : 'border-line-2')}>
+                    {people.has(e.id) ? '✓' : ''}
+                  </span>
+                  <span className="truncate">{e.department?.name ? `${e.name}, ${e.department.name}` : e.name}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <span className="text-sm text-ink-3">Выбрано: {selectedCount}</span>
+      <div className="ml-auto flex gap-2">
+        <Button size="sm" variant="secondary" disabled={!selectedCount} onClick={() => onClean('selected')}>Очистить выбранные</Button>
+        <Button size="sm" variant="ghost" onClick={() => onClean('all')}>Очистить все</Button>
+      </div>
+    </div>
+  )
+}
+
+function DismissConfirm({ count, onCancel, onConfirm, onDone }) {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(null)
+  async function go() {
+    setBusy(true)
+    setError(null)
+    const res = await onConfirm()
+    setBusy(false)
+    if (res.ok) onDone()
+    else setError(res.error || 'Не удалось снять заявки')
+  }
+  return (
+    <Modal
+      open
+      onClose={onCancel}
+      title="Очистить заявки"
+      size="sm"
+      footer={(
+        <>
+          <Button variant="ghost" onClick={onCancel}>Отмена</Button>
+          <Button variant="danger" loading={busy} onClick={go}>Снять</Button>
+        </>
+      )}
+    >
+      <div className="flex flex-col gap-3">
+        <p className="text-sm text-ink-2 leading-relaxed">Снять {count} {plural(count, 'заявку', 'заявки', 'заявок')}? Баллы по ним не начислятся, в истории они останутся.</p>
+        {error && <p className="text-sm text-danger">{error}</p>}
+      </div>
+    </Modal>
   )
 }
 
@@ -169,7 +295,7 @@ function Who({ review }) {
   )
 }
 
-function PendingItem({ review, dailyCap, onApprove, onReject }) {
+function PendingItem({ review, checked, onCheck, dailyCap, onApprove, onReject }) {
   const [points, setPoints] = useState(String(review.prizePoints))
   const [busy, setBusy] = useState(null)
   const [error, setError] = useState(null)
@@ -207,7 +333,10 @@ function PendingItem({ review, dailyCap, onApprove, onReject }) {
     <li>
       <Card className="flex flex-col gap-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <Who review={review} />
+          <div className="flex items-center gap-3">
+            <Checkbox checked={checked} onChange={onCheck} aria-label={`Выбрать заявку ${review.employee.name}`} />
+            <Who review={review} />
+          </div>
           <span className="text-xs text-ink-3">{dateTime(review.occurredAt)}</span>
         </div>
 

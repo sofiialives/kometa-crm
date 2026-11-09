@@ -44,7 +44,7 @@ const EMPTY = {
   reviews: null, reviewsLoading: false, reviewsError: null, reviewsPending: 0,
 }
 
-export const useMotivationStore = create((set) => ({
+export const useMotivationStore = create((set, get) => ({
   // Экран сотрудника про себя.
   mine: null,
   mineLoading: false,
@@ -132,6 +132,8 @@ export const useMotivationStore = create((set) => ({
   // История баллов: месяц или всё время, отдел, человек; before — догрузка.
   fetchHistory: (params) => call(() => api.get(`/motivation/history${query(params)}`)),
   fetchBotJournal: (userId, month) => call(() => api.get(`/motivation/bot-journal${query({ userId, month })}`)),
+  // Таблица по людям: scope = 'all' (вся команда, у руководителя его отдел) или id отдела.
+  fetchBotJournalTeam: (scope, month) => call(() => api.get(`/motivation/bot-journal${query(scope === 'all' ? { scope: 'all', month } : { departmentId: scope, month })}`)),
 
   topUp: (body) => call(() => api.post('/motivation/bank/top-up', body)),
   writeOff: (body) => call(() => api.post('/motivation/bank/write-off', body)),
@@ -181,6 +183,17 @@ export const useMotivationStore = create((set) => ({
     return res
   },
 
+  // Массовое снятие заявок: body = { ids } | { userIds } | { all: true }.
+  // Баллы по ним не начисляются, в истории они остаются.
+  async dismissReviews(body) {
+    const res = await call(() => api.post('/motivation/reviews/withdraw', body))
+    // Сбой обновления счётчика не должен прятать успешное снятие.
+    if (res.ok) {
+      try { await get().fetchReviewsCount() } catch { /* счётчик обновится при следующем заходе */ }
+    }
+    return res
+  },
+
   // Кто работает с клиентом — для «Клиент купил продукт» из карточки клиента.
   fetchClientPeople: (clientId) => call(() => api.get(`/motivation/clients/${clientId}/people`)),
 
@@ -217,7 +230,6 @@ export const useMotivationStore = create((set) => ({
   createEventType: (profileId, body) => call(() => api.post(`/motivation/profiles/${profileId}/events`, body)),
   updateEventType: (id, body) => call(() => api.patch(`/motivation/event-types/${id}`, body)),
   deleteEventType: (id) => call(() => api.del(`/motivation/event-types/${id}`)),
-  assignProfile: (userId, profileId) => call(() => api.put(`/motivation/assignments/${userId}`, { profileId })),
 }))
 
 // Сменился пользователь (вышел один, вошёл другой без перезагрузки) — чужие
