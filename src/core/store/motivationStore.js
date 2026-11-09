@@ -44,7 +44,7 @@ const EMPTY = {
   reviews: null, reviewsLoading: false, reviewsError: null, reviewsPending: 0,
 }
 
-export const useMotivationStore = create((set) => ({
+export const useMotivationStore = create((set, get) => ({
   // Экран сотрудника про себя.
   mine: null,
   mineLoading: false,
@@ -187,7 +187,10 @@ export const useMotivationStore = create((set) => ({
   // Баллы по ним не начисляются, в истории они остаются.
   async dismissReviews(body) {
     const res = await call(() => api.post('/motivation/reviews/withdraw', body))
-    if (res.ok) await get().fetchReviewsCount()
+    // Сбой обновления счётчика не должен прятать успешное снятие.
+    if (res.ok) {
+      try { await get().fetchReviewsCount() } catch { /* счётчик обновится при следующем заходе */ }
+    }
     return res
   },
 
