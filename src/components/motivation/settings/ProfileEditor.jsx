@@ -145,16 +145,14 @@ function ProfileBody({ profile, globalScale, workLevels, actions }) {
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <p className="text-sm font-medium leading-snug">{e.title}</p>
                     <p className="text-xs text-ink-3">
-                      {e.mode === 'auto' ? `Автоматически: ${lowerFirst(autoRuleLabel(e.autoRule))}, ${e.review ? 'вам на решение' : 'начисляется сразу'}` : e.systemKey === 'call_attended' || e.systemKey === 'call_missed' ? 'Журнал звонка, владелец' : e.systemKey === 'checkin_missed' ? 'Бот, внезапный чек-ин' : 'Вручную, владелец'}
+                      {e.mode === 'auto' ? `Автоматически: ${lowerFirst(autoRuleLabel(e.autoRule))}, ${e.review ? 'вам на решение' : 'начисляется сразу'}` : e.systemKey === 'call_attended' || e.systemKey === 'call_missed' ? 'Журнал звонка, владелец' : e.systemKey === 'checkin_missed' || e.systemKey === 'checkin_answered' ? 'Бот, внезапный чек-ин' : 'Вручную, владелец'}
                     </p>
                   </div>
                   {!e.enabled && <Badge>выключено</Badge>}
                   <span className={cx('text-sm font-semibold tabular-nums', pointsTone(e.prizePoints || e.levelPoints))}>{eventPoints(e)}</span>
                   <div className="flex gap-1">
                     <Button size="sm" variant="ghost" onClick={() => setEventModal({ event: e })}>Изменить</Button>
-                    {!['client_product', 'call_attended', 'call_missed', 'checkin_missed'].includes(e.systemKey) && (
-                      <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(e)}>Удалить</Button>
-                    )}
+                    <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(e)}>Удалить</Button>
                   </div>
                 </li>
               ))}
@@ -218,7 +216,9 @@ function ProfileBody({ profile, globalScale, workLevels, actions }) {
         onClose={() => setConfirmDelete(null)}
         danger
         title="Удалить событие?"
-        text="Начисленные по нему баллы останутся в истории сотрудников. Новых начислений по этому событию больше не будет. Если событие может пригодиться, его лучше выключить."
+        text={confirmDelete?.systemKey
+          ? 'Это событие ставят бот или журнал звонка. Начисленные баллы останутся в истории, новых не будет. Вернуть его из CRM нельзя, если может пригодиться, лучше выключить.'
+          : 'Начисленные по нему баллы останутся в истории сотрудников. Новых начислений по этому событию больше не будет. Если событие может пригодиться, его лучше выключить.'}
         confirmText="Удалить"
         onConfirm={async () => {
           const res = await actions.deleteEventType(confirmDelete.id)
