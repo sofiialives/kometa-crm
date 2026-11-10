@@ -41,7 +41,7 @@ export function EventTypeModal({ open, event, onClose, onSubmit }) {
 
   const isProduct = event?.systemKey === 'client_product'
   const isCall = event?.systemKey === 'call_attended' || event?.systemKey === 'call_missed'
-  const isCheckin = event?.systemKey === 'checkin_missed'
+  const isCheckin = ['checkin_missed', 'checkin_answered'].includes(event?.systemKey)
 
   const cleanNumber = (v) => v.replace(/[^\d-−]/g, '').replace('−', '-')
 

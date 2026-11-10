@@ -125,6 +125,7 @@ export function awayLabel(away) {
 export function modeLabel(type) {
   if (type.systemKey === 'call_attended' || type.systemKey === 'call_missed') return 'Отмечает владелец в журнале звонка'
   if (type.systemKey === 'checkin_missed') return 'Снимает бот, если не ответить на внезапный чек-ин за 45 минут'
+  if (type.systemKey === 'checkin_answered') return 'Начисляет бот, если ответить на внезапный чек-ин за 45 минут'
   return type.mode === 'auto' ? 'Автоматически по задачам' : 'Отмечает владелец'
 }
 
