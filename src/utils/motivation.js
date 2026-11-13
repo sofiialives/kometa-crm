@@ -6,7 +6,7 @@
  * разойдутся, и никто не поймёт, какая из них права.
  */
 import { money } from './board'
-import { plural, withPlural } from '../shared/lib/plural'
+import { numRu, plural, withPlural } from '../shared/lib/plural'
 import { todayKey } from './calls'
 
 export { money }
@@ -19,7 +19,7 @@ export function dollars(cents) {
 /** Баллы со знаком: «+2», «−3», «0». Минус — настоящий, не дефис. */
 export function signedPoints(n) {
   if (!n) return '0'
-  return n > 0 ? `+${n}` : `−${Math.abs(n)}`
+  return n > 0 ? `+${numRu(n)}` : `−${numRu(Math.abs(n))}`
 }
 
 export const pointsWord = (n) => withPlural(n, 'балл', 'балла', 'баллов')
@@ -125,6 +125,7 @@ export function awayLabel(away) {
 export function modeLabel(type) {
   if (type.systemKey === 'call_attended' || type.systemKey === 'call_missed') return 'Отмечает владелец в журнале звонка'
   if (type.systemKey === 'checkin_missed') return 'Снимает бот, если не ответить на внезапный чек-ин за 45 минут'
+  if (type.systemKey === 'agent_no_reply') return 'Снимает бот, если на сообщение агента не ответили и не предупредили'
   if (type.systemKey === 'checkin_answered') return 'Начисляет бот, если ответить на внезапный чек-ин за 45 минут'
   return type.mode === 'auto' ? 'Автоматически по задачам' : 'Отмечает владелец'
 }
@@ -221,3 +222,18 @@ export function withDepartment(name, department) {
   const dept = typeof department === 'string' ? department : department?.name
   return dept ? `(${dept}) ${name}` : name
 }
+
+/**
+ * Баллы из поля ввода: целые и дробные, через точку или запятую, минус
+ * любым знаком. Сервер округляет до сотых. Не число — NaN.
+ */
+export function cleanPointsInput(v) {
+  return String(v).replace(/[−–]/g, '-').replace(',', '.').replace(/[^\d.-]/g, '').replace(/(?!^)-/g, '').replace(/(\..*)\./g, '$1')
+}
+export function parsePoints(v) {
+  const t = cleanPointsInput(v)
+  if (!t || t === '-' || t === '.' || t === '-.') return NaN
+  return Number(t)
+}
+export const POINTS_ERROR = 'Число от −100 до 100, можно дробное, например 2,5'
+export const pointsOk = (n) => Number.isFinite(n) && n >= -100 && n <= 100

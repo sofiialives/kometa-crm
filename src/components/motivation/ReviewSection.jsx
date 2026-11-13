@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { Avatar, Button, Card, Checkbox, EmptyState, Input, Modal, Spinner } from '../../shared/ui'
 import { cx } from '../../shared/lib/cx'
 import { useMotivationStore } from '../../core/store/motivationStore'
-import { dateTime, dayMonth, pointsTone, pointsWord, signedPoints } from '../../utils/motivation'
+import { dateTime, dayMonth, pointsTone, pointsWord, signedPoints, cleanPointsInput, parsePoints, pointsOk, POINTS_ERROR } from '../../utils/motivation'
 import { plural } from '../../shared/lib/plural'
 import { HistoryView } from './HistoryView'
 import { useAutoRefresh } from '../../shared/lib/useAutoRefresh'
@@ -310,9 +310,9 @@ function PendingItem({ review, checked, onCheck, dailyCap, onApprove, onReject }
     setError(null)
     let body
     if (kind === 'approve') {
-      const n = Number(points.replace('−', '-'))
-      if (!Number.isInteger(n) || n < -100 || n > 100) {
-        setError('Баллы — целое число от −100 до 100')
+      const n = parsePoints(points)
+      if (!pointsOk(n)) {
+        setError(POINTS_ERROR)
         return
       }
       if (n === 0) {
@@ -368,10 +368,10 @@ function PendingItem({ review, checked, onCheck, dailyCap, onApprove, onReject }
           <Input
             size="sm"
             label="Баллы"
-            inputMode="numeric"
+            inputMode="decimal"
             className="w-28"
             value={points}
-            onChange={(e) => { setError(null); setPoints(e.target.value.replace(/[^\d\-−]/g, '').slice(0, 4)) }}
+            onChange={(e) => { setError(null); setPoints(cleanPointsInput(e.target.value).slice(0, 7)) }}
             aria-label={`Баллы для ${review.employee.name}`}
           />
           <p className="pb-2 text-xs text-ink-3">

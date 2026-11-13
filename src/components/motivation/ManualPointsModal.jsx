@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Button, Checkbox, Input, Modal, Select, Spinner, Textarea } from '../../shared/ui'
-import { eventPoints, withDepartment } from '../../utils/motivation'
+import { eventPoints, withDepartment, cleanPointsInput, parsePoints, pointsOk, POINTS_ERROR } from '../../utils/motivation'
 import { useRequestKey } from './useRequestKey'
 
 const ADJUSTMENT = '__adjustment'
@@ -69,13 +69,13 @@ export function ManualPointsModal({ open, onClose, employees, preselected, loadO
     if (!eventTypeId) next.eventTypeId = 'Выберите событие или корректировку'
     if (isAdjustment) {
       // Пустое поле — не ноль: Number('') даёт 0 и молча прошло бы проверку.
-      const p = Number(prize)
-      if (!prize.trim() || !Number.isInteger(p) || p < -100 || p > 100) next.prize = 'Целое число от −100 до 100'
+      const p = parsePoints(prize)
+      if (!pointsOk(p)) next.prize = POINTS_ERROR
       if (split) {
-        const l = Number(level)
-        if (!level.trim() || !Number.isInteger(l) || l < -100 || l > 100) next.level = 'Целое число от −100 до 100'
+        const l = parsePoints(level)
+        if (!pointsOk(l)) next.level = POINTS_ERROR
       }
-      if (p === 0 && (!split || Number(level) === 0)) next.prize = 'Ноль баллов ничего не меняет'
+      if (p === 0 && (!split || parsePoints(level) === 0)) next.prize = 'Ноль баллов ничего не меняет'
     }
     if (!comment.trim()) next.comment = 'Напишите, за что баллы — это обязательно'
     setErrors(next)
@@ -145,10 +145,10 @@ export function ManualPointsModal({ open, onClose, employees, preselected, loadO
             <Input
               label={split ? 'Баллы в премию' : 'Баллы'}
               required
-              inputMode="numeric"
+              inputMode="decimal"
               placeholder="Например, 5 или −3"
               value={prize}
-              onChange={(e) => { setPrize(e.target.value.replace(/[^\d-−]/g, '').replace('−', '-')); clear('prize') }}
+              onChange={(e) => { setPrize(cleanPointsInput(e.target.value)); clear('prize') }}
               error={errors.prize}
               hint="Плюс добавляет баллы, минус снимает"
             />
@@ -157,9 +157,9 @@ export function ManualPointsModal({ open, onClose, employees, preselected, loadO
               <Input
                 label="Баллы в уровень работы"
                 required
-                inputMode="numeric"
+                inputMode="decimal"
                 value={level}
-                onChange={(e) => { setLevel(e.target.value.replace(/[^\d-−]/g, '').replace('−', '-')); clear('level') }}
+                onChange={(e) => { setLevel(cleanPointsInput(e.target.value)); clear('level') }}
                 error={errors.level}
               />
             )}
