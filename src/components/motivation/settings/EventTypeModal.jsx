@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Button, Checkbox, Input, Modal, Select, Textarea } from '../../../shared/ui'
-import { AUTO_RULES } from '../../../utils/motivation'
+import { AUTO_RULES, cleanPointsInput, parsePoints, pointsOk, POINTS_ERROR } from '../../../utils/motivation'
 
 const MODES = [
   { value: 'manual', label: 'Вручную, отмечает владелец' },
@@ -42,8 +42,12 @@ export function EventTypeModal({ open, event, onClose, onSubmit }) {
   const isProduct = event?.systemKey === 'client_product'
   const isCall = event?.systemKey === 'call_attended' || event?.systemKey === 'call_missed'
   const isCheckin = ['checkin_missed', 'checkin_answered'].includes(event?.systemKey)
+  const isNoReply = event?.systemKey === 'agent_no_reply'
+  // Эти события ставит бот сам. В базе режим «manual» (правила по задачам к
+  // ним не подходят), но владельцу показываем, как есть на деле.
+  const byBot = isCheckin || isNoReply
 
-  const cleanNumber = (v) => v.replace(/[^\d-−]/g, '').replace('−', '-')
+  const cleanNumber = cleanPointsInput
 
   async function submit() {
     const next = {}
@@ -51,10 +55,10 @@ export function EventTypeModal({ open, event, onClose, onSubmit }) {
     if (mode === 'manual' && !title.trim()) next.title = 'Укажите название'
     // Пустое поле — не ноль: Number('') даёт 0 и молча сохранило бы событие
     // без баллов.
-    const p = Number(prize)
-    if (!prize.trim() || !Number.isInteger(p) || p < -100 || p > 100) next.prize = 'Целое число от −100 до 100'
-    const l = split ? Number(level) : p
-    if (split && (!level.trim() || !Number.isInteger(l) || l < -100 || l > 100)) next.level = 'Целое число от −100 до 100'
+    const p = parsePoints(prize)
+    if (!pointsOk(p)) next.prize = POINTS_ERROR
+    const l = split ? parsePoints(level) : p
+    if (split && !pointsOk(l)) next.level = POINTS_ERROR
     if (mode === 'auto' && !autoRule) next.autoRule = 'Выберите, по какому правилу событие начисляется'
     setErrors(next)
     if (Object.keys(next).length) return
@@ -98,24 +102,28 @@ export function EventTypeModal({ open, event, onClose, onSubmit }) {
         <Input
           label={split ? 'Баллы в премию' : 'Баллы'}
           required
-          inputMode="numeric"
+          inputMode="decimal"
           value={prize}
           onChange={(e) => { setPrize(cleanNumber(e.target.value)); clear('prize') }}
           error={errors.prize}
-          hint="Минус — штраф. Например, −2 за просрочку"
+          hint="Минус это штраф. Можно дробное, например −2 или 0,5"
         />
         <Checkbox label="Разные баллы для премии и уровня работы" checked={split} onChange={(e) => setSplit(e.target.checked)} />
         {split && (
-          <Input label="Баллы в уровень работы" required inputMode="numeric" value={level} onChange={(e) => { setLevel(cleanNumber(e.target.value)); clear('level') }} error={errors.level} />
+          <Input label="Баллы в уровень работы" required inputMode="decimal" value={level} onChange={(e) => { setLevel(cleanNumber(e.target.value)); clear('level') }} error={errors.level} />
         )}
 
         <Select
           label="Как фиксируется"
-          options={MODES}
+          options={byBot ? [{ value: mode, label: 'Автоматически, ставит бот' }] : MODES}
           value={mode}
-          disabled={isProduct || isCall || isCheckin}
+          disabled={isProduct || isCall || byBot}
           onChange={(e) => setMode(e.target.value)}
-          hint={isProduct ? 'Покупку продукта всегда отмечает владелец' : isCall ? 'Звонок отмечают в журнале звонка' : isCheckin ? 'Снимает бот на внезапном чек-ине' : undefined}
+          hint={isProduct ? 'Покупку продукта всегда отмечает владелец'
+            : isCall ? 'Звонок отмечают в журнале звонка'
+              : isCheckin ? 'Бот сам начисляет или снимает после внезапного чек-ина'
+                : isNoReply ? 'Бот сам снимает, если на сообщение агента не ответили и не предупредили'
+                  : undefined}
         />
         {mode === 'auto' && (
           <Select
